@@ -31,3 +31,5 @@ coverage/
 .vscode/
 *.swp
 *.swo
+
+firebase-service-account.json

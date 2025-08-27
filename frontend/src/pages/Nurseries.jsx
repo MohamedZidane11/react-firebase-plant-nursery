@@ -20,7 +20,7 @@ const Nurseries = () => {
   useEffect(() => {
     const fetchNurseries = async () => {
       try {
-        const response = await fetch('https://react-plant-nursery-website-production.up.railway.app/api/nurseries'); //local => http://localhost:5000/api/nurseries
+        const response = await fetch('http://localhost:5000/api/nurseries'); //local => http://localhost:5000/api/nurseries
         if (!response.ok) throw new Error('فشل تحميل المشاتل');
         const data = await response.json();
         setNurseries(data);

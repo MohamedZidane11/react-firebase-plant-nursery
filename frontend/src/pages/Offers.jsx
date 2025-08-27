@@ -17,7 +17,7 @@ const Offers = () => {
   useEffect(() => {
     const fetchOffers = async () => {
       try {
-        const response = await fetch('https://react-plant-nursery-website-production.up.railway.app/api/offers'); //local => http://localhost:5000/api/offers
+        const response = await fetch('http://localhost:5000/api/offers'); //local => http://localhost:5000/api/offers
         if (!response.ok) throw new Error('فشل تحميل العروض');
         const data = await response.json();
         setOffers(data);

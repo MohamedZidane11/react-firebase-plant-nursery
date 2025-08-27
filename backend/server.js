@@ -1,56 +1,107 @@
 // server.js
 import express from 'express';
-import mongoose from 'mongoose';
 import cors from 'cors';
-import dotenv from 'dotenv';
-import nurseryRoutes from './routes/nurseries.js';
-import offerRoutes from './routes/offers.js';
-
-dotenv.config();
+import { db } from './firebase.js';
 
 const app = express();
+const PORT = process.env.PORT || 5000;
 
-// 🔽 Allow multiple origins
-const allowedOrigins = [
-  'http://localhost:5173',
-  'https://react-plant-nursery-website.vercel.app'
-];
-
-app.use(cors({
-  origin: (origin, callback) => {
-    // Allow requests with no origin (e.g. mobile apps, curl)
-    if (!origin) return callback(null, true);
-
-    if (allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
-    }
-  },
-  credentials: true
-}));
-
+// Middleware
+app.use(cors());
 app.use(express.json());
 
 // Routes
-app.use('/api/nurseries', nurseryRoutes);
-app.use('/api/offers', offerRoutes);
+
+// GET all nurseries
+app.get('/api/nurseries', async (req, res) => {
+  try {
+    const nurseriesRef = db.collection('nurseries');
+    const snapshot = await nurseriesRef.get();
+    const list = snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    }));
+    res.json(list);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// POST new nursery
+app.post('/api/nurseries', async (req, res) => {
+  try {
+    const { name, image, categories, location, services, featured, discount } = req.body;
+
+    // Validation
+    if (!name || !image || !location) {
+      return res.status(400).json({ message: 'الاسم، الصورة، والموقع مطلوبون' });
+    }
+
+    const newNursery = {
+      name,
+      image,
+      categories: categories || [],
+      location,
+      services: services || [],
+      featured: !!featured,
+      discount: discount || null,
+      createdAt: new Date().toISOString()
+    };
+
+    const docRef = await db.collection('nurseries').add(newNursery);
+    res.status(201).json({ id: docRef.id, ...newNursery });
+  } catch (err) {
+    res.status(400).json({ message: err.message });
+  }
+});
+
+// GET all offers
+app.get('/api/offers', async (req, res) => {
+  try {
+    const offersRef = db.collection('offers');
+    const snapshot = await offersRef.get();
+    const list = snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    }));
+    res.json(list);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// POST new offer
+app.post('/api/offers', async (req, res) => {
+  try {
+    const { title, description, tags, endDate, discount, highlighted } = req.body;
+
+    if (!title || !description) {
+      return res.status(400).json({ message: 'العنوان والوصف مطلوبان' });
+    }
+
+    const newOffer = {
+      title,
+      description,
+      tags: tags || [],
+      endDate,
+      discount: discount || null,
+      highlighted: !!highlighted,
+      createdAt: new Date().toISOString()
+    };
+
+    const docRef = await db.collection('offers').add(newOffer);
+    res.status(201).json({ id: docRef.id, ...newOffer });
+  } catch (err) {
+    res.status(400).json({ message: err.message });
+  }
+});
 
 // Test route
 app.get('/api', (req, res) => {
   res.json({ message: 'Nursery API is running 🌿' });
 });
 
-// Connect to DB & Start Server
-const PORT = process.env.PORT || 5000;
-
-mongoose.connect(process.env.MONGO_URI)
-  .then(() => {
-    app.listen(PORT, () => {
-      console.log(`🚀 Server running on port ${PORT}`);
-      console.log(`📦 DB Connected: nurseries`);
-    });
-  })
-  .catch((err) => {
-    console.error('❌ DB Connection Error:', err);
-  });
+// Start server
+app.listen(PORT, () => {
+  console.log(`🚀 Server running on port ${PORT}`);
+});

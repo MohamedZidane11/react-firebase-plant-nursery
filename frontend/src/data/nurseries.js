@@ -60,6 +60,16 @@ let nurseries = [
     services: ["delivery", "consultation", "maintenance"],
     featured: false,
     discount: null
+  },
+  {
+    id: 7,
+    name: "مشتل الياسمين",
+    image: "https://via.placeholder.com/100x100?text=Garden",
+    categories: ["نباتات خارجية", "مشاتل"],
+    location: "مكة - حي أجياد",
+    services: ["delivery", "consultation", "maintenance"],
+    featured: true,
+    discount: 35
   }
 ];
 
