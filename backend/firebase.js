@@ -1,33 +1,28 @@
 // firebase.js
 import admin from 'firebase-admin';
-import { fileURLToPath } from 'url';
-import { dirname, join } from 'path';
-import fs from 'fs';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
+// Get the service account from environment variable
+const serviceAccountJson = process.env.FIREBASE_SERVICE_ACCOUNT;
 
-// 🔗 Correct path to your service account key
-const serviceAccountPath = join(__dirname, 'firebase-service-account.json');
-
-// ✅ Read and parse the file manually
-let serviceAccount;
-try {
-  const fileContent = fs.readFileSync(serviceAccountPath, 'utf8');
-  serviceAccount = JSON.parse(fileContent);
-} catch (err) {
-  console.error('❌ Error reading service account file:', err.message);
-  process.exit(1);
+if (!serviceAccountJson) {
+  throw new Error('❌ FIREBASE_SERVICE_ACCOUNT is not set in environment variables');
 }
 
-// ✅ Initialize Firebase Admin
+let serviceAccount;
+try {
+  serviceAccount = JSON.parse(serviceAccountJson);
+} catch (err) {
+  throw new Error('❌ Invalid JSON in FIREBASE_SERVICE_ACCOUNT: ' + err.message);
+}
+
+// Initialize Firebase Admin
 if (!admin.apps.length) {
   admin.initializeApp({
     credential: admin.credential.cert(serviceAccount),
   });
 }
 
-// 🔥 Get Firestore
+// Get Firestore
 const db = admin.firestore();
 
 export { db };
