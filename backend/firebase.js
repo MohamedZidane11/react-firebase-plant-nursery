@@ -1,7 +1,7 @@
 // firebase.js
 import admin from 'firebase-admin';
 
-// Get the service account from environment variable
+// Get the service account JSON string from environment
 const serviceAccountJson = process.env.FIREBASE_SERVICE_ACCOUNT;
 
 if (!serviceAccountJson) {
@@ -10,8 +10,10 @@ if (!serviceAccountJson) {
 
 let serviceAccount;
 try {
+  // Parse the JSON string (Railway passes it as a string)
   serviceAccount = JSON.parse(serviceAccountJson);
 } catch (err) {
+  console.error('Raw value of FIREBASE_SERVICE_ACCOUNT:', serviceAccountJson); // Debug
   throw new Error('❌ Invalid JSON in FIREBASE_SERVICE_ACCOUNT: ' + err.message);
 }
 
