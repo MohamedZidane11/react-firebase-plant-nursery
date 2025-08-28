@@ -68,7 +68,7 @@ const RegisterNursery = () => {
       };
 
       // ✅ Send to backend
-      await axios.post('http://localhost:5000/api/nurseries', trimmedFormData); // local=> http://localhost:5000/api/nurseries
+      await axios.post('https://react-plant-nursery-website-production-4ff3.up.railway.app/api/nurseries', trimmedFormData); // local=> http://localhost:5000/api/nurseries
 
       alert('تم تسجيل مشتلّك بنجاح! سيظهر قريبًا في القائمة.');
       
