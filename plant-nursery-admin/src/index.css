@@ -1,0 +1,20 @@
+@import "tailwindcss";
+
+body {
+    font-family: 'Cairo', sans-serif;
+    background-color: #f9fafb;
+    color: #1f2937;
+  }
+  
+  /* Green theme */
+  .btn-primary {
+    @apply bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-6 rounded-lg transition-colors;
+  }
+  
+  .card {
+    @apply bg-white p-6 rounded-xl shadow-lg;
+  }
+  
+  .stat-card {
+    @apply p-6 rounded-lg text-center;
+  }
