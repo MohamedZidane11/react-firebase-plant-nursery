@@ -16,11 +16,28 @@ const OffersManager = () => {
     tags: [],
     endDate: '',
     discount: null,
-    highlighted: false
+    highlighted: false,
+    published: true
   });
 
   const scrollToForm = () => {
     formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'top' });
+  };
+
+  const isValidDate = (dateString) => {
+    if (!dateString) return false;
+    const date = new Date(dateString);
+    return !isNaN(date.getTime());
+  };
+
+  const isExpired = (endDateStr) => {
+    if (!endDateStr) return false;
+    const end = new Date(endDateStr);
+    const now = new Date();
+    // Set time to 0 for day comparison
+    end.setHours(0, 0, 0, 0);
+    now.setHours(0, 0, 0, 0);
+    return end < now;
   };
 
   const fetchOffers = async () => {
@@ -43,9 +60,7 @@ const OffersManager = () => {
   }, []);
 
   useEffect(() => {
-    if (showForm && formRef.current) {
-      setTimeout(scrollToForm, 100);
-    }
+    if (showForm) setTimeout(scrollToForm, 100);
   }, [showForm]);
 
   const handleChange = (e) => {
@@ -72,7 +87,8 @@ const OffersManager = () => {
       tags: [],
       endDate: '',
       discount: null,
-      highlighted: false
+      highlighted: false,
+      published: true
     });
     setEditing(null);
     setShowForm(false);
@@ -86,18 +102,22 @@ const OffersManager = () => {
     }
 
     try {
-      const trimmedData = {
+      const data = {
         ...formData,
-        title: formData.title.trim(),
-        description: formData.description.trim(),
-        discount: formData.discount ? Number(formData.discount) : null
+        discount: formData.discount ? Number(formData.discount) : null,
+        updatedAt: serverTimestamp(),
+        updatedBy: auth.currentUser.email
       };
 
       if (editing) {
-        await updateDoc(doc(db, 'offers', editing), trimmedData);
+        await updateDoc(doc(db, 'offers', editing), data);
         alert('تم تحديث العرض!');
       } else {
-        await addDoc(collection(db, 'offers'), trimmedData);
+        await addDoc(collection(db, 'offers'), {
+          ...data,
+          createdAt: serverTimestamp(),
+          createdBy: auth.currentUser.email
+        });
         alert('تم إضافة العرض!');
       }
 
@@ -126,7 +146,8 @@ const OffersManager = () => {
       tags: offer.tags || [],
       endDate: offer.endDate,
       discount: offer.discount,
-      highlighted: offer.highlighted || false
+      highlighted: offer.highlighted || false,
+      published: offer.published !== false
     });
     setEditing(offer.id);
     setShowForm(true);
@@ -147,10 +168,11 @@ const OffersManager = () => {
           </button>
         </div>
 
+        {/* Add/Edit Form */}
         {showForm && (
-          <div className="bg-white p-8 rounded-2xl shadow-lg mb-8 border border-orange-100">
+          <div ref={formRef} className="bg-white p-8 rounded-2xl shadow-lg mb-8 border border-orange-100">
             <h2 className="text-2xl font-bold mb-6">{editing ? 'تعديل عرض' : 'إضافة عرض جديد'}</h2>
-            <form ref={formRef} onSubmit={handleSubmit} className="space-y-6">
+            <form onSubmit={handleSubmit} className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">عنوان العرض</label>
@@ -167,12 +189,11 @@ const OffersManager = () => {
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">تاريخ الانتهاء</label>
                   <input
-                    type="text"
+                    type="date"
                     name="endDate"
                     value={formData.endDate}
                     onChange={handleChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
-                    placeholder="31 ديسمبر 2024"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg"
                   />
                 </div>
 
@@ -233,6 +254,19 @@ const OffersManager = () => {
                 </label>
               </div>
 
+              <div className="flex items-center">
+                <label className="flex items-center">
+                  <input
+                    type="checkbox"
+                    name="published"
+                    checked={formData.published}
+                    onChange={handleChange}
+                    className="mr-2 h-4 w-4 text-orange-600"
+                  />
+                  <span className="text-sm">منشور</span>
+                </label>
+              </div>
+
               <div className="flex gap-4">
                 <button
                   type="submit"
@@ -252,6 +286,7 @@ const OffersManager = () => {
           </div>
         )}
 
+        {/* Offers List */}
         <div className="bg-white rounded-2xl shadow-lg overflow-hidden border border-orange-100">
           <div className="p-6 border-b border-gray-200">
             <h2 className="text-xl font-bold">العروض ({offers.length})</h2>
@@ -266,18 +301,34 @@ const OffersManager = () => {
                     <h3 className="font-bold text-gray-800">{offer.title}</h3>
                     <p className="text-sm text-gray-600 line-clamp-2">{offer.description}</p>
                     <div className="flex flex-wrap gap-1 mt-2">
-                      {offer.tags.map(tag => (
-                        <span key={tag} className="bg-orange-100 text-orange-800 text-xs px-2 py-1 rounded-full">
-                          {tag}
+                      {/* Badges */}
+                      {offer.highlighted && (
+                        <span className="bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded-full">
+                          مميز
                         </span>
-                      ))}
+                      )}
+                      {offer.published !== false ? (
+                        <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">
+                          منشور
+                        </span>
+                      ) : (
+                        <span className="bg-red-100 text-red-800 text-xs px-2 py-1 rounded-full">
+                          غير منشور
+                        </span>
+                      )}
+                      {isExpired(offer.endDate) ? (
+                        <span className="bg-gray-100 text-gray-800 text-xs px-2 py-1 rounded-full">
+                          منتهي
+                        </span>
+                      ) : (
+                        <span className="bg-orange-100 text-orange-800 text-xs px-2 py-1 rounded-full">
+                          نشط
+                        </span>
+                      )}
                     </div>
                   </div>
 
                   <div className="flex flex-wrap gap-2 mt-4 md:mt-0">
-                    {offer.highlighted && (
-                      <span className="bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded-full">مميز</span>
-                    )}
                     <button
                       onClick={() => handleEdit(offer)}
                       className="bg-blue-100 hover:bg-blue-200 text-blue-800 text-sm px-3 py-1 rounded transition"

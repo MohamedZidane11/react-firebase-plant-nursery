@@ -33,3 +33,4 @@ coverage/
 *.swo
 
 firebase-service-account.json
+firebase_service_account.json

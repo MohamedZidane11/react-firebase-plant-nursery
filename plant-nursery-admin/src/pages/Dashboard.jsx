@@ -12,28 +12,46 @@ const Dashboard = () => {
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        // Count nurseries
+        // Fetch nurseries
         const nurseriesSnap = await getDocs(collection(db, 'nurseries'));
         const nurseries = nurseriesSnap.docs.map(doc => doc.data());
-        const published = nurseries.filter(n => n.published !== false).length;
-        const unpublished = nurseries.filter(n => n.published === false).length;
-
-        // Count offers (active vs expired)
+        const publishedNurseries = nurseries.filter(n => n.published !== false).length;
+        const unpublishedNurseries = nurseries.length - publishedNurseries;
+    
+        // Fetch offers
         const offersSnap = await getDocs(collection(db, 'offers'));
         const offers = offersSnap.docs.map(doc => doc.data());
-        const today = new Date();
-        const active = offers.filter(offer => {
+    
+        // ✅ Correct: Define `activeCount` and `expiredCount` as numbers
+        const activeCount = offers.filter(offer => {
+          if (offer.published === false) return false; // not published
+          if (!offer.endDate) return true; // no end date = active
+    
           const endDate = new Date(offer.endDate);
-          return endDate >= today;
+          return !isNaN(endDate.getTime()) && endDate >= new Date(); // valid date and not expired
         }).length;
-        const expired = offers.length - active;
-
+    
+        const expiredCount = offers.filter(offer => {
+          if (offer.published === false) return false;
+          if (!offer.endDate) return false;
+    
+          const endDate = new Date(offer.endDate);
+          return !isNaN(endDate.getTime()) && endDate < new Date();
+        }).length;
+    
+        // ✅ Set stats with correct keys
         setStats({
-          nurseries: { published, unpublished },
-          offers: { active, expired }
+          nurseries: {
+            published: publishedNurseries,
+            unpublished: unpublishedNurseries
+          },
+          offers: {
+            active: activeCount,
+            expired: expiredCount
+          }
         });
       } catch (err) {
-        console.error("Error fetching stats:", err);
+        console.error('Error fetching stats:', err); // ✅ Now this will show real error
       } finally {
         setLoading(false);
       }
