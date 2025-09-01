@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useLayoutEffect } from 'react';
 import { db, auth } from '../firebase/firebase';
 import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc } from 'firebase/firestore';
 import { serverTimestamp } from 'firebase/firestore';
@@ -44,8 +44,10 @@ const NurseriesManager = () => {
     fetchNurseries();
   }, []);
 
-  useEffect(() => {
-    if (showForm) setTimeout(scrollToForm, 100);
+  useLayoutEffect(() => {
+    if (showForm && formRef.current) {
+      formRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
   }, [showForm]);
 
   const handleChange = (e) => {
