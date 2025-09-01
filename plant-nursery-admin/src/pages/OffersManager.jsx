@@ -1,14 +1,15 @@
-import { useState, useEffect } from 'react';
-import { db } from '../firebase/firebase';
+import { useState, useEffect, useRef } from 'react';
+import { db, auth } from '../firebase/firebase';
 import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc } from 'firebase/firestore';
+import { serverTimestamp } from 'firebase/firestore';
 
 const OffersManager = () => {
   const [offers, setOffers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState(null);
+  const formRef = useRef();
 
-  // Form state
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -18,22 +19,35 @@ const OffersManager = () => {
     highlighted: false
   });
 
-  // Fetch offers
+  const scrollToForm = () => {
+    formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'top' });
+  };
+
   const fetchOffers = async () => {
-    const snapshot = await getDocs(collection(db, 'offers'));
-    const list = snapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data()
-    }));
-    setOffers(list);
-    setLoading(false);
+    try {
+      const snapshot = await getDocs(collection(db, 'offers'));
+      const list = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+      setOffers(list);
+    } catch (err) {
+      console.error('Error fetching offers:', err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
     fetchOffers();
   }, []);
 
-  // Handle input change
+  useEffect(() => {
+    if (showForm && formRef.current) {
+      setTimeout(scrollToForm, 100);
+    }
+  }, [showForm]);
+
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
     setFormData(prev => ({
@@ -51,7 +65,6 @@ const OffersManager = () => {
     }));
   };
 
-  // Reset form
   const resetForm = () => {
     setFormData({
       title: '',
@@ -65,10 +78,9 @@ const OffersManager = () => {
     setShowForm(false);
   };
 
-  // Add or Update Offer
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!formData.title || !formData.description || !formData.endDate) {
+    if (!formData.title.trim() || !formData.description.trim() || !formData.endDate.trim()) {
       alert('العنوان، الوصف، وتاريخ الانتهاء مطلوبون');
       return;
     }
@@ -96,7 +108,6 @@ const OffersManager = () => {
     }
   };
 
-  // Delete Offer
   const handleDelete = async (id) => {
     if (!confirm('هل أنت متأكد من حذف هذا العرض؟')) return;
     try {
@@ -108,7 +119,6 @@ const OffersManager = () => {
     }
   };
 
-  // Edit Offer
   const handleEdit = (offer) => {
     setFormData({
       title: offer.title,
@@ -130,18 +140,17 @@ const OffersManager = () => {
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-3xl font-bold text-orange-800">إدارة العروض</h1>
           <button
-            onClick={() => { resetForm(); setShowForm(true); }}
+            onClick={resetForm}
             className="bg-orange-500 hover:bg-orange-600 text-white px-6 py-3 rounded-lg font-medium transition"
           >
             + إضافة عرض جديد
           </button>
         </div>
 
-        {/* Add/Edit Form */}
         {showForm && (
           <div className="bg-white p-8 rounded-2xl shadow-lg mb-8 border border-orange-100">
             <h2 className="text-2xl font-bold mb-6">{editing ? 'تعديل عرض' : 'إضافة عرض جديد'}</h2>
-            <form onSubmit={handleSubmit} className="space-y-6">
+            <form ref={formRef} onSubmit={handleSubmit} className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">عنوان العرض</label>
@@ -180,20 +189,6 @@ const OffersManager = () => {
                     placeholder="مثل: 30"
                   />
                 </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">مميز؟</label>
-                  <label className="flex items-center mt-2">
-                    <input
-                      type="checkbox"
-                      name="highlighted"
-                      checked={formData.highlighted}
-                      onChange={handleChange}
-                      className="mr-2 h-4 w-4 text-orange-600"
-                    />
-                    <span className="text-sm">يظهر في العروض المميزة</span>
-                  </label>
-                </div>
               </div>
 
               <div>
@@ -208,7 +203,6 @@ const OffersManager = () => {
                 />
               </div>
 
-              {/* Tags */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">التصنيفات</label>
                 <div className="flex flex-wrap gap-2">
@@ -224,6 +218,19 @@ const OffersManager = () => {
                     </label>
                   ))}
                 </div>
+              </div>
+
+              <div className="flex items-center">
+                <label className="flex items-center">
+                  <input
+                    type="checkbox"
+                    name="highlighted"
+                    checked={formData.highlighted}
+                    onChange={handleChange}
+                    className="mr-2 h-4 w-4 text-orange-600"
+                  />
+                  <span className="text-sm">مميز</span>
+                </label>
               </div>
 
               <div className="flex gap-4">
@@ -245,7 +252,6 @@ const OffersManager = () => {
           </div>
         )}
 
-        {/* Offers List */}
         <div className="bg-white rounded-2xl shadow-lg overflow-hidden border border-orange-100">
           <div className="p-6 border-b border-gray-200">
             <h2 className="text-xl font-bold">العروض ({offers.length})</h2>

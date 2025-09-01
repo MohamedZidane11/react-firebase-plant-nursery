@@ -2,10 +2,16 @@ import { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import { onAuthStateChanged } from 'firebase/auth';
 import { auth } from './firebase/firebase';
+
+// Import all admin pages
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import NurseriesManager from './pages/NurseriesManager';
 import OffersManager from './pages/OffersManager';
+import CategoriesManager from './pages/CategoriesManager';
+import FiltersManager from './pages/FiltersManager';
+import SponsorsManager from './pages/SponsorsManager';
+import SiteSettings from './pages/SiteSettings';
 
 function App() {
   const [user, setUser] = useState(null);
@@ -22,30 +28,73 @@ function App() {
   return (
     <Router>
       <div className="min-h-screen bg-gray-50">
-        {/* Sidebar or Top Nav */}
-        <nav className="bg-white shadow-lg p-4">
-          <div className="max-w-6xl mx-auto flex flex-wrap items-center justify-between">
+        {/* Top Navigation Bar */}
+        <nav className="bg-white shadow-lg p-4" dir="rtl">
+          <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between">
             <h1 className="text-2xl font-bold text-green-800">لوحة التحكم</h1>
-            <ul className="flex space-x-1 space-x-reverse">
-              <li><Link to="/" className="px-4 py-2 text-sm font-medium rounded hover:bg-green-100">الرئيسية</Link></li>
-              <li><Link to="/nurseries" className="px-4 py-2 text-sm font-medium rounded hover:bg-green-100">المشاتل</Link></li>
-              <li><Link to="/offers" className="px-4 py-2 text-sm font-medium rounded hover:bg-green-100">العروض</Link></li>
+
+            {/* Main Navigation Links */}
+            <ul className="flex space-x-1 space-x-reverse text-sm md:text-base">
+              <li>
+                <Link to="/" className="px-4 py-2 font-medium rounded hover:bg-green-100 transition">
+                  🏠 الرئيسية
+                </Link>
+              </li>
+              <li>
+                <Link to="/nurseries" className="px-4 py-2 font-medium rounded hover:bg-green-100 transition">
+                  🌿 المشاتل
+                </Link>
+              </li>
+              <li>
+                <Link to="/offers" className="px-4 py-2 font-medium rounded hover:bg-green-100 transition">
+                  💰 العروض
+                </Link>
+              </li>
+              <li>
+                <Link to="/categories" className="px-4 py-2 font-medium rounded hover:bg-green-100 transition">
+                  🔖 التصنيفات
+                </Link>
+              </li>
+              <li>
+                <Link to="/filters" className="px-4 py-2 font-medium rounded hover:bg-green-100 transition">
+                  🔍 الفلاتر
+                </Link>
+              </li>
+              <li>
+                <Link to="/sponsors" className="px-4 py-2 font-medium rounded hover:bg-green-100 transition">
+                  ✨ الرعاة
+                </Link>
+              </li>
+              <li>
+                <Link to="/settings" className="px-4 py-2 font-medium rounded hover:bg-green-100 transition">
+                  ⚙️ الإعدادات
+                </Link>
+              </li>
             </ul>
+
+            {/* Logout Button */}
             <button
               onClick={() => auth.signOut()}
-              className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded text-sm"
+              className="bg-red-500 hover:bg-red-600 text-white px-5 py-2 rounded-lg text-sm font-medium transition"
             >
               تسجيل الخروج
             </button>
           </div>
         </nav>
 
-        <main className="py-8">
-          <Routes>
-            <Route path="/" element={<Dashboard />} />
-            <Route path="/nurseries" element={<NurseriesManager />} />
-            <Route path="/offers" element={<OffersManager />} />
-          </Routes>
+        {/* Main Content */}
+        <main className="py-8 px-4">
+          <div className="max-w-7xl mx-auto">
+            <Routes>
+              <Route path="/" element={<Dashboard />} />
+              <Route path="/nurseries" element={<NurseriesManager />} />
+              <Route path="/offers" element={<OffersManager />} />
+              <Route path="/categories" element={<CategoriesManager />} />
+              <Route path="/filters" element={<FiltersManager />} />
+              <Route path="/sponsors" element={<SponsorsManager />} />
+              <Route path="/settings" element={<SiteSettings />} />
+            </Routes>
+          </div>
         </main>
       </div>
     </Router>
