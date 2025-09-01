@@ -45,10 +45,10 @@ const NurseriesManager = () => {
   }, []);
 
   useLayoutEffect(() => {
-    if (showForm && formRef.current) {
+    if (showForm && formRef.current && editing) {
       formRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
-  }, [showForm]);
+  }, [showForm, editing]);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -159,7 +159,10 @@ const NurseriesManager = () => {
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-3xl font-bold text-green-800">إدارة المشاتل</h1>
           <button
-            onClick={resetForm}
+              onClick={() => {
+                resetForm(); // This sets all fields to default
+                setShowForm(true); // ✅ Now open the form
+              }}
             className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-medium transition"
           >
             + إضافة مشتل جديد
@@ -300,7 +303,7 @@ const NurseriesManager = () => {
                 </button>
                 <button
                   type="button"
-                  onClick={resetForm}
+                  onClick={() => setShowForm(false)}
                   className="bg-gray-500 hover:bg-gray-600 text-white px-6 py-3 rounded-lg font-medium transition"
                 >
                   إلغاء

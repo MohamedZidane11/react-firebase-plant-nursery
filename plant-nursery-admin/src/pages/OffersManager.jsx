@@ -60,10 +60,10 @@ const OffersManager = () => {
   }, []);
 
   useLayoutEffect(() => {
-    if (showForm && formRef.current) {
+    if (showForm && formRef.current && editing) {
       formRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
-  }, [showForm]);
+  }, [showForm, editing]);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -163,7 +163,10 @@ const OffersManager = () => {
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-3xl font-bold text-orange-800">إدارة العروض</h1>
           <button
-            onClick={resetForm}
+              onClick={() => {
+                resetForm(); // This sets all fields to default
+                setShowForm(true); // ✅ Now open the form
+              }}
             className="bg-orange-500 hover:bg-orange-600 text-white px-6 py-3 rounded-lg font-medium transition"
           >
             + إضافة عرض جديد
@@ -278,7 +281,7 @@ const OffersManager = () => {
                 </button>
                 <button
                   type="button"
-                  onClick={resetForm}
+                  onClick={() => setShowForm(false)}
                   className="bg-gray-500 hover:bg-gray-600 text-white px-6 py-3 rounded-lg font-medium transition"
                 >
                   إلغاء
