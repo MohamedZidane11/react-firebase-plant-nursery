@@ -15,7 +15,7 @@ const Header = () => {
         
         <nav className="hidden md:flex space-x-8">
           <Link to="/" className="hover:text-yellow-300 transition-colors">الرئيسية</Link>
-          <Link to="/nurseries" className="hover:text-yellow-300 transition-colors">مشتل</Link>
+          <Link to="/nurseries" className="hover:text-yellow-300 transition-colors">المشاتل</Link>
           <Link to="/offers" className="hover:text-yellow-300 transition-colors">العروض</Link>
           <Link to="/contact" className="hover:text-yellow-300 transition-colors">اتصل بنا</Link>
         </nav>

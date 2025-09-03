@@ -8,6 +8,20 @@ const Home = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [activeFilter, setActiveFilter] = useState('all');
 
+  const [currentSlide, setCurrentSlide] = useState(0);
+
+  const nextSlide = () => {
+    setCurrentSlide((prev) => (prev === 2 ? 0 : prev + 1));
+  };
+
+  const prevSlide = () => {
+    setCurrentSlide((prev) => (prev === 0 ? 2 : prev - 1));
+  };
+
+  const goToSlide = (index) => {
+    setCurrentSlide(index);
+  };
+
   // 🔎 Filter offers based on search and filter
   const filteredOffers = offers.filter((offer) => {
     // Search in title, description, tags
@@ -54,21 +68,21 @@ const Home = () => {
               <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-green-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
               </svg>
-              <span className="text-green-800">ضمان الجودة</span>
+              <span className="text-green-800">معلومات كاملة</span>
             </div>
 
             <div className="flex items-center">
               <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-green-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
               </svg>
-              <span className="text-green-800">أسعار منافسة</span>
+              <span className="text-green-800">تواصل مباشر</span>
             </div>
 
             <div className="flex items-center">
               <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-green-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
               </svg>
-              <span className="text-green-800">توصيل سريع</span>
+              <span className="text-green-800">خدمات مجانية</span>
             </div>
           </div>
         </div>
@@ -135,14 +149,14 @@ const Home = () => {
         <div className="container mx-auto px-4">
           <h2 className="text-3xl font-bold text-center text-green-800 mb-12">التصنيفات الرئيسية</h2>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <div className="bg-green-600 text-white p-6 rounded-xl shadow-lg text-center">
               <div className="w-20 h-20 mx-auto mb-4 bg-green-500 rounded-full flex items-center justify-center">
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                 </svg>
               </div>
-              <h3 className="text-xl font-bold mb-2">المشاتل المختلفة</h3>
+              <h3 className="text-xl font-bold mb-2">مشاتل مختلفة</h3>
               <p className="text-sm opacity-90">أكثر من 200 مشتل</p>
             </div>
 
@@ -157,15 +171,6 @@ const Home = () => {
               <p className="text-sm opacity-90">أكثر من 80 متجر</p>
             </div>
 
-            <div className="bg-green-600 text-white p-6 rounded-xl shadow-lg text-center">
-              <div className="w-20 h-20 mx-auto mb-4 bg-green-500 rounded-full flex items-center justify-center">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-              </div>
-              <h3 className="text-xl font-bold mb-2">مشاتل</h3>
-              <p className="text-sm opacity-90">أكثر من 150 مشتل</p>
-            </div>
           </div>
         </div>
       </section>
@@ -176,7 +181,7 @@ const Home = () => {
           <h2 className="text-3xl font-bold text-center text-green-800 mb-12">أبرز المشاتل</h2>
 
           <div className="overflow-x-auto pb-4">
-            <div className="flex space-x-6">
+            <div className="flex space-x-6 justify-center">
               <div className="bg-green-100 p-6 rounded-xl shadow-lg min-w-[200px]">
                 <div className="w-20 h-20 mx-auto mb-4 bg-green-200 rounded-full flex items-center justify-center">
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 text-pink-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -242,8 +247,7 @@ const Home = () => {
       <section className="py-12 bg-gray-900 text-white">
         <div className="container mx-auto px-4">
           <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold mb-4">الرعاة الرسميون ✨</h2>
-            <p className="text-gray-300">تفتخر بشراكتنا مع أفضل المشاتل ومقدمي الخدمات في المملكة</p>
+            <h2 className="text-3xl font-bold mb-4">شركاء النجاح ✨</h2>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -255,9 +259,6 @@ const Home = () => {
               </div>
               <h3 className="text-xl font-bold mb-2">حدائق المملكة</h3>
               <p className="text-sm text-gray-300">نباتات داخلية وخارجية مميزة</p>
-              <div className="mt-2 bg-yellow-500 text-black text-xs px-2 py-1 rounded-full">
-                فضي
-              </div>
             </div>
 
             <div className="bg-gray-800 border border-yellow-500 p-6 rounded-lg text-center">
@@ -268,9 +269,6 @@ const Home = () => {
               </div>
               <h3 className="text-xl font-bold mb-2">مشاتل الرياض الخضراء</h3>
               <p className="text-sm text-gray-300">تنسيق حدائق احترافي</p>
-              <div className="mt-2 bg-yellow-500 text-black text-xs px-2 py-1 rounded-full">
-                ذهبي
-              </div>
             </div>
 
             <div className="bg-gray-800 border border-yellow-500 p-6 rounded-lg text-center">
@@ -281,9 +279,6 @@ const Home = () => {
               </div>
               <h3 className="text-xl font-bold mb-2">مؤسسة النخيل الذهبية</h3>
               <p className="text-sm text-gray-300">متخصصون في أشجار النخيل النادرة</p>
-              <div className="mt-2 bg-yellow-500 text-black text-xs px-2 py-1 rounded-full">
-                ذهبي
-              </div>
             </div>
 
             <div className="bg-gray-800 border border-yellow-500 p-6 rounded-lg text-center">
@@ -294,49 +289,73 @@ const Home = () => {
               </div>
               <h3 className="text-xl font-bold mb-2">مشتل الخليج الأخضر</h3>
               <p className="text-sm text-gray-300">الرائد في النباتات المحلية والمستوردة</p>
-              <div className="mt-2 bg-yellow-500 text-black text-xs px-2 py-1 rounded-full">
-                بلاتيني
-              </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Current Offers */}
+      {/* Current Offers - Replaced with Empty Carousel */}
       <section id="search-results" className="py-12">
         <div className="container mx-auto px-4">
           <h2 className="text-3xl font-bold text-center text-green-800 mb-12">العروض الحالية</h2>
 
-          {filteredOffers.length === 0 ? (
-            <p className="text-center text-gray-600 py-8">لا توجد عروض مطابقة للبحث.</p>
-          ) : (
-            <div className="bg-white p-8 rounded-xl shadow-lg max-w-4xl mx-auto">
-              <div className="flex flex-col md:flex-row gap-6">
-                <div className="flex-grow">
-                  <div className="bg-orange-500 p-4 rounded-lg mb-4">
-                    <div className="flex items-center justify-between">
-                      <span className="text-white font-bold">عرض خاص</span>
-                    </div>
-                  </div>
-
-                  <h3 className="text-2xl font-bold text-green-800 mb-4">{featuredOffer.title}</h3>
-                  <p className="text-gray-600 mb-6">{featuredOffer.description}</p>
-
-                  <button className="bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-full transition-colors">
-                    تفاصيل العرض
-                  </button>
+          <div className="relative max-w-4xl mx-auto">
+            {/* Carousel Container */}
+            <div className="overflow-hidden rounded-xl shadow-lg bg-white">
+              <div
+                className="flex transition-transform duration-500 ease-in-out"
+                style={{ transform: `translateX(-${currentSlide * 100}%)` }}
+              >
+                {/* Slide 1 */}
+                <div className="w-full flex-shrink-0 h-64 md:h-80 bg-gradient-to-br from-green-50 to-emerald-100 flex items-center justify-center">
+                  <p className="text-green-800 text-2xl font-semibold">الصفحة 1</p>
                 </div>
-
-                <div className="bg-orange-100 p-6 rounded-lg">
-                  <div className="w-24 h-24 mx-auto mb-4 bg-orange-200 rounded-full flex items-center justify-center">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-orange-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                  </div>
+                {/* Slide 2 */}
+                <div className="w-full flex-shrink-0 h-64 md:h-80 bg-gradient-to-br from-blue-50 to-cyan-100 flex items-center justify-center">
+                  <p className="text-blue-800 text-2xl font-semibold">الصفحة 2</p>
+                </div>
+                {/* Slide 3 */}
+                <div className="w-full flex-shrink-0 h-64 md:h-80 bg-gradient-to-br from-purple-50 to-pink-100 flex items-center justify-center">
+                  <p className="text-purple-800 text-2xl font-semibold">الصفحة 3</p>
                 </div>
               </div>
             </div>
-          )}
+
+            {/* Pagination Dots */}
+            <div className="flex justify-center mt-6 space-x-2">
+              {[0, 1, 2].map((dot) => (
+                <button
+                  key={dot}
+                  onClick={() => goToSlide(dot)}
+                  className={`w-3 h-3 rounded-full transition-colors ${
+                    currentSlide === dot ? 'bg-green-500' : 'bg-gray-300 hover:bg-gray-400'
+                  }`}
+                  aria-label={`انتقل إلى الشريحة ${dot + 1}`}
+                />
+              ))}
+            </div>
+
+            {/* Control Arrows */}
+            <button
+              onClick={prevSlide}
+              className="absolute top-1/2 left-4 transform -translate-y-1/2 bg-black bg-opacity-30 text-white p-2 rounded-full hover:bg-opacity-50 transition"
+              aria-label="الشريحة السابقة"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+            </button>
+
+            <button
+              onClick={nextSlide}
+              className="absolute top-1/2 right-4 transform -translate-y-1/2 bg-black bg-opacity-30 text-white p-2 rounded-full hover:bg-opacity-50 transition"
+              aria-label="الشريحة التالية"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </button>
+          </div>
         </div>
       </section>
     </div>
