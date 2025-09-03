@@ -1,8 +1,6 @@
 import { useState, useEffect } from 'react';
 import NurseryCard from '../components/NurseryCard';
 import SearchBar from '../components/SearchBar';
-import { db } from '../firebase/firebase';
-import { collection, getDocs } from 'firebase/firestore';
 
 const Nurseries = () => {
   const [nurseries, setNurseries] = useState([]);
@@ -18,19 +16,17 @@ const Nurseries = () => {
   const [sortBy, setSortBy] = useState('newest');
   const [showOffersOnly, setShowOffersOnly] = useState(false);
 
-  // 🌐 Fetch nurseries from Firebase
+  // 🌐 Fetch nurseries from your Railway API
   useEffect(() => {
     const fetchNurseries = async () => {
       try {
-        const snapshot = await getDocs(collection(db, 'nurseries'));
-        const list = snapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        })).filter(n => n.published !== false); // Only show published
-        setNurseries(list);
+        const response = await fetch('https://react-firebase-plant-nursery.vercel.app/api/nurseries'); // 🔁 Replace with your actual URL
+        if (!response.ok) throw new Error('فشل تحميل المشاتل');
+        const data = await response.json();
+        setNurseries(data);
       } catch (err) {
-        console.error('Error fetching nurseries from Firebase:', err);
-        alert('تعذر تحميل المشاتل');
+        console.error('Error fetching nurseries:', err);
+        alert('تعذر الاتصال بالخادم');
       } finally {
         setLoading(false);
       }
@@ -39,7 +35,7 @@ const Nurseries = () => {
     fetchNurseries();
   }, []);
 
-  // 🌆 Extract cities & districts from fetched data
+  // 🌆 Extract cities & districts
   const cityToDistricts = nurseries.reduce((acc, nursery) => {
     const parts = nursery.location.split('-').map(part => part.trim());
     const city = parts[0];
@@ -105,7 +101,6 @@ const Nurseries = () => {
     }
   };
 
-  // Reset to page 1 when filters change
   useEffect(() => {
     setCurrentPage(1);
   }, [searchTerm, selectedCategory, selectedRegion, selectedDistrict, showOffersOnly, sortBy]);
