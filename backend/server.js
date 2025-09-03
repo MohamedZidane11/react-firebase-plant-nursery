@@ -8,7 +8,7 @@ const PORT = process.env.PORT || 5000;
 
 // ✅ Middleware
 app.use(cors({
-  origin: 'https://react-firebase-plant-nursery.vercel.app' // You can restrict this later (e.g., 'https://your-vercel-app.vercel.app')
+  origin: 'https://react-firebase-plant-nursery.vercel.app' // ✅ Fixed: no trailing spaces
 }));
 app.use(express.json({ limit: '10mb' })); // Handle large payloads (e.g., image URLs)
 
