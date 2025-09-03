@@ -1,3 +1,4 @@
+// src/pages/Nurseries.jsx
 import { useState, useEffect } from 'react';
 import NurseryCard from '../components/NurseryCard';
 import SearchBar from '../components/SearchBar';
@@ -16,14 +17,17 @@ const Nurseries = () => {
   const [sortBy, setSortBy] = useState('newest');
   const [showOffersOnly, setShowOffersOnly] = useState(false);
 
-  // 🌐 Fetch nurseries from your Railway API
+  // 🌐 Fetch nurseries from Railway
   useEffect(() => {
     const fetchNurseries = async () => {
       try {
-        const response = await fetch('https://react-firebase-plant-nursery.vercel.app/api/nurseries'); // 🔁 Replace with your actual URL
-        if (!response.ok) throw new Error('فشل تحميل المشاتل');
+        const API_BASE = 'https://react-plant-nursery-website-production-4ff3.up.railway.app'; // 🔁 Replace with your actual Railway URL
+        const response = await fetch(`${API_BASE}/api/nurseries`);
+        
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        
         const data = await response.json();
-        setNurseries(data);
+        setNurseries(Array.isArray(data) ? data : []);
       } catch (err) {
         console.error('Error fetching nurseries:', err);
         alert('تعذر الاتصال بالخادم');
@@ -43,7 +47,6 @@ const Nurseries = () => {
 
     if (!acc[city]) acc[city] = new Set();
     acc[city].add(district);
-
     return acc;
   }, {});
 
@@ -83,7 +86,7 @@ const Nurseries = () => {
 
   // 📊 Sort
   const sortedNurseries = [...filteredNurseries].sort((a, b) => {
-    if (sortBy === 'newest') return b.id - a.id;
+    if (sortBy === 'newest') return b.id.localeCompare(a.id);
     if (sortBy === 'popular') return (b.featured ? 1 : 0) - (a.featured ? 1 : 0);
     return 0;
   });
