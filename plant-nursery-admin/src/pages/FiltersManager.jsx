@@ -1,119 +1,261 @@
-import { useState, useEffect } from 'react';
+// src/pages/FiltersManager.jsx
+import { useState, useEffect, useRef, useLayoutEffect } from 'react';
 import { db, auth } from '../firebase/firebase';
 import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc } from 'firebase/firestore';
 import { serverTimestamp } from 'firebase/firestore';
 
 const FiltersManager = () => {
   const [filters, setFilters] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState(null);
-  const [formData, setFormData] = useState({ label: '', slug: '', order: 0, published: true });
+  const formRef = useRef();
 
-  const fetch = async () => {
-    const snapshot = await getDocs(collection(db, 'filters'));
-    const list = snapshot.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => a.order - b.order);
-    setFilters(list);
+  const [formData, setFormData] = useState({
+    label: '',
+    slug: '',
+    order: 0,
+    published: true
+  });
+
+  // Auto-scroll to form when editing
+  useLayoutEffect(() => {
+    if (showForm && formRef.current && editing) {
+      formRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, [showForm, editing]);
+
+  const fetchFilters = async () => {
+    try {
+      const snapshot = await getDocs(collection(db, 'filters'));
+      const list = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      })).sort((a, b) => a.order - b.order); // Sort by order
+      setFilters(list);
+    } catch (err) {
+      console.error('Error fetching filters:', err);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  useEffect(() => { fetch(); }, []);
+  useEffect(() => {
+    fetchFilters();
+  }, []);
 
-  const reset = () => {
-    setFormData({ label: '', slug: '', order: 0, published: true });
+  const handleChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: type === 'checkbox' ? checked : value
+    }));
+  };
+
+  const resetForm = () => {
+    setFormData({
+      label: '',
+      slug: '',
+      order: filters.length, // Default to next order
+      published: true
+    });
     setEditing(null);
     setShowForm(false);
   };
 
-  const save = async () => {
-    if (!formData.label || !formData.slug) return alert('الحقلين مطلوبان');
-
-    const data = {
-      ...formData,
-      order: Number(formData.order),
-      updatedAt: serverTimestamp(),
-      updatedBy: auth.currentUser.email
-    };
-
-    if (editing) {
-      await updateDoc(doc(db, 'filters', editing), data);
-    } else {
-      await addDoc(collection(db, 'filters'), {
-        ...data,
-        createdAt: serverTimestamp(),
-        createdBy: auth.currentUser.email
-      });
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!formData.label.trim() || !formData.slug.trim()) {
+      alert('الاسم والرابط (slug) مطلوبان');
+      return;
     }
 
-    reset();
-    fetch();
+    try {
+      const data = {
+        ...formData,
+        order: Number(formData.order),
+        updatedAt: serverTimestamp(),
+        updatedBy: auth.currentUser.email
+      };
+
+      if (editing) {
+        await updateDoc(doc(db, 'filters', editing), data);
+        alert('تم تحديث الفلتر!');
+      } else {
+        await addDoc(collection(db, 'filters'), {
+          ...data,
+          createdAt: serverTimestamp(),
+          createdBy: auth.currentUser.email
+        });
+        alert('تم إضافة الفلتر!');
+      }
+
+      resetForm();
+      fetchFilters();
+    } catch (err) {
+      alert('خطأ في الحفظ: ' + err.message);
+    }
   };
 
-  const del = async (id) => {
-    if (confirm('حذف هذا الفلتر؟')) {
+  const handleDelete = async (id) => {
+    if (!confirm('هل أنت متأكد من حذف هذا الفلتر؟')) return;
+    try {
       await deleteDoc(doc(db, 'filters', id));
-      fetch();
+      alert('تم الحذف!');
+      fetchFilters();
+    } catch (err) {
+      alert('خطأ في الحذف: ' + err.message);
     }
   };
+
+  const handleEdit = (filter) => {
+    setFormData({
+      label: filter.label,
+      slug: filter.slug,
+      order: filter.order || 0,
+      published: filter.published !== false
+    });
+    setEditing(filter.id);
+    setShowForm(true);
+  };
+
+  if (loading) return <p className="text-center py-8">جاري التحميل...</p>;
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
-      <div className="max-w-4xl mx-auto">
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 to-indigo-50 p-6">
+      <div className="max-w-6xl mx-auto">
         <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold">إدارة الفلاتر</h1>
-          <button onClick={reset} className="bg-blue-600 text-white px-6 py-3 rounded-lg">+ فلتر جديد</button>
+          <h1 className="text-3xl font-bold text-purple-800">إدارة الفلاتر</h1>
+          <button
+            onClick={() => {
+              resetForm();
+              setShowForm(true);
+            }}
+            className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded-lg font-medium transition"
+          >
+            + إضافة فلتر جديد
+          </button>
         </div>
 
+        {/* Add/Edit Form */}
         {showForm && (
-          <div className="bg-white p-8 rounded-2xl shadow-lg mb-8">
-            <h2 className="text-2xl font-bold mb-6">{editing ? 'تعديل' : 'إضافة'} فلتر</h2>
-            <div className="space-y-4">
-              <input
-                placeholder="الاسم"
-                value={formData.label}
-                onChange={e => setFormData(prev => ({ ...prev, label: e.target.value }))}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg"
-              />
-              <input
-                placeholder="الرابط (slug)"
-                value={formData.slug}
-                onChange={e => setFormData(prev => ({ ...prev, slug: e.target.value }))}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg"
-              />
-              <input
-                type="number"
-                placeholder="الترتيب"
-                value={formData.order}
-                onChange={e => setFormData(prev => ({ ...prev, order: Number(e.target.value) }))}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg"
-              />
-              <label className="flex items-center">
-                <input
-                  type="checkbox"
-                  checked={formData.published}
-                  onChange={e => setFormData(prev => ({ ...prev, published: e.target.checked }))}
-                  className="mr-2"
-                />
-                <span>منشور</span>
-              </label>
-              <div className="flex gap-4">
-                <button onClick={save} className="bg-green-600 text-white px-6 py-3 rounded-lg">حفظ</button>
-                <button onClick={reset} className="bg-gray-500 text-white px-6 py-3 rounded-lg">إلغاء</button>
+          <div ref={formRef} className="bg-white p-8 rounded-2xl shadow-lg mb-8 border border-purple-100">
+            <h2 className="text-2xl font-bold mb-6">{editing ? 'تعديل فلتر' : 'إضافة فلتر جديد'}</h2>
+            <form onSubmit={handleSubmit} className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">اسم الفلتر</label>
+                  <input
+                    type="text"
+                    name="label"
+                    value={formData.label}
+                    onChange={handleChange}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                    placeholder="مثل: توصيل، مميز"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">الرابط (Slug)</label>
+                  <input
+                    type="text"
+                    name="slug"
+                    value={formData.slug}
+                    onChange={handleChange}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                    placeholder="مثل: delivery, featured"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">الترتيب</label>
+                  <input
+                    type="number"
+                    name="order"
+                    value={formData.order}
+                    onChange={handleChange}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                    placeholder="مثل: 1, 2, 3"
+                  />
+                </div>
               </div>
-            </div>
+
+              <div className="flex items-center">
+                <label className="flex items-center">
+                  <input
+                    type="checkbox"
+                    name="published"
+                    checked={formData.published}
+                    onChange={handleChange}
+                    className="mr-2 h-4 w-4 text-purple-600"
+                  />
+                  <span className="text-sm">منشور</span>
+                </label>
+              </div>
+
+              <div className="flex gap-4">
+                <button
+                  type="submit"
+                  className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded-lg font-medium transition"
+                >
+                  {editing ? 'تحديث' : 'إضافة'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowForm(false)}
+                  className="bg-gray-500 hover:bg-gray-600 text-white px-6 py-3 rounded-lg font-medium transition"
+                >
+                  إلغاء
+                </button>
+              </div>
+            </form>
           </div>
         )}
 
-        <div className="bg-white rounded-2xl overflow-hidden shadow-lg">
-          {filters.map(f => (
-            <div key={f.id} className="p-6 border-b border-gray-100 flex justify-between items-center">
-              <div>
-                <strong>{f.label}</strong> ({f.slug}) - الترتيب: {f.order}
-              </div>
-              <div className="flex gap-2">
-                <button onClick={() => { setFormData(f); setEditing(f.id); setShowForm(true); }} className="bg-blue-100 text-blue-800 px-3 py-1 rounded">تعديل</button>
-                <button onClick={() => del(f.id)} className="bg-red-100 text-red-800 px-3 py-1 rounded">حذف</button>
-              </div>
-            </div>
-          ))}
+        {/* Filters List */}
+        <div className="bg-white rounded-2xl shadow-lg overflow-hidden border border-purple-100">
+          <div className="p-6 border-b border-gray-200">
+            <h2 className="text-xl font-bold">الفلاتر ({filters.length})</h2>
+          </div>
+          <div className="divide-y divide-gray-100">
+            {filters.length === 0 ? (
+              <p className="p-8 text-center text-gray-500">لا توجد فلاتر.</p>
+            ) : (
+              filters.map((filter) => (
+                <div key={filter.id} className="p-6 hover:bg-gray-50 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                  <div>
+                    <h3 className="font-bold text-gray-800">{filter.label}</h3>
+                    <p className="text-sm text-gray-600">الرابط: <code className="bg-gray-100 px-2 py-1 rounded">{filter.slug}</code></p>
+                    <div className="text-sm text-purple-600 mt-1">الترتيب: {filter.order}</div>
+                  </div>
+
+                  <div className="flex flex-wrap gap-2 mt-4 md:mt-0">
+                    {filter.published !== false ? (
+                      <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">
+                        منشور
+                      </span>
+                    ) : (
+                      <span className="bg-red-100 text-red-800 text-xs px-2 py-1 rounded-full">
+                        غير منشور
+                      </span>
+                    )}
+                    <button
+                      onClick={() => handleEdit(filter)}
+                      className="bg-blue-100 hover:bg-blue-200 text-blue-800 text-sm px-3 py-1 rounded transition"
+                    >
+                      تعديل
+                    </button>
+                    <button
+                      onClick={() => handleDelete(filter.id)}
+                      className="bg-red-100 hover:bg-red-200 text-red-800 text-sm px-3 py-1 rounded transition"
+                    >
+                      حذف
+                    </button>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
         </div>
       </div>
     </div>
