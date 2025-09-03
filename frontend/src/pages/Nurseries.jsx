@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import NurseryCard from '../components/NurseryCard';
 import SearchBar from '../components/SearchBar';
+import { db } from '../firebase/firebase';
+import { collection, getDocs } from 'firebase/firestore';
 
 const Nurseries = () => {
   const [nurseries, setNurseries] = useState([]);
@@ -16,17 +18,19 @@ const Nurseries = () => {
   const [sortBy, setSortBy] = useState('newest');
   const [showOffersOnly, setShowOffersOnly] = useState(false);
 
-  // 🌐 Fetch nurseries from backend
+  // 🌐 Fetch nurseries from Firebase
   useEffect(() => {
     const fetchNurseries = async () => {
       try {
-        const response = await fetch('https://react-plant-nursery-website-production-4ff3.up.railway.app/api/nurseries'); //local => http://localhost:5000/api/nurseries
-        if (!response.ok) throw new Error('فشل تحميل المشاتل');
-        const data = await response.json();
-        setNurseries(data);
+        const snapshot = await getDocs(collection(db, 'nurseries'));
+        const list = snapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        })).filter(n => n.published !== false); // Only show published
+        setNurseries(list);
       } catch (err) {
-        console.error('Error fetching nurseries:', err);
-        alert('تعذر الاتصال بالخادم');
+        console.error('Error fetching nurseries from Firebase:', err);
+        alert('تعذر تحميل المشاتل');
       } finally {
         setLoading(false);
       }
@@ -53,7 +57,7 @@ const Nurseries = () => {
 
   const allCities = [...Object.keys(cityToDistricts)].sort();
 
-  // 🔎 Filter nurseries (same logic, but on fetched data)
+  // 🔎 Filter nurseries
   const filteredNurseries = nurseries.filter((nursery) => {
     const parts = nursery.location.split('-').map(part => part.trim());
     const city = parts[0];
@@ -83,7 +87,7 @@ const Nurseries = () => {
 
   // 📊 Sort
   const sortedNurseries = [...filteredNurseries].sort((a, b) => {
-    if (sortBy === 'newest') return b._id - a._id; // or use createdAt if available
+    if (sortBy === 'newest') return b.id - a.id;
     if (sortBy === 'popular') return (b.featured ? 1 : 0) - (a.featured ? 1 : 0);
     return 0;
   });
@@ -169,7 +173,7 @@ const Nurseries = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {currentNurseries.length > 0 ? (
               currentNurseries.map((nursery) => (
-                <NurseryCard key={nursery._id} nursery={nursery} />
+                <NurseryCard key={nursery.id} nursery={nursery} />
               ))
             ) : (
               <p className="col-span-full text-center text-gray-500 py-8">
