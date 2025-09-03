@@ -1,4 +1,3 @@
-// server.js
 import express from 'express';
 import cors from 'cors';
 import { db } from './firebase.js';
@@ -6,217 +5,29 @@ import { db } from './firebase.js';
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// ✅ Middleware
-app.use(cors({
-  origin: 'https://react-firebase-plant-nursery.vercel.app' // ✅ Fixed: no trailing spaces
-}));
-app.use(express.json({ limit: '10mb' })); // Handle large payloads (e.g., image URLs)
+app.use(cors());
+app.use(express.json());
 
-// 🔧 Utility: Send JSON with consistent structure
-const sendSuccess = (res, data, status = 200) => {
-  return res.status(status).json({
-    success: true,
-    data
-  });
-};
-
-const sendError = (res, message, status = 500) => {
-  console.error('API Error:', message);
-  return res.status(status).json({
-    success: false,
-    message
-  });
-};
-
-// 🌿 API: GET all published nurseries
 app.get('/api/nurseries', async (req, res) => {
   try {
     const snapshot = await db.collection('nurseries').get();
-    const nurseries = [];
-
+    const list = [];
     snapshot.forEach(doc => {
       const data = doc.data();
-      // Only include published nurseries
       if (data.published !== false) {
-        nurseries.push({
-          id: doc.id,
-          ...data
-        });
+        list.push({ id: doc.id, ...data });
       }
     });
-
-    sendSuccess(res, nurseries);
+    res.json(list);
   } catch (err) {
-    sendError(res, 'فشل تحميل المشاتل', 500);
+    res.status(500).json({ message: err.message });
   }
 });
 
-// 🌿 API: GET single nursery by ID
-app.get('/api/nurseries/:id', async (req, res) => {
-  try {
-    const { id } = req.params;
-    const doc = await db.collection('nurseries').doc(id).get();
-
-    if (!doc.exists) {
-      return sendError(res, 'المشتل غير موجود', 404);
-    }
-
-    const data = doc.data();
-    if (data.published === false) {
-      return sendError(res, 'المشتل غير منشور', 404);
-    }
-
-    sendSuccess(res, { id: doc.id, ...data });
-  } catch (err) {
-    sendError(res, 'خطأ في جلب بيانات المشتل', 500);
-  }
+app.get('/', (req, res) => {
+  res.json({ message: 'Working!' });
 });
 
-// 🌿 API: POST new nursery (used by admin if needed)
-app.post('/api/nurseries', async (req, res) => {
-  try {
-    const { name, image, categories, location, services, featured, discount, published } = req.body;
-
-    // ✅ Validation
-    if (!name?.trim() || !image?.trim() || !location?.trim()) {
-      return sendError(res, 'الاسم، الصورة، والموقع مطلوبون', 400);
-    }
-
-    const newNursery = {
-      name: name.trim(),
-      image: image.trim(),
-      categories: Array.isArray(categories) ? categories : [],
-      location: location.trim(),
-      services: Array.isArray(services) ? services : [],
-      featured: !!featured,
-      discount: discount ? Number(discount) : null,
-      published: published !== false,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    };
-
-    const docRef = await db.collection('nurseries').add(newNursery);
-    sendSuccess(res, { id: docRef.id, ...newNursery }, 201);
-  } catch (err) {
-    sendError(res, 'فشل إضافة المشتل: ' + err.message, 400);
-  }
-});
-
-// 🎁 API: GET all active offers
-app.get('/api/offers', async (req, res) => {
-  const today = new Date();
-  try {
-    const snapshot = await db.collection('offers').get();
-    const offers = [];
-
-    snapshot.forEach(doc => {
-      const data = doc.data();
-      if (data.published === false) return;
-
-      // If no end date → active
-      if (!data.endDate) {
-        offers.push({ id: doc.id, ...data });
-        return;
-      }
-
-      // Parse end date
-      const endDate = new Date(data.endDate);
-      if (isNaN(endDate.getTime())) {
-        console.warn(`Invalid endDate for offer ${doc.id}:`, data.endDate);
-        return;
-      }
-
-      // Check if not expired
-      if (endDate >= today) {
-        offers.push({ id: doc.id, ...data });
-      }
-    });
-
-    sendSuccess(res, offers);
-  } catch (err) {
-    sendError(res, 'فشل تحميل العروض', 500);
-  }
-});
-
-// 🎁 API: GET single offer by ID
-app.get('/api/offers/:id', async (req, res) => {
-  try {
-    const { id } = req.params;
-    const doc = await db.collection('offers').doc(id).get();
-
-    if (!doc.exists) {
-      return sendError(res, 'العرض غير موجود', 404);
-    }
-
-    const data = doc.data();
-    if (data.published === false) {
-      return sendError(res, 'العرض غير منشور', 404);
-    }
-
-    const today = new Date();
-    if (data.endDate) {
-      const endDate = new Date(data.endDate);
-      if (endDate < today) {
-        return sendError(res, 'العرض منتهي', 404);
-      }
-    }
-
-    sendSuccess(res, { id: doc.id, ...data });
-  } catch (err) {
-    sendError(res, 'خطأ في جلب العرض', 500);
-  }
-});
-
-// 🎁 API: POST new offer
-app.post('/api/offers', async (req, res) => {
-  try {
-    const { title, description, tags, endDate, discount, highlighted, published } = req.body;
-
-    if (!title?.trim() || !description?.trim()) {
-      return sendError(res, 'العنوان والوصف مطلوبان', 400);
-    }
-
-    const newOffer = {
-      title: title.trim(),
-      description: description.trim(),
-      tags: Array.isArray(tags) ? tags : [],
-      endDate: endDate?.trim() || null,
-      discount: discount ? Number(discount) : null,
-      highlighted: !!highlighted,
-      published: published !== false,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    };
-
-    const docRef = await db.collection('offers').add(newOffer);
-    sendSuccess(res, { id: docRef.id, ...newOffer }, 201);
-  } catch (err) {
-    sendError(res, 'فشل إضافة العرض: ' + err.message, 400);
-  }
-});
-
-// ✅ Health Check
-app.get('/api', (req, res) => {
-  res.json({
-    success: true,
-    message: 'Nursery API is running 🌿',
-    timestamp: new Date().toISOString()
-  });
-});
-
-// ✅ 404 for unknown routes
-app.use('*', (req, res) => {
-  sendError(res, 'المسار غير موجود', 404);
-});
-
-// ✅ Error handling middleware
-app.use((err, req, res, next) => {
-  console.error('Unhandled error:', err);
-  sendError(res, 'خطأ داخلي في الخادم', 500);
-});
-
-// Start server
 app.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
-  console.log(`🔗 API Base: http://localhost:${PORT}/api`);
+  console.log(`Server running on port ${PORT}`);
 });
