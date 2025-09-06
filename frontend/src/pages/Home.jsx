@@ -1,5 +1,5 @@
 // src/pages/Home.jsx
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { offers } from '../data/offers';
 
 console.log('✅ Home Component Loaded');
@@ -9,6 +9,36 @@ const Home = () => {
   const [activeFilter, setActiveFilter] = useState('all');
 
   const [currentSlide, setCurrentSlide] = useState(0);
+
+  const [categories, setCategories] = useState([]); // ✅ New state
+  const [loading, setLoading] = useState(true); // ✅ Loading state
+
+  // ✅ Fetch categories from backend
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const API_BASE = 'https://react-firebase-plant-nursery-production.up.railway.app'; // 🔁 Replace with your Railway URL
+        const response = await fetch(`${API_BASE}/api/categories`);
+
+        if (!response.ok) throw new Error('فشل تحميل التصنيفات');
+
+        const data = await response.json();
+        setCategories(Array.isArray(data) ? data : []);
+      } catch (err) {
+        console.error('Error fetching categories:', err);
+        setCategories([]); // Fallback to empty
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchCategories();
+  }, []);
+
+  // If still loading, show loading message
+  if (loading) {
+    return <p className="text-center py-8">جاري تحميل التصنيفات...</p>;
+  }
 
   const nextSlide = () => {
     setCurrentSlide((prev) => (prev === 2 ? 0 : prev + 1));
@@ -149,29 +179,39 @@ const Home = () => {
         <div className="container mx-auto px-4">
           <h2 className="text-3xl font-bold text-center text-green-800 mb-12">التصنيفات الرئيسية</h2>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div className="bg-green-600 text-white p-6 rounded-xl shadow-lg text-center">
-              <div className="w-20 h-20 mx-auto mb-4 bg-green-500 rounded-full flex items-center justify-center">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                </svg>
-              </div>
-              <h3 className="text-xl font-bold mb-2">مشاتل مختلفة</h3>
-              <p className="text-sm opacity-90">أكثر من 200 مشتل</p>
-            </div>
+          {categories.length === 0 ? (
+            <p className="text-center text-gray-500">لا توجد تصنيفات.</p>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              {categories.map((cat) => (
+                <div key={cat.id} className="bg-green-600 text-white p-6 rounded-xl shadow-lg text-center">
+                  {/* Image */}
+                  <div className="w-20 h-20 mx-auto mb-4 bg-green-500 rounded-full flex items-center justify-center overflow-hidden">
+                    {cat.image ? (
+                      <img
+                        src={cat.image}
+                        alt={cat.title}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          e.target.src = 'https://placehold.co/100x100/10b981/ffffff?text=No+Image';
+                        }}
+                      />
+                    ) : (
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                      </svg>
+                    )}
+                  </div>
 
-            <div className="bg-green-600 text-white p-6 rounded-xl shadow-lg text-center">
-              <div className="w-20 h-20 mx-auto mb-4 bg-green-500 rounded-full flex items-center justify-center">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.638 2.296.07 2.572-1.065z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                </svg>
-              </div>
-              <h3 className="text-xl font-bold mb-2">أدوات الزراعة</h3>
-              <p className="text-sm opacity-90">أكثر من 80 متجر</p>
-            </div>
+                  {/* Title */}
+                  <h3 className="text-xl font-bold mb-2">{cat.title}</h3>
 
-          </div>
+                  {/* Description */}
+                  <p className="text-sm opacity-90">{cat.description || 'تفاصيل غير متوفرة'}</p>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </section>
 
