@@ -105,6 +105,32 @@ app.get('/api/categories', async (req, res) => {
   }
 });
 
+// ✅ GET all published sponsors
+app.get('/api/sponsors', async (req, res) => {
+  try {
+    const snapshot = await db.collection('sponsors').get();
+    const list = [];
+
+    snapshot.forEach(doc => {
+      const data = doc.data();
+      if (data.published !== false) {
+        list.push({
+          id: doc.id,
+          ...data
+        });
+      }
+    });
+
+    // Sort by order
+    list.sort((a, b) => a.order - b.order);
+
+    res.json(list);
+  } catch (err) {
+    console.error('Error fetching sponsors:', err);
+    res.status(500).json({ message: 'فشل تحميل الرعاة' });
+  }
+});
+
 // ✅ Health check
 app.get('/', (req, res) => {
   res.json({ message: 'Nursery API is running 🌿' });
