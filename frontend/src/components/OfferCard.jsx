@@ -2,40 +2,46 @@
 import React from 'react';
 
 const OfferCard = ({ offer }) => {
-  // Parse Arabic date manually
-  const parseArabicDate = (arabicDateStr) => {
+  // ✅ Universal date parser
+  const parseDate = (dateStr) => {
+    if (!dateStr) return null;
+
+    // Handle "2025-11-15"
+    if (typeof dateStr === 'string' && /^\d{4}-\d{2}-\d{2}/.test(dateStr)) {
+      const [year, month, day] = dateStr.split('-').map(Number);
+      return new Date(year, month - 1, day);
+    }
+
+    // Handle Arabic: "15 نوفمبر 2025"
     const monthMap = {
       'يناير': 0, 'فبراير': 1, 'مارس': 2, 'أبريل': 3,
       'مايو': 4, 'يونيو': 5, 'يوليو': 6, 'أغسطس': 7,
       'سبتمبر': 8, 'أكتوبر': 9, 'نوفمبر': 10, 'ديسمبر': 11
     };
 
-    // Match pattern: "31 ديسمبر 2024"
-    const match = arabicDateStr.trim().match(/(\d+)\s+([^\s]+)\s+(\d{4})/);
-    if (!match) return null;
+    const match = dateStr.trim().match(/(\d+)\s+([^\s]+)\s+(\d{4})/);
+    if (match) {
+      const day = parseInt(match[1], 10);
+      const monthName = match[2];
+      const year = parseInt(match[3], 10);
+      const month = monthMap[monthName];
+      if (month !== undefined) {
+        return new Date(year, month, day);
+      }
+    }
 
-    const day = parseInt(match[1], 10);
-    const monthName = match[2];
-    const year = parseInt(match[3], 10);
-
-    const month = monthMap[monthName];
-    if (month === undefined) return null;
-
-    return new Date(year, month, day);
+    return null;
   };
 
-  const endDate = parseArabicDate(offer.endDate);
-  if (!endDate) {
-    console.warn(`Failed to parse date: ${offer.endDate}`);
-  }
-
+  // ✅ Parse endDate
+  const endDate = parseDate(offer.endDate);
   const today = new Date();
-  today.setHours(0, 0, 0, 0); // Reset time for accurate day comparison
+  today.setHours(0, 0, 0, 0);
 
-  const timeDiff = endDate - today;
+  const timeDiff = endDate ? endDate - today : NaN;
   const daysLeft = Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
 
-  // Generate human-readable message
+  // ✅ Human-readable text
   const getDaysLeftText = () => {
     if (!endDate) return 'تاريخ غير صالح';
     if (daysLeft < 0) return 'العرض منتهي';
@@ -45,13 +51,11 @@ const OfferCard = ({ offer }) => {
     return 'متاح حاليًا';
   };
 
-  // Color based on urgency
   const daysLeftColor = !endDate ? 'text-gray-600' :
                         daysLeft < 0 ? 'text-red-600' :
                         daysLeft <= 7 ? 'text-orange-600' :
                         'text-green-600';
 
-  // Only show discount if valid
   const showDiscount = offer.discount !== null && offer.discount > 0;
 
   return (
@@ -63,7 +67,6 @@ const OfferCard = ({ offer }) => {
             <p className="text-gray-700 mt-2">{offer.description}</p>
           </div>
 
-          {/* 🔹 Discount Badge - Only if discount exists */}
           {showDiscount && (
             <div className="relative">
               <div className="absolute top-0 -left-1 bg-red-500 text-white text-sm font-bold px-3 py-1 rounded-full whitespace-nowrap">
@@ -73,7 +76,6 @@ const OfferCard = ({ offer }) => {
           )}
         </div>
 
-        {/* Tags */}
         <div className="flex flex-wrap gap-2 mb-4">
           {offer.tags.map((tag, index) => (
             <span key={index} className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">
@@ -82,7 +84,6 @@ const OfferCard = ({ offer }) => {
           ))}
         </div>
 
-        {/* Countdown with Icon */}
         <div className="flex justify-between items-center text-sm">
           <span className={`font-medium ${daysLeftColor}`}>
             {getDaysLeftText()}
@@ -96,7 +97,6 @@ const OfferCard = ({ offer }) => {
         </div>
       </div>
 
-      {/* Highlighted Banner */}
       {offer.highlighted && (
         <div className="bg-orange-500 p-4 text-center">
           <span className="text-white font-bold">عرض خاص</span>
