@@ -54,7 +54,7 @@ const Home = () => {
   useEffect(() => {
     const fetchSponsors = async () => {
       try {
-        const API_BASE = 'https://your-railway-app.up.railway.app'; // 🔁 Replace with your URL
+        const API_BASE = 'https://react-firebase-plant-nursery-production.up.railway.app'; // 🔁 Replace with your URL
         const response = await fetch(`${API_BASE}/api/sponsors`);
 
         if (!response.ok) throw new Error('فشل تحميل الرعاة');
@@ -77,7 +77,7 @@ const Home = () => {
     return <p className="text-center py-8">جاري التحميل...</p>;
   }
 
-  
+
   // 🏷️ Define available filters
   const filters = [
     { key: 'all', label: 'الكل' },
@@ -350,7 +350,6 @@ const Home = () => {
         <div className="container mx-auto px-4">
           <div className="text-center mb-8">
             <h2 className="text-3xl font-bold">الرعاة الرسميون ✨</h2>
-            <p className="text-gray-300 mt-2">نفتخر بشراكاتنا مع أفضل المشاتل ومقدمي الخدمات في المملكة</p>
           </div>
 
           {sponsors.length === 0 ? (
