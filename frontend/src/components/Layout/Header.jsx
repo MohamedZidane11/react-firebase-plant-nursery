@@ -1,6 +1,6 @@
 // src/components/Header.jsx
 import { Link } from 'react-router-dom';
-import logo from '../assets/tashgeel_logo.svg'; // ✅ Your SVG logo
+import logo from '../../assets/logo.png'; // ✅ Your SVG logo
 
 const Header = () => {
   return (
@@ -11,7 +11,7 @@ const Header = () => {
           {/* Remove the yellow circle, just show the SVG */}
           <img
             src={logo}
-            alt="تاشجيل - منصة المشاتل"
+            alt="تشجير - منصة المشاتل"
             className="h-12 w-auto object-contain" // ✅ Height 3rem, auto width
           />
           <span className="text-xl font-bold tracking-wide">منصة المشاتل</span>

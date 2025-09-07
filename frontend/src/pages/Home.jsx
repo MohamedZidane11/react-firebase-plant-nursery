@@ -377,7 +377,7 @@ const Home = () => {
                   </div>
                   <h3 className="text-lg font-bold">{sponsor.name}</h3>
                   {sponsor.blurb && (
-                    <p className="text-sm text-gray-300">{sponsor.blurb}</p>
+                    <p className="text-sm text-gray-900">{sponsor.blurb}</p>
                   )}
                 </div>
               ))}
