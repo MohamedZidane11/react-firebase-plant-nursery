@@ -11,6 +11,7 @@ const Offers = () => {
   // 🔍 Filters
   const [filterType, setFilterType] = useState('all');
   const [filterCategory, setFilterCategory] = useState('all');
+  const [filterService, setFilterService] = useState('all');
   const [sortBy, setSortBy] = useState('newest');
 
   // 🌐 Fetch offers from backend
@@ -46,6 +47,11 @@ const Offers = () => {
       if (!offer.tags.includes(filterCategory)) return false;
     }
 
+    // ✅ Filter by service
+    if (filterService !== 'all') {
+      if (!offer.tags.includes(filterService)) return false;
+    }
+
     return true;
   }).sort((a, b) => {
     if (sortBy === 'newest') return b._id - a._id; // or use createdAt if available
@@ -71,7 +77,7 @@ const Offers = () => {
   // Reset to page 1 when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [filterType, filterCategory, sortBy]);
+  }, [filterType, filterCategory, filterService, sortBy]);
 
   if (loading) {
     return <p className="text-center py-8">جاري التحميل...</p>;
@@ -118,11 +124,26 @@ const Offers = () => {
                 className="px-4 py-2 border border-gray-300 rounded-md min-w-36"
               >
                 <option value="all">جميع التصنيفات</option>
+                <option value="مشاتل"> مشاتل</option>
+                <option value="مشاتل مختلطة"> مشاتل مختلطة</option>
+                <option value="أدوات زراعة">أدوات زراعة</option>
                 <option value="نباتات داخلية">نباتات داخلية</option>
                 <option value="نباتات خارجية">نباتات خارجية</option>
                 <option value="زهور">زهور</option>
-                <option value="أدوات زراعة">أدوات زراعة</option>
+              </select>
+
+              {/* Filter by Service */}
+              <select
+                value={filterService}
+                onChange={(e) => setFilterService(e.target.value)}
+                className="px-4 py-2 border border-gray-300 rounded-md min-w-36"
+              >
+                <option value="all">جميع الخدمات</option>
                 <option value="خدمات">خدمات</option>
+                <option value="تركيب وصيانة">تركيب وصيانة</option>
+                <option value="توصيل">توصيل</option>
+                <option value="ضمان نباتات">ضمان نباتات</option>
+                <option value="استشارات">استشارات</option>
               </select>
 
               {/* Sort by */}
