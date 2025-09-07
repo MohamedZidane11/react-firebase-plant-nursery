@@ -42,7 +42,7 @@ const Footer = () => {
         </div>
         
         <div className="border-t border-green-700 mt-8 pt-8 text-center text-sm">
-          <p>&copy; 2024 منصة المشاتل. جميع الحقوق محفوظة.</p>
+          <p>&copy; 2025 منصة المشاتل. جميع الحقوق محفوظة.</p>
         </div>
       </div>
     </footer>

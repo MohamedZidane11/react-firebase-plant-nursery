@@ -346,7 +346,7 @@ const Home = () => {
       </section>
 
       {/* Sponsors Banner */}
-      <section className="py-12 bg-gray-900 text-white">
+      <section className="py-12 bg-gradient-to-r from-amber-50 to-yellow-50">
         <div className="container mx-auto px-4">
           <div className="text-center mb-8">
             <h2 className="text-3xl font-bold">الرعاة الرسميون ✨</h2>
