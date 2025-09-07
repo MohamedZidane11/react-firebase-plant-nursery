@@ -21,7 +21,7 @@ const Nurseries = () => {
   useEffect(() => {
     const fetchNurseries = async () => {
       try {
-        const API_BASE = 'https://react-plant-nursery-website-production-4ff3.up.railway.app'; // 🔁 Replace with your actual Railway URL
+        const API_BASE = 'https://react-firebase-plant-nursery-production.up.railway.app'; // 🔁 Replace with your actual Railway URL
         const response = await fetch(`${API_BASE}/api/nurseries`);
         
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
