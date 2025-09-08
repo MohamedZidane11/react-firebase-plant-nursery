@@ -1,3 +1,4 @@
+// src/pages/NurseriesManager.jsx
 import { useState, useEffect, useRef, useLayoutEffect } from 'react';
 import { db, auth } from '../firebase/firebase';
 import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc } from 'firebase/firestore';
@@ -10,23 +11,26 @@ const NurseriesManager = () => {
   const [editing, setEditing] = useState(null);
   const formRef = useRef();
 
+  // ✅ Initial form data with region/city/district
   const [formData, setFormData] = useState({
     name: '',
     image: '',
     categories: [],
     location: '',
-    region: '',    // ✅
-    city: '',      // ✅
-    district: '',  // ✅
+    region: '',
+    city: '',
+    district: '',
     services: [],
     featured: false,
     discount: null,
     published: true
   });
 
-  const scrollToForm = () => {
-    formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'top' });
-  };
+  useLayoutEffect(() => {
+    if (showForm && formRef.current && editing) {
+      formRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, [showForm, editing]);
 
   const fetchNurseries = async () => {
     try {
@@ -46,12 +50,6 @@ const NurseriesManager = () => {
   useEffect(() => {
     fetchNurseries();
   }, []);
-
-  useLayoutEffect(() => {
-    if (showForm && formRef.current && editing) {
-      formRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
-  }, [showForm, editing]);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -93,10 +91,13 @@ const NurseriesManager = () => {
       discount: null,
       published: true
     });
+    setEditing(null);
+    setShowForm(false);
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
     if (!formData.name.trim() || !formData.location.trim() || !formData.image.trim()) {
       alert('الاسم، الموقع، والصورة مطلوبة');
       return;
@@ -126,6 +127,7 @@ const NurseriesManager = () => {
       fetchNurseries();
     } catch (err) {
       alert('خطأ في الحفظ: ' + err.message);
+      console.error('Save error:', err);
     }
   };
 
@@ -160,35 +162,44 @@ const NurseriesManager = () => {
 
   const handleLocationChange = (e) => {
     const value = e.target.value;
-    
+
     // Update location
     setFormData(prev => ({
       ...prev,
       location: value
     }));
-  
-    // ✅ Auto-parse and fill region, city, district
+
+    // Parse and auto-fill region, city, district
     const parts = value.split('-').map(part => part.trim());
-    
+
     if (parts.length === 3) {
       setFormData(prev => ({
         ...prev,
-        region: parts[0],  // "منطقة الرياض"
-        city: parts[1],    // "الرياض"
-        district: parts[2] // "حي النخيل"
+        region: parts[0],
+        city: parts[1],
+        district: parts[2]
       }));
     } else if (parts.length === 2) {
-      // Fallback: if only "الرياض - حي النخيل"
       setFormData(prev => ({
         ...prev,
         city: parts[0],
         district: parts[1],
-        region: '' // or set a default
+        region: '' // Optional: set default region
       }));
     } else if (parts.length === 1) {
       setFormData(prev => ({
         ...prev,
-        city: parts[0]
+        city: parts[0],
+        region: '',
+        district: ''
+      }));
+    } else {
+      // If empty or invalid
+      setFormData(prev => ({
+        ...prev,
+        region: '',
+        city: '',
+        district: ''
       }));
     }
   };
@@ -201,10 +212,10 @@ const NurseriesManager = () => {
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-3xl font-bold text-green-800">إدارة المشاتل</h1>
           <button
-              onClick={() => {
-                resetForm(); // This sets all fields to default
-                setShowForm(true); // ✅ Now open the form
-              }}
+            onClick={() => {
+              resetForm();
+              setShowForm(true);
+            }}
             className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-medium transition"
           >
             + إضافة مشتل جديد
@@ -249,7 +260,7 @@ const NurseriesManager = () => {
                     value={formData.location}
                     onChange={handleLocationChange}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
-                    placeholder="مثل: الرياض - حي النخيل"
+                    placeholder="مثل: منطقة الرياض - الرياض - حي النخيل"
                   />
                 </div>
 
@@ -371,7 +382,9 @@ const NurseriesManager = () => {
                       src={nursery.image}
                       alt={nursery.name}
                       className="w-16 h-16 object-cover rounded-lg"
-                      onError={(e) => e.target.src = 'https://placehold.co/100x100/d1f7c4/4ade80?text=No+Image'}
+                      onError={(e) => {
+                        e.target.src = 'https://placehold.co/100x100/d1f7c4/4ade80?text=No+Image';
+                      }}
                     />
                     <div>
                       <h3 className="font-bold text-gray-800">{nursery.name}</h3>
@@ -383,7 +396,6 @@ const NurseriesManager = () => {
                   </div>
 
                   <div className="flex flex-wrap gap-2 mt-4 md:mt-0">
-                    {/* Badges */}
                     {nursery.featured && (
                       <span className="bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded-full">
                         مميز
