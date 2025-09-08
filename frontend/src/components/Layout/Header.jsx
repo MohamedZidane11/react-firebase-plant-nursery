@@ -12,7 +12,7 @@ const Header = () => {
           <img
             src={logo}
             alt="تشجير - منصة المشاتل"
-            className="h-12 w-auto object-contain" // ✅ Height 3rem, auto width
+            className="h-17 w-auto object-contain" // ✅ Height 3rem, auto width
           />
           <span className="text-xl font-bold tracking-wide">منصة المشاتل</span>
         </div>
