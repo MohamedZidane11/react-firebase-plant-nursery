@@ -1,7 +1,6 @@
 // src/pages/Nurseries.jsx
 import { useState, useEffect } from 'react';
 import NurseryCard from '../components/NurseryCard';
-import SearchBar from '../components/SearchBar';
 
 const Nurseries = () => {
   const [nurseries, setNurseries] = useState([]);
@@ -13,6 +12,7 @@ const Nurseries = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [selectedRegion, setSelectedRegion] = useState('all');
+  const [selectedCity, setSelectedCity] = useState('all');
   const [selectedDistrict, setSelectedDistrict] = useState('all');
   const [sortBy, setSortBy] = useState('newest');
   const [showOffersOnly, setShowOffersOnly] = useState(false);
@@ -21,7 +21,7 @@ const Nurseries = () => {
   useEffect(() => {
     const fetchNurseries = async () => {
       try {
-        const API_BASE = 'https://react-firebase-plant-nursery-production.up.railway.app'; // 🔁 Replace with your actual Railway URL
+        const API_BASE = 'https://react-firebase-plant-nursery-production.up.railway.app';
         const response = await fetch(`${API_BASE}/api/nurseries`);
         
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
@@ -39,29 +39,20 @@ const Nurseries = () => {
     fetchNurseries();
   }, []);
 
-  // 🌆 Extract cities & districts
-  const cityToDistricts = nurseries.reduce((acc, nursery) => {
-    const parts = nursery.location.split('-').map(part => part.trim());
-    const city = parts[0];
-    const district = parts.length > 1 ? parts[1] : 'غير محدد';
+  // 🌆 Build filter options
+  const regions = [...new Set(nurseries.map(n => n.region).filter(Boolean))].sort();
+  const cities = selectedRegion === 'all'
+    ? [...new Set(nurseries.map(n => n.city).filter(Boolean))].sort()
+    : [...new Set(nurseries.filter(n => n.region === selectedRegion).map(n => n.city))].sort();
 
-    if (!acc[city]) acc[city] = new Set();
-    acc[city].add(district);
-    return acc;
-  }, {});
-
-  Object.keys(cityToDistricts).forEach(city => {
-    cityToDistricts[city] = [...cityToDistricts[city]].sort();
-  });
-
-  const allCities = [...Object.keys(cityToDistricts)].sort();
+  const districts = selectedCity === 'all'
+    ? selectedRegion === 'all'
+      ? [...new Set(nurseries.map(n => n.district).filter(Boolean))].sort()
+      : [...new Set(nurseries.filter(n => n.region === selectedRegion).map(n => n.district))].sort()
+    : [...new Set(nurseries.filter(n => n.city === selectedCity).map(n => n.district))].sort();
 
   // 🔎 Filter nurseries
   const filteredNurseries = nurseries.filter((nursery) => {
-    const parts = nursery.location.split('-').map(part => part.trim());
-    const city = parts[0];
-    const district = parts.length > 1 ? parts[1] : 'غير محدد';
-
     const matchesSearch = searchTerm
       ? nursery.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         nursery.location.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -77,11 +68,12 @@ const Nurseries = () => {
       return false;
     });
 
-    const matchesCity = selectedRegion === 'all' || city === selectedRegion;
-    const matchesDistrict = selectedDistrict === 'all' || selectedRegion === 'all' || district === selectedDistrict;
+    const matchesRegion = selectedRegion === 'all' || nursery.region === selectedRegion;
+    const matchesCity = selectedCity === 'all' || nursery.city === selectedCity;
+    const matchesDistrict = selectedDistrict === 'all' || nursery.district === selectedDistrict;
     const matchesOffer = showOffersOnly ? nursery.discount !== null : true;
 
-    return matchesSearch && matchesCategory && matchesCity && matchesDistrict && matchesOffer;
+    return matchesSearch && matchesCategory && matchesRegion && matchesCity && matchesDistrict && matchesOffer;
   });
 
   // 📊 Sort
@@ -104,9 +96,10 @@ const Nurseries = () => {
     }
   };
 
+  // Reset page on filter change
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm, selectedCategory, selectedRegion, selectedDistrict, showOffersOnly, sortBy]);
+  }, [searchTerm, selectedCategory, selectedRegion, selectedCity, selectedDistrict, showOffersOnly, sortBy]);
 
   if (loading) {
     return <p className="text-center py-8">جاري التحميل...</p>;
@@ -114,41 +107,89 @@ const Nurseries = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Search and Filters */}
+      {/* Filters */}
       <section className="py-8">
         <div className="container mx-auto px-4">
-          <div className="bg-white rounded-xl p-6 shadow-md">
-            <SearchBar
-              searchTerm={searchTerm}
-              setSearchTerm={setSearchTerm}
-              selectedCategory={selectedCategory}
-              setSelectedCategory={setSelectedCategory}
-              selectedRegion={selectedRegion}
-              setSelectedRegion={setSelectedRegion}
-              selectedDistrict={selectedDistrict}
-              setSelectedDistrict={setSelectedDistrict}
-              cityToDistricts={cityToDistricts}
-              allCities={allCities}
-              sortBy={sortBy}
-              setSortBy={setSortBy}
-              showOffersOnly={showOffersOnly}
-              setShowOffersOnly={setShowOffersOnly}
+          <div className="bg-white rounded-xl p-6 shadow-md space-y-4">
+            {/* Search */}
+            <input
+              type="text"
+              placeholder="ابحث عن مشتل، منطقة، أو تصنيف..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full px-4 py-2 border border-gray-300 rounded-md"
             />
 
+            {/* Category Filter */}
+            <select
+              value={selectedCategory}
+              onChange={(e) => setSelectedCategory(e.target.value)}
+              className="w-full md:w-auto px-4 py-2 border border-gray-300 rounded-md"
+            >
+              <option value="all">جميع التصنيفات</option>
+              <option value="nursery">مشاتل</option>
+              <option value="plants">نباتات</option>
+              <option value="tools">أدوات زراعة</option>
+            </select>
+
+            {/* Region Filter */}
+            <select
+              value={selectedRegion}
+              onChange={(e) => {
+                setSelectedRegion(e.target.value);
+                setSelectedCity('all');
+                setSelectedDistrict('all');
+              }}
+              className="w-full md:w-auto px-4 py-2 border border-gray-300 rounded-md"
+            >
+              <option value="all">جميع المناطق</option>
+              {regions.map(region => (
+                <option key={region} value={region}>{region}</option>
+              ))}
+            </select>
+
+            {/* City Filter */}
+            <select
+              value={selectedCity}
+              onChange={(e) => {
+                setSelectedCity(e.target.value);
+                setSelectedDistrict('all');
+              }}
+              disabled={selectedRegion === 'all' && cities.length === 0}
+              className="w-full md:w-auto px-4 py-2 border border-gray-300 rounded-md disabled:opacity-50"
+            >
+              <option value="all">جميع المدن</option>
+              {cities.map(city => (
+                <option key={city} value={city}>{city}</option>
+              ))}
+            </select>
+
+            {/* District Filter */}
+            <select
+              value={selectedDistrict}
+              onChange={(e) => setSelectedDistrict(e.target.value)}
+              disabled={selectedCity === 'all' && districts.length === 0}
+              className="w-full md:w-auto px-4 py-2 border border-gray-300 rounded-md disabled:opacity-50"
+            >
+              <option value="all">جميع الأحياء</option>
+              {districts.map(district => (
+                <option key={district} value={district}>{district}</option>
+              ))}
+            </select>
+
+            {/* Sort & Offers */}
             <div className="flex flex-col md:flex-row gap-4 mt-4">
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value)}
                 className="px-4 py-2 border border-gray-300 rounded-md"
               >
-                <option value="newest">الترتيب حسب:</option>
-                <option value="newest">الأحدث إضافة</option>
+                <option value="newest">الترتيب حسب: الأحدث</option>
                 <option value="popular">الأكثر شهرة</option>
-                <option value="rating">التقييم</option>
               </select>
 
               <div className="flex items-center">
-                <label className="mr-2 text-sm">إظهار المشاتل ذات العروض الحالية فقط</label>
+                <label className="mr-2 text-sm">عروض حالية فقط</label>
                 <input
                   type="checkbox"
                   checked={showOffersOnly}
@@ -161,7 +202,7 @@ const Nurseries = () => {
         </div>
       </section>
 
-      {/* Nurseries Grid */}
+      {/* Results */}
       <section className="py-12">
         <div className="container mx-auto px-4">
           <div className="flex justify-between items-center mb-6">

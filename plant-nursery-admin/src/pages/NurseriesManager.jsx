@@ -15,6 +15,9 @@ const NurseriesManager = () => {
     image: '',
     categories: [],
     location: '',
+    region: '',    // ✅
+    city: '',      // ✅
+    district: '',  // ✅
     services: [],
     featured: false,
     discount: null,
@@ -82,13 +85,14 @@ const NurseriesManager = () => {
       image: '',
       categories: [],
       location: '',
+      region: '',
+      city: '',
+      district: '',
       services: [],
       featured: false,
       discount: null,
       published: true
     });
-    setEditing(null);
-    setShowForm(false);
   };
 
   const handleSubmit = async (e) => {
@@ -142,6 +146,9 @@ const NurseriesManager = () => {
       image: nursery.image,
       categories: nursery.categories || [],
       location: nursery.location,
+      region: nursery.region || '',
+      city: nursery.city || '',
+      district: nursery.district || '',
       services: nursery.services || [],
       featured: nursery.featured || false,
       discount: nursery.discount,
@@ -149,6 +156,41 @@ const NurseriesManager = () => {
     });
     setEditing(nursery.id);
     setShowForm(true);
+  };
+
+  const handleLocationChange = (e) => {
+    const value = e.target.value;
+    
+    // Update location
+    setFormData(prev => ({
+      ...prev,
+      location: value
+    }));
+  
+    // ✅ Auto-parse and fill region, city, district
+    const parts = value.split('-').map(part => part.trim());
+    
+    if (parts.length === 3) {
+      setFormData(prev => ({
+        ...prev,
+        region: parts[0],  // "منطقة الرياض"
+        city: parts[1],    // "الرياض"
+        district: parts[2] // "حي النخيل"
+      }));
+    } else if (parts.length === 2) {
+      // Fallback: if only "الرياض - حي النخيل"
+      setFormData(prev => ({
+        ...prev,
+        city: parts[0],
+        district: parts[1],
+        region: '' // or set a default
+      }));
+    } else if (parts.length === 1) {
+      setFormData(prev => ({
+        ...prev,
+        city: parts[0]
+      }));
+    }
   };
 
   if (loading) return <p className="text-center py-8">جاري التحميل...</p>;
@@ -205,7 +247,7 @@ const NurseriesManager = () => {
                     type="text"
                     name="location"
                     value={formData.location}
-                    onChange={handleChange}
+                    onChange={handleLocationChange}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
                     placeholder="مثل: الرياض - حي النخيل"
                   />
