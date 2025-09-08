@@ -10,7 +10,8 @@ const RegisterNursery = () => {
     location: '',
     services: [],
     featured: false,
-    discount: null,
+    contactName: '',        // ✅ New
+    whatsapp: '',           // ✅ New
   });
 
   const [errors, setErrors] = useState({});
@@ -50,6 +51,11 @@ const RegisterNursery = () => {
     if (!formData.name.trim()) newErrors.name = 'الاسم مطلوب';
     if (!formData.location.trim()) newErrors.location = 'الموقع مطلوب';
     if (!formData.image.trim()) newErrors.image = 'صورة المشتل مطلوبة';
+    if (!formData.contactName.trim()) newErrors.contactName = 'اسم المسئول مطلوب';
+    if (!formData.whatsapp.trim()) newErrors.whatsapp = 'رقم الواتس آب مطلوب';
+    if (!/^[\d+\-\s()]{8,15}$/.test(formData.whatsapp.trim())) {
+      newErrors.whatsapp = 'رقم الواتس آب غير صالح';
+    }
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
@@ -59,18 +65,24 @@ const RegisterNursery = () => {
     setSubmitting(true);
 
     try {
-      const trimmedFormData = {
+      const payload = {
         ...formData,
         name: formData.name.trim(),
         location: formData.location.trim(),
         image: formData.image.trim(),
-        discount: formData.discount ? Number(formData.discount) : null,
+        contactName: formData.contactName.trim(),
+        whatsapp: formData.whatsapp.trim(),
+        submittedAt: new Date().toISOString(),
+        status: 'pending' // ✅ Mark as pending
       };
 
       // ✅ Send to backend
-      await axios.post('https://react-plant-nursery-website-production-4ff3.up.railway.app/api/nurseries', trimmedFormData); // local=> http://localhost:5000/api/nurseries
+      await axios.post(
+        'https://react-firebase-plant-nursery-production.up.railway.app/api/pending-nurseries',
+        payload
+      );
 
-      alert('تم تسجيل مشتلّك بنجاح! سيظهر قريبًا في القائمة.');
+      alert('تم تسجيل مشتلّك بنجاح! سيقوم الفريق بمراجعته خلال 24 ساعة.');
       
       // Reset form
       setFormData({
@@ -80,13 +92,14 @@ const RegisterNursery = () => {
         location: '',
         services: [],
         featured: false,
-        discount: null,
+        contactName: '',
+        whatsapp: '',
       });
       setErrors({});
 
     } catch (err) {
       console.error('Error submitting nursery:', err);
-      alert('فشل في الإرسال. تأكد من أن الخادم يعمل.');
+      alert('فشل في الإرسال. تأكد من الاتصال بالإنترنت.');
     } finally {
       setSubmitting(false);
     }
@@ -135,6 +148,42 @@ const RegisterNursery = () => {
                 placeholder="https://example.com/image.jpg"
               />
               {errors.image && <p className="text-red-500 text-sm mt-1">{errors.image}</p>}
+            </div>
+
+            {/* Contact Person */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                اسم المسئول
+              </label>
+              <input
+                type="text"
+                name="contactName"
+                value={formData.contactName}
+                onChange={handleChange}
+                className={`w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-green-500 focus:outline-none ${
+                  errors.contactName ? 'border-red-500' : 'border-gray-300'
+                }`}
+                placeholder="مثل: أحمد محمد"
+              />
+              {errors.contactName && <p className="text-red-500 text-sm mt-1">{errors.contactName}</p>}
+            </div>
+
+            {/* WhatsApp Number */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                رقم التواصل (واتس آب)
+              </label>
+              <input
+                type="tel"
+                name="whatsapp"
+                value={formData.whatsapp}
+                onChange={handleChange}
+                className={`w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-green-500 focus:outline-none ${
+                  errors.whatsapp ? 'border-red-500' : 'border-gray-300'
+                }`}
+                placeholder="مثل: 966500123456"
+              />
+              {errors.whatsapp && <p className="text-red-500 text-sm mt-1">{errors.whatsapp}</p>}
             </div>
 
             {/* Categories */}
@@ -203,35 +252,18 @@ const RegisterNursery = () => {
               </div>
             </div>
 
-            {/* Featured & Discount */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="flex items-center">
-                  <input
-                    type="checkbox"
-                    name="featured"
-                    checked={formData.featured}
-                    onChange={handleChange}
-                    className="mr-2 h-4 w-4 text-green-600"
-                  />
-                  <span className="text-sm">عرض كـ "مميز"</span>
-                </label>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  الخصم (%)
-                </label>
+            {/* Featured */}
+            <div>
+              <label className="flex items-center">
                 <input
-                  type="number"
-                  name="discount"
-                  value={formData.discount || ''}
+                  type="checkbox"
+                  name="featured"
+                  checked={formData.featured}
                   onChange={handleChange}
-                  min="0"
-                  max="100"
-                  className="w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-green-500 focus:outline-none"
-                  placeholder="مثل: 25"
+                  className="mr-2 h-4 w-4 text-green-600"
                 />
-              </div>
+                <span className="text-sm">أرغب أن يظهر مشتلي كـ "مميز"</span>
+              </label>
             </div>
 
             <button

@@ -12,6 +12,7 @@ import CategoriesManager from './pages/CategoriesManager';
 import FiltersManager from './pages/FiltersManager';
 import SponsorsManager from './pages/SponsorsManager';
 import SiteSettings from './pages/SiteSettings';
+import PendingNurseriesManager from './pages/PendingNurseriesManager';
 
 function App() {
   const [user, setUser] = useState(null);
@@ -66,6 +67,11 @@ function App() {
                 </Link>
               </li>
               <li>
+                <Link to="/pending-nurseries" className="px-4 py-2 font-medium rounded hover:bg-green-100 transition">
+                  📋 المراجعة
+                </Link>
+              </li>
+              <li>
                 <Link to="/settings" className="px-4 py-2 font-medium rounded hover:bg-green-100 transition">
                   ⚙️ الإعدادات
                 </Link>
@@ -92,6 +98,7 @@ function App() {
               <Route path="/categories" element={<CategoriesManager />} />
               <Route path="/filters" element={<FiltersManager />} />
               <Route path="/sponsors" element={<SponsorsManager />} />
+              <Route path="/pending-nurseries" element={<PendingNurseriesManager />} />
               <Route path="/settings" element={<SiteSettings />} />
             </Routes>
           </div>
