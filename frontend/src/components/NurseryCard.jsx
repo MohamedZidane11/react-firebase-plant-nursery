@@ -1,3 +1,5 @@
+import defaultImage from '../assets/nurs_empty.png';
+
 const NurseryCard = ({ nursery }) => {
   return (
     <div className={`rounded-xl shadow-lg overflow-hidden ${nursery.featured ? 'border-2 border-orange-500' : ''}`}>
@@ -21,11 +23,14 @@ const NurseryCard = ({ nursery }) => {
         </div>
         
         <div className="flex justify-center">
-          <img 
-            src={nursery.image} 
-            alt={nursery.name} 
-            className="w-20 h-20 object-contain"
-          />
+        <img
+          src={nursery.image || defaultImage}
+          alt={nursery.name}
+          onError={(e) => {
+            e.target.src = defaultImage; // Fallback if URL fails
+          }}
+          className="w-32 h-32 object-contain"
+        />
         </div>
       </div>
       

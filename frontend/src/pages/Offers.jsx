@@ -139,7 +139,6 @@ const Offers = () => {
                 className="px-4 py-2 border border-gray-300 rounded-md min-w-36"
               >
                 <option value="all">جميع الخدمات</option>
-                <option value="خدمات">خدمات</option>
                 <option value="تركيب وصيانة">تركيب وصيانة</option>
                 <option value="توصيل">توصيل</option>
                 <option value="ضمان نباتات">ضمان نباتات</option>
