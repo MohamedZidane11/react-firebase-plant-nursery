@@ -1,6 +1,7 @@
 // src/pages/NurseryDetail.jsx
 import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
+import defaultImage from '../assets/nurs_empty.png';
 import { Link } from 'react-router-dom';
 
 const NurseryDetail = () => {
@@ -36,14 +37,14 @@ const NurseryDetail = () => {
     <div className="min-h-screen bg-gray-50">
       <section className="py-12">
         <div className="container mx-auto px-4">
-        <Link to="/nurseries" className="text-green-600 hover:underline mb-4 inline-block">
-  ← العودة إلى المشاتل
-</Link>
+          <Link to="/nurseries" className="text-green-600 hover:underline mb-4 inline-block">
+            ← العودة إلى المشاتل
+          </Link>
           <div className="max-w-4xl mx-auto">
             {/* Nursery Image */}
             <div className="bg-green-100 rounded-xl h-64 flex items-center justify-center mb-8">
               <img 
-                src={nursery.image} 
+                src={nursery.image || defaultImage} 
                 alt={nursery.name} 
                 className="w-32 h-32 object-contain"
               />
