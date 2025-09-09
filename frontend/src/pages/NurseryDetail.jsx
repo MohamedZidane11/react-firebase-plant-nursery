@@ -1,33 +1,50 @@
 // src/pages/NurseryDetail.jsx
 import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import defaultImage from '../assets/nurs_empty.png';
-import { Link } from 'react-router-dom';
 
 const NurseryDetail = () => {
   const { id } = useParams();
   const [nursery, setNursery] = useState(null);
+  const [offers, setOffers] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  // ✅ Fetch nursery
   useEffect(() => {
     const fetchNursery = async () => {
       try {
-        const API_BASE = 'https://react-firebase-plant-nursery-production.up.railway.app'; // 🔁 Replace with your Railway URL
+        const API_BASE = 'https://react-firebase-plant-nursery-production.up.railway.app';
         const response = await fetch(`${API_BASE}/api/nurseries/${id}`);
-        
         if (!response.ok) throw new Error('Not found');
-        
         const data = await response.json();
         setNursery(data);
       } catch (err) {
         console.error('Error fetching nursery:', err);
         setNursery(null);
-      } finally {
-        setLoading(false);
       }
     };
 
-    fetchNursery();
+    // ✅ Fetch offers for this nursery
+    const fetchOffers = async () => {
+      try {
+        const API_BASE = 'https://react-firebase-plant-nursery-production.up.railway.app';
+        const response = await fetch(`${API_BASE}/api/offers`);
+        if (!response.ok) throw new Error('Failed to fetch offers');
+        
+        const allOffers = await response.json();
+        
+        // Filter: only offers that belong to this nursery
+        const nurseryOffers = allOffers.filter(offer => offer.nurseryId === id);
+        setOffers(nurseryOffers);
+      } catch (err) {
+        console.error('Error fetching offers:', err);
+        setOffers([]);
+      }
+    };
+
+    // Run both
+    Promise.all([fetchNursery(), fetchOffers()]).finally(() => {
+      setLoading(false);
+    });
   }, [id]);
 
   if (loading) return <p className="text-center py-8">جاري التحميل...</p>;
@@ -40,11 +57,12 @@ const NurseryDetail = () => {
           <Link to="/nurseries" className="text-green-600 hover:underline mb-4 inline-block">
             ← العودة إلى المشاتل
           </Link>
+
           <div className="max-w-4xl mx-auto">
             {/* Nursery Image */}
             <div className="bg-green-100 rounded-xl h-64 flex items-center justify-center mb-8">
               <img 
-                src={nursery.image || defaultImage} 
+                src={nursery.image} 
                 alt={nursery.name} 
                 className="w-32 h-32 object-contain"
               />
@@ -133,10 +151,34 @@ const NurseryDetail = () => {
               </div>
             </div>
 
-            {/* Current Offers */}
+            {/* ✅ Current Offers for This Nursery */}
             <div className="bg-yellow-50 rounded-xl p-8 mt-8">
               <h3 className="text-xl font-bold text-green-800 mb-6">العروض الحالية 🎁</h3>
-              <p className="text-gray-600">يعرض العروض الخاصة بالمشتل حسب البيانات من لوحة التحكم.</p>
+              
+              {offers.length > 0 ? (
+                <div className="space-y-6">
+                  {offers.map((offer) => (
+                    <div key={offer.id} className="bg-white p-6 rounded-lg shadow">
+                      <h4 className="text-lg font-bold text-gray-800">{offer.title}</h4>
+                      <p className="text-gray-700 mt-2">{offer.description}</p>
+                      
+                      {offer.discount && (
+                        <div className="mt-3">
+                          <span className="bg-red-500 text-white text-sm font-bold px-3 py-1 rounded-full">
+                            خصم {offer.discount}%
+                          </span>
+                        </div>
+                      )}
+
+                      <div className="mt-4 text-sm text-gray-600">
+                        <strong>ينتهي في:</strong> {offer.endDate || 'غير محدد'}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-gray-600">لا توجد عروض حالية من هذا المشتل.</p>
+              )}
             </div>
 
             {/* Contact Information */}
