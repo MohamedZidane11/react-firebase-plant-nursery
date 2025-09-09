@@ -79,6 +79,21 @@ app.get('/api/offers', async (req, res) => {
   }
 });
 
+// ✅ GET single offer by ID
+app.get('/api/offers/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const doc = await db.collection('offers').doc(id).get();
+    if (!doc.exists) {
+      return res.status(404).json({ message: 'العرض غير موجود' });
+    }
+    res.json({ id: doc.id, ...doc.data() });
+  } catch (err) {
+    console.error('Error fetching offer:', err);
+    res.status(500).json({ message: 'فشل تحميل العرض' });
+  }
+});
+
 // ✅ GET all published categories
 app.get('/api/categories', async (req, res) => {
   try {
