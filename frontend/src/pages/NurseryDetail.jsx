@@ -86,6 +86,7 @@ const NurseryDetail = () => {
                     ))}
                   </div>
                 </div>
+                {/*
                 <div className="flex space-x-4 mt-4 md:mt-0">
                   <button className="bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-full transition-colors flex items-center">
                     اتصل الآن
@@ -94,6 +95,7 @@ const NurseryDetail = () => {
                     واتساب
                   </button>
                 </div>
+                    */}
               </div>
 
               {/* Info Grid */}
