@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { Link } from 'react-router-dom';
+import defaultNurseryImage from '../assets/nurs_empty.png';
 
 const NurseryDetail = () => {
   const { id } = useParams();
@@ -63,8 +64,11 @@ const NurseryDetail = () => {
             {/* Nursery Image */}
             <div className="bg-green-100 rounded-xl h-64 flex items-center justify-center mb-8">
               <img 
-                src={nursery.image} 
+                src={nursery.image || defaultNurseryImage} 
                 alt={nursery.name} 
+                onError={(e) => {
+                  e.target.src = defaultNurseryImage;
+                }}
                 className="w-32 h-32 object-contain"
               />
             </div>
@@ -217,12 +221,14 @@ const NurseryDetail = () => {
             </div>
 
             {/* Map */}
+            {/* 
             <div className="bg-white rounded-xl shadow-lg p-8 mt-8">
               <h3 className="text-xl font-bold text-green-800 mb-6">الموقع على الخريطة</h3>
               <div className="bg-gray-200 h-64 flex items-center justify-center rounded-lg">
                 <p className="text-gray-500">خريطة الموقع</p>
               </div>
             </div>
+              */}
           </div>
         </div>
       </section>
