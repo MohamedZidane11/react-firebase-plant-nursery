@@ -7,6 +7,7 @@ import NurseryDetail from './pages/NurseryDetail';
 import Offers from './pages/Offers';
 import Contact from './pages/Contact';
 import RegisterNursery from './components/RegisterNursery';
+import OfferDetail from './pages/OfferDetail';
 
 function App() {
   return (
@@ -20,6 +21,7 @@ function App() {
             <Route path="/nurseries" element={<Nurseries />} />
             <Route path="/nurseries/:id" element={<NurseryDetail />} />
             <Route path="/offers" element={<Offers />} />
+            <Route path="/offers/:id" element={<OfferDetail />} />
             <Route path="/contact" element={<Contact />} />
             <Route path="/register" element={<RegisterNursery />} />
           </Routes>
