@@ -1,6 +1,7 @@
 // src/pages/NurseryDetail.jsx
 import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 
 const NurseryDetail = () => {
   const { id } = useParams();
