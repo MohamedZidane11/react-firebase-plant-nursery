@@ -42,6 +42,28 @@ app.get('/api/nurseries', async (req, res) => {
   }
 });
 
+// ✅ GET single nursery by ID
+app.get('/api/nurseries/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const doc = await db.collection('nurseries').doc(id).get();
+
+    if (!doc.exists) {
+      return res.status(404).json({ message: 'المشتل غير موجود' });
+    }
+
+    const data = doc.data();
+    if (data.published === false) {
+      return res.status(404).json({ message: 'المشتل غير منشور' });
+    }
+
+    res.json({ id: doc.id, ...data });
+  } catch (err) {
+    console.error('Error fetching nursery:', err);
+    res.status(500).json({ message: 'فشل تحميل المشتل' });
+  }
+});
+
 // ✅ GET all offers
 app.get('/api/offers', async (req, res) => {
   const today = new Date();
