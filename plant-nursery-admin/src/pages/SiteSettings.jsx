@@ -225,7 +225,7 @@ const SiteSettings = () => {
           {/* Contact */}
           <div className="bg-white p-8 rounded-2xl shadow-lg border border-gray-100">
             <h2 className="text-2xl font-bold mb-6 text-gray-800">معلومات الاتصال</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
               <input
                 placeholder="البريد الإلكتروني"
                 value={settings.contacts.email}
@@ -277,7 +277,7 @@ const SiteSettings = () => {
           {/* Social Media */}
           <div className="bg-white p-8 rounded-2xl shadow-lg border border-gray-100">
             <h2 className="text-2xl font-bold mb-6 text-gray-800">الروابط الاجتماعية</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
               <input
                 placeholder="إنستغرام (اسم المستخدم)"
                 value={settings.social.instagram}

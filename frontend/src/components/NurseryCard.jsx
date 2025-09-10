@@ -11,6 +11,7 @@ const NurseryCard = ({ nursery }) => {
   }
 
   return (
+    <div className="w-full sm:max-w-xs mx-auto">
     <Link to={`/nurseries/${nursery.id}`} className="block">
       <div className={`rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300 ${nursery.featured ? 'border-2 border-orange-500' : ''}`}>
         <div className="bg-green-100 p-6 relative">
@@ -111,6 +112,7 @@ const NurseryCard = ({ nursery }) => {
         </div>
       </div>
     </Link>
+    </div>
   );
 };
 

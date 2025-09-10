@@ -205,7 +205,7 @@ const OffersManager = () => {
           <div ref={formRef} className="bg-white p-8 rounded-2xl shadow-lg mb-8 border border-orange-100">
             <h2 className="text-2xl font-bold mb-6">{editing ? 'تعديل عرض' : 'إضافة عرض جديد'}</h2>
             <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">عنوان العرض</label>
                   <input
@@ -317,7 +317,7 @@ const OffersManager = () => {
                 </label>
               </div>
 
-              <div className="flex gap-4">
+              <div className="flex flex-col sm:flex-row gap-4">
                 <button
                   type="submit"
                   className="bg-orange-500 hover:bg-orange-600 text-white px-6 py-3 rounded-lg font-medium transition"

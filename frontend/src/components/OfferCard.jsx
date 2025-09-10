@@ -58,6 +58,7 @@ const OfferCard = ({ offer }) => {
   const showDiscount = offer.discount !== null && offer.discount > 0;
 
   return (
+    <div className="w-full sm:max-w-xs mx-auto">
     <Link to={`/offers/${offer.id}`} className="block"> 
       <div className="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300">
         <div className="h-40 bg-orange-50 flex items-center justify-center">
@@ -103,6 +104,7 @@ const OfferCard = ({ offer }) => {
         )}
       </div>
     </Link>
+    </div>
   );
 };
 
