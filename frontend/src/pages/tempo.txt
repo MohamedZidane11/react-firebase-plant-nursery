@@ -1,5 +1,5 @@
 // src/pages/Home.jsx
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { offers } from '../data/offers';
 
 console.log('✅ Home Component Loaded');
@@ -7,20 +7,33 @@ console.log('✅ Home Component Loaded');
 const Home = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [activeFilter, setActiveFilter] = useState('all');
+  const [sponsors, setSponsors] = useState([]);
+  const [categories, setCategories] = useState([]); // ✅ New state
+  const [loading, setLoading] = useState(true); // ✅ Loading state
+  const [sponsorsLoading, setSponsorsLoading] = useState(true);
 
-  const [currentSlide, setCurrentSlide] = useState(0);
+  // ✅ Fetch categories from backend
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const API_BASE = 'https://react-firebase-plant-nursery-production.up.railway.app'; // 🔁 Replace with your Railway URL
+        const response = await fetch(`${API_BASE}/api/categories`);
 
-  const nextSlide = () => {
-    setCurrentSlide((prev) => (prev === 2 ? 0 : prev + 1));
-  };
+        if (!response.ok) throw new Error('فشل تحميل التصنيفات');
 
-  const prevSlide = () => {
-    setCurrentSlide((prev) => (prev === 0 ? 2 : prev - 1));
-  };
+        const data = await response.json();
+        setCategories(Array.isArray(data) ? data : []);
+      } catch (err) {
+        console.error('Error fetching categories:', err);
+        setCategories([]); // Fallback to empty
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  const goToSlide = (index) => {
-    setCurrentSlide(index);
-  };
+    fetchCategories();
+  }, []);
+
 
   // 🔎 Filter offers based on search and filter
   const filteredOffers = offers.filter((offer) => {
@@ -36,6 +49,34 @@ const Home = () => {
 
     return matchesSearch && matchesFilter;
   });
+
+  // ✅ Fetch sponsors from backend
+  useEffect(() => {
+    const fetchSponsors = async () => {
+      try {
+        const API_BASE = 'https://react-firebase-plant-nursery-production.up.railway.app'; // 🔁 Replace with your URL
+        const response = await fetch(`${API_BASE}/api/sponsors`);
+
+        if (!response.ok) throw new Error('فشل تحميل الرعاة');
+
+        const data = await response.json();
+        setSponsors(Array.isArray(data) ? data : []);
+      } catch (err) {
+        console.error('Error fetching sponsors:', err);
+        setSponsors([]); // Fallback to empty
+      } finally {
+        setSponsorsLoading(false);
+      }
+    };
+
+    fetchSponsors();
+  }, []);
+
+
+  if (loading || sponsorsLoading) {
+    return <p className="text-center py-8">جاري التحميل...</p>;
+  }
+
 
   // 🏷️ Define available filters
   const filters = [
@@ -149,29 +190,39 @@ const Home = () => {
         <div className="container mx-auto px-4">
           <h2 className="text-3xl font-bold text-center text-green-800 mb-12">التصنيفات الرئيسية</h2>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div className="bg-green-600 text-white p-6 rounded-xl shadow-lg text-center">
-              <div className="w-20 h-20 mx-auto mb-4 bg-green-500 rounded-full flex items-center justify-center">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                </svg>
-              </div>
-              <h3 className="text-xl font-bold mb-2">مشاتل مختلفة</h3>
-              <p className="text-sm opacity-90">أكثر من 200 مشتل</p>
-            </div>
+          {categories.length === 0 ? (
+            <p className="text-center text-gray-500">لا توجد تصنيفات.</p>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              {categories.map((cat) => (
+                <div key={cat.id} className="bg-green-600 text-white p-6 rounded-xl shadow-lg text-center">
+                  {/* Image */}
+                  <div className="w-20 h-20 mx-auto mb-4 bg-green-500 rounded-full flex items-center justify-center overflow-hidden">
+                    {cat.image ? (
+                      <img
+                        src={cat.image}
+                        alt={cat.title}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          e.target.src = 'https://placehold.co/100x100/10b981/ffffff?text=No+Image';
+                        }}
+                      />
+                    ) : (
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                      </svg>
+                    )}
+                  </div>
 
-            <div className="bg-green-600 text-white p-6 rounded-xl shadow-lg text-center">
-              <div className="w-20 h-20 mx-auto mb-4 bg-green-500 rounded-full flex items-center justify-center">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.638 2.296.07 2.572-1.065z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                </svg>
-              </div>
-              <h3 className="text-xl font-bold mb-2">أدوات الزراعة</h3>
-              <p className="text-sm opacity-90">أكثر من 80 متجر</p>
-            </div>
+                  {/* Title */}
+                  <h3 className="text-xl font-bold mb-2">{cat.title}</h3>
 
-          </div>
+                  {/* Description */}
+                  <p className="text-sm opacity-90">{cat.description || 'تفاصيل غير متوفرة'}</p>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </section>
 
@@ -294,68 +345,44 @@ const Home = () => {
         </div>
       </section>
 
-      {/* Current Offers - Replaced with Empty Carousel */}
-      <section id="search-results" className="py-12">
+      {/* Sponsors Banner */}
+      <section className="py-12 bg-gradient-to-r from-amber-50 to-yellow-50">
         <div className="container mx-auto px-4">
-          <h2 className="text-3xl font-bold text-center text-green-800 mb-12">العروض الحالية</h2>
+          <div className="text-center mb-8">
+            <h2 className="text-3xl font-bold"> ✨</h2>
+          </div>
 
-          <div className="relative max-w-4xl mx-auto">
-            {/* Carousel Container */}
-            <div className="overflow-hidden rounded-xl shadow-lg bg-white">
-              <div
-                className="flex transition-transform duration-500 ease-in-out"
-                style={{ transform: `translateX(-${currentSlide * 100}%)` }}
-              >
-                {/* Slide 1 */}
-                <div className="w-full flex-shrink-0 h-64 md:h-80 bg-gradient-to-br from-green-50 to-emerald-100 flex items-center justify-center">
-                  <p className="text-green-800 text-2xl font-semibold">الصفحة 1</p>
+          {sponsors.length === 0 ? (
+            <p className="text-center text-gray-400">لا توجد رعاة حالياً.</p>
+          ) : (
+            <div className="flex flex-wrap justify-center items-center gap-8 md:gap-12 overflow-x-auto pb-4">
+              {sponsors.map((sponsor) => (
+                <div
+                  key={sponsor.id}
+                  className="text-center min-w-[120px] md:min-w-[160px]"
+                >
+                  <div className="w-16 h-16 md:w-20 md:h-20 mx-auto mb-3 bg-yellow-500 border-4 border-yellow-400 rounded-full flex items-center justify-center overflow-hidden">
+                    {sponsor.logo ? (
+                      <img
+                        src={sponsor.logo}
+                        alt={sponsor.name}
+                        className="w-full h-full object-contain"
+                        onError={(e) => {
+                          e.target.src = 'https://placehold.co/100x100/fbbf24/ffffff?text=Sponsor';
+                        }}
+                      />
+                    ) : (
+                      <span className="text-black font-bold text-sm">Logo</span>
+                    )}
+                  </div>
+                  <h3 className="text-lg font-bold">{sponsor.name}</h3>
+                  {sponsor.blurb && (
+                    <p className="text-sm text-gray-900">{sponsor.blurb}</p>
+                  )}
                 </div>
-                {/* Slide 2 */}
-                <div className="w-full flex-shrink-0 h-64 md:h-80 bg-gradient-to-br from-blue-50 to-cyan-100 flex items-center justify-center">
-                  <p className="text-blue-800 text-2xl font-semibold">الصفحة 2</p>
-                </div>
-                {/* Slide 3 */}
-                <div className="w-full flex-shrink-0 h-64 md:h-80 bg-gradient-to-br from-purple-50 to-pink-100 flex items-center justify-center">
-                  <p className="text-purple-800 text-2xl font-semibold">الصفحة 3</p>
-                </div>
-              </div>
-            </div>
-
-            {/* Pagination Dots */}
-            <div className="flex justify-center mt-6 space-x-2">
-              {[0, 1, 2].map((dot) => (
-                <button
-                  key={dot}
-                  onClick={() => goToSlide(dot)}
-                  className={`w-3 h-3 rounded-full transition-colors ${
-                    currentSlide === dot ? 'bg-green-500' : 'bg-gray-300 hover:bg-gray-400'
-                  }`}
-                  aria-label={`انتقل إلى الشريحة ${dot + 1}`}
-                />
               ))}
             </div>
-
-            {/* Control Arrows */}
-            <button
-              onClick={prevSlide}
-              className="absolute top-1/2 left-4 transform -translate-y-1/2 bg-black bg-opacity-30 text-white p-2 rounded-full hover:bg-opacity-50 transition"
-              aria-label="الشريحة السابقة"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-              </svg>
-            </button>
-
-            <button
-              onClick={nextSlide}
-              className="absolute top-1/2 right-4 transform -translate-y-1/2 bg-black bg-opacity-30 text-white p-2 rounded-full hover:bg-opacity-50 transition"
-              aria-label="الشريحة التالية"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-              </svg>
-            </button>
-          </div>
+          )}
         </div>
       </section>
     </div>
