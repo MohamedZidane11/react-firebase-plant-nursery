@@ -89,7 +89,8 @@ const NurseriesManager = () => {
       services: [],
       featured: false,
       discount: null,
-      published: true
+      published: true,
+      phone: ''
     });
     setEditing(null);
     setShowForm(false);
@@ -262,6 +263,20 @@ const NurseriesManager = () => {
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
                     placeholder="مثل: منطقة الرياض - الرياض - حي النخيل"
                   />
+                </div>
+                {/* Contact Info */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">رقم الهاتف</label>
+                    <input
+                      type="tel"
+                      name="phone"
+                      value={formData.phone || ''}
+                      onChange={handleChange}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                      placeholder="+966 55 123 4567"
+                    />
+                  </div>
                 </div>
 
                 <div>

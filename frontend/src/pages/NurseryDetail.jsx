@@ -116,7 +116,7 @@ const NurseryDetail = () => {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.54 1.06l-1.519.76a11.042 11.042 0 006.105 6.105l.76-1.519a1 1 0 011.06-.54l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
                     </svg>
                   </div>
-                  <p className="text-green-800">+966 55 123 4567</p>
+                  <p className="text-green-800">{nursery.phone || '+966 55 123 4567'}</p>
                 </div>
                 <div className="bg-gray-50 p-4 rounded-lg">
                   <div className="flex items-center justify-between mb-2">
@@ -192,6 +192,34 @@ const NurseryDetail = () => {
             <div className="bg-white rounded-xl shadow-lg p-8 mt-8">
               <h3 className="text-xl font-bold text-green-800 mb-6">معلومات التواصل</h3>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                
+                {/* Phone */}
+                {nursery.phone && (
+                  <div className="flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.54 1.06l-1.519.76a11.042 11.042 0 006.105 6.105l.76-1.519a1 1 0 011.06-.54l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                    </svg>
+                    <div className="ml-4">
+                      <p className="text-sm text-gray-500">رقم الجوال</p>
+                      <p className="font-medium text-green-800">{nursery.phone}</p>
+                    </div>
+                  </div>
+                )}
+
+                {/* WhatsApp */}
+                {nursery.whatsapp && (
+                  <div className="flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16h.01M12 16h.01M15 16h.01M8 18h.01M12 18h.01M16 18h.01M9 14h.01M12 14h.01M15 14h.01" />
+                    </svg>
+                    <div className="ml-4">
+                      <p className="text-sm text-gray-500">واتساب</p>
+                      <p className="font-medium text-green-800">{nursery.whatsapp}</p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Email (Optional) */}
                 <div className="flex items-center">
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
@@ -199,24 +227,6 @@ const NurseryDetail = () => {
                   <div className="ml-4">
                     <p className="text-sm text-gray-500">البريد الإلكتروني</p>
                     <p className="font-medium text-green-800">info@nursery.com</p>
-                  </div>
-                </div>
-                <div className="flex items-center">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16h.01M12 16h.01M15 16h.01M8 18h.01M12 18h.01M16 18h.01M9 14h.01M12 14h.01M15 14h.01" />
-                  </svg>
-                  <div className="ml-4">
-                    <p className="text-sm text-gray-500">واتساب</p>
-                    <p className="font-medium text-green-800">+966 55 123 4567</p>
-                  </div>
-                </div>
-                <div className="flex items-center">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.54 1.06l-1.519.76a11.042 11.042 0 006.105 6.105l.76-1.519a1 1 0 011.06-.54l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                  </svg>
-                  <div className="ml-4">
-                    <p className="text-sm text-gray-500">رقم الجوال</p>
-                    <p className="font-medium text-green-800">+966 55 123 4567</p>
                   </div>
                 </div>
               </div>
