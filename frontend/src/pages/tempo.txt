@@ -1,31 +1,66 @@
 // src/pages/Home.jsx
 import { useState, useEffect } from 'react';
-import { offers } from '../data/offers';
-
-console.log('✅ Home Component Loaded');
+import { Link } from 'react-router-dom';
 
 const Home = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [activeFilter, setActiveFilter] = useState('all');
   const [sponsors, setSponsors] = useState([]);
-  const [categories, setCategories] = useState([]); // ✅ New state
-  const [loading, setLoading] = useState(true); // ✅ Loading state
+  const [categories, setCategories] = useState([]);
+  const [nurseries, setNurseries] = useState([]);
+  const [offers, setOffers] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [sponsorsLoading, setSponsorsLoading] = useState(true);
+  const [results, setResults] = useState([]);
 
-  // ✅ Fetch categories from backend
+  // ✅ Fetch nurseries
+  useEffect(() => {
+    const fetchNurseries = async () => {
+      try {
+        const API_BASE = 'https://react-firebase-plant-nursery-production.up.railway.app';
+        const response = await fetch(`${API_BASE}/api/nurseries`);
+        if (!response.ok) throw new Error('فشل تحميل المشاتل');
+        const data = await response.json();
+        setNurseries(Array.isArray(data) ? data : []);
+      } catch (err) {
+        console.error('Error fetching nurseries:', err);
+        setNurseries([]);
+      }
+    };
+
+    fetchNurseries();
+  }, []);
+
+  // ✅ Fetch offers
+  useEffect(() => {
+    const fetchOffers = async () => {
+      try {
+        const API_BASE = 'https://react-firebase-plant-nursery-production.up.railway.app';
+        const response = await fetch(`${API_BASE}/api/offers`);
+        if (!response.ok) throw new Error('فشل تحميل العروض');
+        const data = await response.json();
+        setOffers(Array.isArray(data) ? data : []);
+      } catch (err) {
+        console.error('Error fetching offers:', err);
+        setOffers([]);
+      }
+    };
+
+    fetchOffers();
+  }, []);
+
+  // ✅ Fetch categories
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const API_BASE = 'https://react-firebase-plant-nursery-production.up.railway.app'; // 🔁 Replace with your Railway URL
+        const API_BASE = 'https://react-firebase-plant-nursery-production.up.railway.app';
         const response = await fetch(`${API_BASE}/api/categories`);
-
         if (!response.ok) throw new Error('فشل تحميل التصنيفات');
-
         const data = await response.json();
         setCategories(Array.isArray(data) ? data : []);
       } catch (err) {
         console.error('Error fetching categories:', err);
-        setCategories([]); // Fallback to empty
+        setCategories([]);
       } finally {
         setLoading(false);
       }
@@ -34,36 +69,18 @@ const Home = () => {
     fetchCategories();
   }, []);
 
-
-  // 🔎 Filter offers based on search and filter
-  const filteredOffers = offers.filter((offer) => {
-    // Search in title, description, tags
-    const matchesSearch = searchTerm
-      ? offer.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        offer.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        offer.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()))
-      : true;
-
-    // Filter by category
-    const matchesFilter = activeFilter === 'all' ? true : offer.tags.includes(activeFilter);
-
-    return matchesSearch && matchesFilter;
-  });
-
-  // ✅ Fetch sponsors from backend
+  // ✅ Fetch sponsors
   useEffect(() => {
     const fetchSponsors = async () => {
       try {
-        const API_BASE = 'https://react-firebase-plant-nursery-production.up.railway.app'; // 🔁 Replace with your URL
+        const API_BASE = 'https://react-firebase-plant-nursery-production.up.railway.app';
         const response = await fetch(`${API_BASE}/api/sponsors`);
-
         if (!response.ok) throw new Error('فشل تحميل الرعاة');
-
         const data = await response.json();
         setSponsors(Array.isArray(data) ? data : []);
       } catch (err) {
         console.error('Error fetching sponsors:', err);
-        setSponsors([]); // Fallback to empty
+        setSponsors([]);
       } finally {
         setSponsorsLoading(false);
       }
@@ -72,25 +89,98 @@ const Home = () => {
     fetchSponsors();
   }, []);
 
+  // ✅ Combine and filter results
+  useEffect(() => {
+    const term = searchTerm.toLowerCase().trim();
+
+    if (!term) {
+      setResults([]);
+      return;
+    }
+
+    const results = [];
+
+    // 🔍 Search nurseries
+    nurseries.forEach(n => {
+      if (
+        n.name.toLowerCase().includes(term) ||
+        n.location.toLowerCase().includes(term) ||
+        n.region?.toLowerCase().includes(term) ||
+        n.city?.toLowerCase().includes(term) ||
+        n.district?.toLowerCase().includes(term) ||
+        n.categories.some(cat => cat.toLowerCase().includes(term)) ||
+        n.services.some(svc => svc.toLowerCase().includes(term))
+      ) {
+        results.push({
+          type: 'nursery',
+          id: n.id,
+          title: n.name,
+          subtitle: n.location,
+          link: `/nurseries/${n.id}`,
+          tags: n.categories.slice(0, 2)
+        });
+      }
+    });
+
+    // 🔍 Search offers
+    offers.forEach(o => {
+      if (
+        o.title.toLowerCase().includes(term) ||
+        o.description.toLowerCase().includes(term) ||
+        o.tags.some(tag => tag.toLowerCase().includes(term)) ||
+        o.nurseryName?.toLowerCase().includes(term)
+      ) {
+        results.push({
+          type: 'offer',
+          id: o.id,
+          title: o.title,
+          subtitle: `من: ${o.nurseryName || 'عرض عام'}`,
+          link: `/offers/${o.id}`,
+          tags: o.tags.slice(0, 2)
+        });
+      }
+    });
+
+    // 🔍 Search categories
+    categories.forEach(c => {
+      if (
+        c.title.toLowerCase().includes(term) ||
+        c.description?.toLowerCase().includes(term)
+      ) {
+        results.push({
+          type: 'category',
+          id: c.id,
+          title: c.title,
+          subtitle: 'تصنيف متاح',
+          link: '/nurseries',
+          tags: ['تصنيف']
+        });
+      }
+    });
+
+    setResults(results);
+  }, [searchTerm, nurseries, offers, categories]);
+
+  // ✅ Define filters
+  const filters = [
+    { key: 'all', label: 'الكل' },
+    { key: 'category', label: 'تصنيفات' },
+    { key: 'service', label: 'خدمات' }
+  ];
+
+  // ✅ Filter results by active filter
+  const filteredResults = results.filter(result => {
+    if (activeFilter === 'all') return true;
+    if (activeFilter === 'category') return result.type === 'category';
+    if (activeFilter === 'service') return ['nursery', 'offer'].includes(result.type) && (
+      nurseries.find(n => n.id === result.id && n.services.some(s => s === 'consultation' || s === 'delivery' || s === 'installation' || s === 'maintenance'))
+    );
+    return true;
+  });
 
   if (loading || sponsorsLoading) {
     return <p className="text-center py-8">جاري التحميل...</p>;
   }
-
-
-  // 🏷️ Define available filters
-  const filters = [
-    { key: 'all', label: 'الكل' },
-    { key: 'نباتات داخلية', label: 'نباتات داخلية' },
-    { key: 'زهور', label: 'زهور' },
-    { key: 'نباتات خارجية', label: 'نباتات خارجية' },
-    { key: 'أدوات زراعة', label: 'أدوات زراعة' },
-    { key: 'توصيل', label: 'توصيل' },
-    { key: 'استشارات', label: 'استشارات' }
-  ];
-
-  // 🖼️ Get the first filtered offer for "Current Offers" section
-  const featuredOffer = filteredOffers[0] || offers[0];
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -156,13 +246,12 @@ const Home = () => {
 
                   <input
                     type="text"
-                    placeholder="ابحث عن مشتل، عرض، منطقة..."
+                    placeholder="ابحث عن مشتل، عرض، منطقة، تصنيف..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     className="w-full px-12 py-3 rounded-full border border-gray-300 focus:outline-none focus:ring-2 focus:ring-green-500"
                   />
                 </form>
-                
               </div>
             </div>
 
@@ -182,6 +271,49 @@ const Home = () => {
               ))}
             </div>
           </div>
+
+          {/* Search Results */}
+          {searchTerm && (
+            <div id="search-results" className="mt-8 bg-white rounded-xl shadow-lg p-6">
+              <h3 className="text-xl font-bold text-green-800 mb-4">
+                نتائج البحث لـ "{searchTerm}"
+              </h3>
+
+              {filteredResults.length > 0 ? (
+                <div className="space-y-4">
+                  {filteredResults.map((result) => (
+                    <Link
+                      key={result.id}
+                      to={result.link}
+                      className="block p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition"
+                    >
+                      <div className="flex justify-between">
+                        <h4 className="font-bold text-gray-800">{result.title}</h4>
+                        <span className={`text-xs px-2 py-1 rounded-full ${
+                          result.type === 'nursery' ? 'bg-green-100 text-green-800' :
+                          result.type === 'offer' ? 'bg-orange-100 text-orange-800' :
+                          'bg-blue-100 text-blue-800'
+                        }`}>
+                          {result.type === 'nursery' ? 'مشتل' :
+                           result.type === 'offer' ? 'عرض' : 'تصنيف'}
+                        </span>
+                      </div>
+                      <p className="text-sm text-gray-600 mt-1">{result.subtitle}</p>
+                      <div className="flex flex-wrap gap-1 mt-2">
+                        {result.tags.map((tag, i) => (
+                          <span key={i} className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded">
+                            {tag}
+                          </span>
+                        ))}
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-gray-500">لا توجد نتائج مطابقة للبحث.</p>
+              )}
+            </div>
+          )}
         </div>
       </section>
 
@@ -196,7 +328,6 @@ const Home = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               {categories.map((cat) => (
                 <div key={cat.id} className="bg-green-600 text-white p-6 rounded-xl shadow-lg text-center">
-                  {/* Image */}
                   <div className="w-20 h-20 mx-auto mb-4 bg-green-500 rounded-full flex items-center justify-center overflow-hidden">
                     {cat.image ? (
                       <img
@@ -213,11 +344,7 @@ const Home = () => {
                       </svg>
                     )}
                   </div>
-
-                  {/* Title */}
                   <h3 className="text-xl font-bold mb-2">{cat.title}</h3>
-
-                  {/* Description */}
                   <p className="text-sm opacity-90">{cat.description || 'تفاصيل غير متوفرة'}</p>
                 </div>
               ))}
@@ -351,16 +478,12 @@ const Home = () => {
           <div className="text-center mb-8">
             <h2 className="text-3xl font-bold"> ✨</h2>
           </div>
-
           {sponsors.length === 0 ? (
             <p className="text-center text-gray-400">لا توجد رعاة حالياً.</p>
           ) : (
             <div className="flex flex-wrap justify-center items-center gap-8 md:gap-12 overflow-x-auto pb-4">
               {sponsors.map((sponsor) => (
-                <div
-                  key={sponsor.id}
-                  className="text-center min-w-[120px] md:min-w-[160px]"
-                >
+                <div key={sponsor.id} className="text-center min-w-[120px] md:min-w-[160px]">
                   <div className="w-16 h-16 md:w-20 md:h-20 mx-auto mb-3 bg-yellow-500 border-4 border-yellow-400 rounded-full flex items-center justify-center overflow-hidden">
                     {sponsor.logo ? (
                       <img
