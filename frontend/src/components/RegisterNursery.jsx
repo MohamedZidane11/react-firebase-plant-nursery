@@ -53,6 +53,7 @@ const RegisterNursery = () => {
     if (!formData.whatsapp.trim()) newErrors.whatsapp = 'رقم الواتس آب مطلوب';
     if (!/^[\d+\-\s()]{8,15}$/.test(formData.whatsapp.trim())) {
       newErrors.whatsapp = 'رقم الواتس آب غير صالح';
+    if (!formData.categories.trim()) newErrors.categories = 'التصنيف مطلوب';
     }
 
     if (Object.keys(newErrors).length > 0) {
@@ -69,6 +70,7 @@ const RegisterNursery = () => {
         location: formData.location.trim(),
         contactName: formData.contactName.trim(),
         whatsapp: formData.whatsapp.trim(),
+        categories: formData.categories.trim(),
         submittedAt: new Date().toISOString(),
         status: 'pending'
         // ❌ No image field
@@ -113,6 +115,7 @@ const RegisterNursery = () => {
             {/* Name */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
+              <span className="text-red-500">*</span>
                 اسم المشتل
               </label>
               <input
@@ -131,6 +134,7 @@ const RegisterNursery = () => {
             {/* Contact Person */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
+              <span className="text-red-500">*</span>
                 اسم المسئول
               </label>
               <input
@@ -149,6 +153,7 @@ const RegisterNursery = () => {
             {/* WhatsApp Number */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
+              <span className="text-red-500">*</span>
                 رقم التواصل (واتس آب)
               </label>
               <input
@@ -167,6 +172,7 @@ const RegisterNursery = () => {
             {/* Categories */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
+              <span className="text-red-500">*</span>
                 التصنيف الرئيسي
               </label>
               <div className="flex flex-wrap gap-2">
@@ -187,6 +193,7 @@ const RegisterNursery = () => {
             {/* Location */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
+              <span className="text-red-500">*</span>
                 الموقع
               </label>
               <input

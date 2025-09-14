@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { db } from '../firebase/firebase';
 import { collection, getDocs, doc, updateDoc, deleteDoc } from 'firebase/firestore';
+import defaultPending from '../assets/pending.png'; // ✅ Import default image
 
 const PendingNurseriesManager = () => {
   const [nurseries, setNurseries] = useState([]);
@@ -89,13 +90,13 @@ const PendingNurseriesManager = () => {
                 {/* Nursery Info */}
                 <div className="flex flex-col md:flex-row gap-6">
                   {/* Image */}
-                  <div className="md:w-48 flex-shrink-0">
+                  <div className="md:w-30 flex-shrink-0">
                     <img
-                      src={nursery.image}
+                      src={nursery.image || defaultPending}
                       alt={nursery.name}
-                      className="w-full h-32 object-cover rounded-lg"
+                      className="h-26 h-20 object-cover rounded-lg"
                       onError={(e) => {
-                        e.target.src = 'https://placehold.co/200x150/e2e8f0/64748b?text=No+Image';
+                        e.target.src = defaultPending;
                       }}
                     />
                   </div>
