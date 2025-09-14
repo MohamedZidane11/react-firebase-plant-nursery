@@ -193,7 +193,8 @@ app.get('/api/sponsors', async (req, res) => {
       // Save to Firestore
       const newNursery = {
         name: name.trim(),
-        image: image.trim(),
+        // Remove image validation entirely, or log but don't block
+        //image: image.trim(),
         categories: Array.isArray(categories) ? categories : [],
         location: location.trim(),
         services: Array.isArray(services) ? services : [],
