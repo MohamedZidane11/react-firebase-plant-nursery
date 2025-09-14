@@ -133,6 +133,7 @@ const RegisterNursery = () => {
             </div>
 
             {/* Image URL */}
+            {/*
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 رابط الصورة
@@ -149,6 +150,7 @@ const RegisterNursery = () => {
               />
               {errors.image && <p className="text-red-500 text-sm mt-1">{errors.image}</p>}
             </div>
+              */}
 
             {/* Contact Person */}
             <div>
