@@ -45,7 +45,7 @@ const RegisterNursery = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Validation (remove image validation)
+    // Validation
     const newErrors = {};
     if (!formData.name.trim()) newErrors.name = 'الاسم مطلوب';
     if (!formData.location.trim()) newErrors.location = 'الموقع مطلوب';
@@ -54,12 +54,12 @@ const RegisterNursery = () => {
     if (!/^[\d+\-\s()]{8,15}$/.test(formData.whatsapp.trim())) {
       newErrors.whatsapp = 'رقم الواتس آب غير صالح';
     }
-
+    
     // ✅ Validate categories
     if (formData.categories.length === 0) {
       newErrors.categories = 'يرجى اختيار تصنيف واحد على الأقل';
     }
-    
+
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
       return;
@@ -76,7 +76,6 @@ const RegisterNursery = () => {
         whatsapp: formData.whatsapp.trim(),
         submittedAt: new Date().toISOString(),
         status: 'pending'
-        // ❌ No image field
       };
 
       await axios.post(
@@ -118,8 +117,7 @@ const RegisterNursery = () => {
             {/* Name */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-              <span className="text-red-500">*</span>
-                اسم المشتل
+                <span className="text-red-500">*</span> اسم المشتل
               </label>
               <input
                 type="text"
@@ -137,8 +135,7 @@ const RegisterNursery = () => {
             {/* Contact Person */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-              <span className="text-red-500">*</span>
-                اسم المسئول
+                <span className="text-red-500">*</span> اسم المسئول
               </label>
               <input
                 type="text"
@@ -156,8 +153,7 @@ const RegisterNursery = () => {
             {/* WhatsApp Number */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-              <span className="text-red-500">*</span>
-                رقم التواصل (واتس آب)
+                <span className="text-red-500">*</span> رقم التواصل (واتس آب)
               </label>
               <input
                 type="tel"
@@ -175,8 +171,7 @@ const RegisterNursery = () => {
             {/* Categories */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-              <span className="text-red-500">*</span>
-                التصنيف الرئيسي
+                <span className="text-red-500">*</span> التصنيف الرئيسي
               </label>
               <div className="flex flex-wrap gap-2">
                 {['زهور', 'نخيل', 'نباتات داخلية', 'نباتات خارجية', 'مشاتل مختلطة', 'معدات', 'أدوات الزراعة'].map((cat) => (
@@ -191,13 +186,13 @@ const RegisterNursery = () => {
                   </label>
                 ))}
               </div>
+              {errors.categories && <p className="text-red-500 text-sm mt-1">{errors.categories}</p>}
             </div>
 
             {/* Location */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-              <span className="text-red-500">*</span>
-                الموقع
+                <span className="text-red-500">*</span> الموقع
               </label>
               <input
                 type="text"
