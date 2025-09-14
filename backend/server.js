@@ -184,7 +184,8 @@ app.get('/api/sponsors', async (req, res) => {
 
       // Validation
       if (!name?.trim()) return res.status(400).json({ message: 'الاسم مطلوب' });
-      if (!image?.trim()) return res.status(400).json({ message: 'الصورة مطلوبة' });
+      // Remove image validation entirely, or log but don't block
+      //if (!image?.trim()) return res.status(400).json({ message: 'الصورة مطلوبة' });
       if (!location?.trim()) return res.status(400).json({ message: 'الموقع مطلوب' });
       if (!contactName?.trim()) return res.status(400).json({ message: 'اسم المسئول مطلوب' });
       if (!whatsapp?.trim()) return res.status(400).json({ message: 'رقم الواتس آب مطلوب' });
