@@ -53,9 +53,13 @@ const RegisterNursery = () => {
     if (!formData.whatsapp.trim()) newErrors.whatsapp = 'رقم الواتس آب مطلوب';
     if (!/^[\d+\-\s()]{8,15}$/.test(formData.whatsapp.trim())) {
       newErrors.whatsapp = 'رقم الواتس آب غير صالح';
-    if (!formData.categories.trim()) newErrors.categories = 'التصنيف مطلوب';
     }
 
+    // ✅ Validate categories
+    if (formData.categories.length === 0) {
+      newErrors.categories = 'يرجى اختيار تصنيف واحد على الأقل';
+    }
+    
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
       return;
@@ -70,7 +74,6 @@ const RegisterNursery = () => {
         location: formData.location.trim(),
         contactName: formData.contactName.trim(),
         whatsapp: formData.whatsapp.trim(),
-        categories: formData.categories.trim(),
         submittedAt: new Date().toISOString(),
         status: 'pending'
         // ❌ No image field
