@@ -5,13 +5,12 @@ import axios from 'axios';
 const RegisterNursery = () => {
   const [formData, setFormData] = useState({
     name: '',
-    image: '',
     categories: [],
     location: '',
     services: [],
     featured: false,
-    contactName: '',        // ✅ New
-    whatsapp: '',           // ✅ New
+    contactName: '',
+    whatsapp: '',
   });
 
   const [errors, setErrors] = useState({});
@@ -46,11 +45,10 @@ const RegisterNursery = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Validation
+    // Validation (remove image validation)
     const newErrors = {};
     if (!formData.name.trim()) newErrors.name = 'الاسم مطلوب';
     if (!formData.location.trim()) newErrors.location = 'الموقع مطلوب';
-    if (!formData.image.trim()) newErrors.image = 'صورة المشتل مطلوبة';
     if (!formData.contactName.trim()) newErrors.contactName = 'اسم المسئول مطلوب';
     if (!formData.whatsapp.trim()) newErrors.whatsapp = 'رقم الواتس آب مطلوب';
     if (!/^[\d+\-\s()]{8,15}$/.test(formData.whatsapp.trim())) {
@@ -69,25 +67,23 @@ const RegisterNursery = () => {
         ...formData,
         name: formData.name.trim(),
         location: formData.location.trim(),
-        image: formData.image.trim(),
         contactName: formData.contactName.trim(),
         whatsapp: formData.whatsapp.trim(),
         submittedAt: new Date().toISOString(),
-        status: 'pending' // ✅ Mark as pending
+        status: 'pending'
+        // ❌ No image field
       };
 
-      // ✅ Send to backend
       await axios.post(
         'https://react-firebase-plant-nursery-production.up.railway.app/api/pending-nurseries',
         payload
       );
 
       alert('تم تسجيل مشتلّك بنجاح! سيقوم الفريق بمراجعته خلال 24 ساعة.');
-      
+
       // Reset form
       setFormData({
         name: '',
-        image: '',
         categories: [],
         location: '',
         services: [],
@@ -131,26 +127,6 @@ const RegisterNursery = () => {
               />
               {errors.name && <p className="text-red-500 text-sm mt-1">{errors.name}</p>}
             </div>
-
-            {/* Image URL */}
-            {/*
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                رابط الصورة
-              </label>
-              <input
-                type="url"
-                name="image"
-                value={formData.image}
-                onChange={handleChange}
-                className={`w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-green-500 focus:outline-none ${
-                  errors.image ? 'border-red-500' : 'border-gray-300'
-                }`}
-                placeholder="https://example.com/image.jpg"
-              />
-              {errors.image && <p className="text-red-500 text-sm mt-1">{errors.image}</p>}
-            </div>
-              */}
 
             {/* Contact Person */}
             <div>
