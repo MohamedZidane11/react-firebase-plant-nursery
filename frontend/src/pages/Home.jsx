@@ -327,7 +327,7 @@ const Home = () => {
       {viewMode === 'home' && (
         <section className="py-12 bg-white">
           <div className="container mx-auto px-4">
-            <h2 className="text-3xl font-bold text-center text-green-800 mb-12">التصنيفات الرئيسية</h2>
+            <h2 className="text-3xl font-bold text-center text-green-800 mb-12">التصنيف الرئيسى</h2>
 
             {categories.length === 0 ? (
               <p className="text-center text-gray-500">لا توجد تصنيفات.</p>
@@ -368,22 +368,27 @@ const Home = () => {
         </section>
       )}
 
-      {/* Featured Nurseries (Only those marked as "مميز") */}
+      {/* Featured Nurseries (Responsive & Centered) */}
       {viewMode === 'home' && featuredNurseries.length > 0 && (
         <section className="py-12">
           <div className="container mx-auto px-4">
-            <h2 className="text-3xl font-bold text-center text-green-800 mb-12">أبرز المشاتل ✨</h2>
+            <h2 className="text-3xl font-bold text-center text-green-800 mb-8">أبرز المشاتل ✨</h2>
 
-            <div className="overflow-x-auto pb-4">
-              <div className="flex space-x-6 justify-center">
+            {/* Outer centering wrapper */}
+            <div className="flex justify-center w-full">
+              <div 
+                className="flex overflow-x-auto scroll-smooth snap-x snap-mandatory space-x-6 pb-4 hide-scrollbar max-w-full"
+                dir="rtl"
+                style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+              >
                 {featuredNurseries.map((nursery) => (
                   <Link 
                     key={nursery.id} 
                     to={`/nurseries/${nursery.id}`}
-                    className="flex-shrink-0 w-48"
+                    className="flex-shrink-0 snap-start w-full sm:w-80 md:w-64 lg:w-56 xl:w-64"
                   >
-                    <div className="bg-green-100 p-6 rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 border-2 border-yellow-500">
-                      <div className="w-20 h-20 mx-auto mb-4 bg-green-200 rounded-full flex items-center justify-center overflow-hidden">
+                    <div className="bg-green-100 p-6 rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 border-2 border-yellow-500 h-full flex flex-col items-center">
+                      <div className="w-20 h-20 mb-4 bg-green-200 rounded-full flex items-center justify-center overflow-hidden">
                         <img
                           src={nursery.image || defaultNurseryImage}
                           alt={nursery.name}
@@ -393,13 +398,13 @@ const Home = () => {
                           }}
                         />
                       </div>
-                      <h3 className="text-lg font-bold text-green-800 text-center">{nursery.name}</h3>
-                      <p className="text-sm text-gray-600 text-center">{nursery.location}</p>
-                      <div className="flex justify-center mt-2 space-x-1">
+                      <h3 className="text-lg font-bold text-green-800 text-center line-clamp-1">{nursery.name}</h3>
+                      <p className="text-sm text-gray-600 text-center mt-1 line-clamp-1">{nursery.location}</p>
+                      <div className="flex justify-center mt-2 flex-wrap gap-1">
                         {nursery.categories.slice(0, 2).map((cat, i) => (
                           <span
                             key={i}
-                            className="text-xs bg-green-200 text-green-800 px-2 py-1 rounded-full"
+                            className="text-xs bg-green-200 text-green-800 px-2 py-1 rounded-full whitespace-nowrap"
                           >
                             {cat}
                           </span>
@@ -410,17 +415,19 @@ const Home = () => {
                 ))}
               </div>
 
-              {selectedCategory && (
-               <div className="text-center mt-6">
-                   {/*<button
-                    onClick={() => setViewMode('category-results')}
-                    className="text-green-600 hover:underline"
-                  >
-                    ← عرض المشاتل في تصنيف: {selectedCategory}
-                  </button>*/}
-              </div>
-              )}
+              {/* Optional: Scroll indicators or buttons (you can add later) */}
             </div>
+
+            {selectedCategory && (
+              <div className="text-center mt-6">
+                {/* <button
+                  onClick={() => setViewMode('category-results')}
+                  className="text-green-600 hover:underline"
+                >
+                  ← عرض المشاتل في تصنيف: {selectedCategory}
+                </button> */}
+              </div>
+            )}
           </div>
         </section>
       )}
@@ -435,8 +442,13 @@ const Home = () => {
               المشاتل في تصنيف: {selectedCategory}
             </h2>
 
-            <div className="overflow-x-auto pb-4">
-              <div className="flex space-x-6 justify-center">
+            {/* Outer centering wrapper */}
+            <div className="flex justify-center w-full">
+              <div 
+                className="flex overflow-x-auto scroll-smooth snap-x snap-mandatory space-x-6 pb-4 hide-scrollbar max-w-full"
+                dir="rtl"
+                style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+              >
                 {nurseries
                   .filter(nursery => nursery.categories.includes(selectedCategory))
                   .map((nursery) => (
@@ -473,8 +485,10 @@ const Home = () => {
                   ))}
               </div>
 
-              {/* Back to Categories */}
-              <div className="text-center mt-6">
+              
+            </div>
+            {/* Back to Categories */}
+            <div className="text-center mt-6">
                 <button
                   onClick={() => setViewMode('home')}
                   className="text-green-600 hover:underline text-lg"
@@ -482,7 +496,6 @@ const Home = () => {
                   ← عودة الي التصنيفات
                 </button>
               </div>
-            </div>
           </div>
         </section>
       )}

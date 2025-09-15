@@ -111,72 +111,73 @@ const Nurseries = () => {
       <section className="py-8">
         <div className="container mx-auto px-4">
           <div className="bg-white rounded-xl p-6 shadow-md space-y-4">
-            {/* Search */}
-            <input
-              type="text"
-              placeholder="ابحث عن مشتل، منطقة، أو تصنيف..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-md"
-            />
+            <div className="flex flex-wrap gap-4 items-center justify-center">
+              {/* Search */}
+              <input
+                type="text"
+                placeholder="ابحث عن مشتل، منطقة، أو تصنيف..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full px-4 py-2 border border-gray-300 rounded-md"
+              />
 
-            {/* Category Filter */}
-            <select
-              value={selectedCategory}
-              onChange={(e) => setSelectedCategory(e.target.value)}
-              className="w-full md:w-auto px-4 py-2 border border-gray-300 rounded-md"
-            >
-              <option value="all">جميع التصنيفات</option>
-              <option value="nursery">مشاتل</option>
-              <option value="plants">نباتات</option>
-              <option value="tools">أدوات زراعة</option>
-            </select>
+              {/* Category Filter */}
+              <select
+                value={selectedCategory}
+                onChange={(e) => setSelectedCategory(e.target.value)}
+                className="w-full md:w-auto px-4 py-2 border border-gray-300 rounded-md"
+              >
+                <option value="all">جميع التصنيفات</option>
+                <option value="nursery">مشاتل</option>
+                <option value="plants">نباتات</option>
+                <option value="tools">أدوات زراعة</option>
+              </select>
 
-            {/* Region Filter */}
-            <select
-              value={selectedRegion}
-              onChange={(e) => {
-                setSelectedRegion(e.target.value);
-                setSelectedCity('all');
-                setSelectedDistrict('all');
-              }}
-              className="w-full md:w-auto px-4 py-2 border border-gray-300 rounded-md"
-            >
-              <option value="all">جميع المناطق</option>
-              {regions.map(region => (
-                <option key={region} value={region}>{region}</option>
-              ))}
-            </select>
+              {/* Region Filter */}
+              <select
+                value={selectedRegion}
+                onChange={(e) => {
+                  setSelectedRegion(e.target.value);
+                  setSelectedCity('all');
+                  setSelectedDistrict('all');
+                }}
+                className="w-full md:w-auto px-4 py-2 border border-gray-300 rounded-md"
+              >
+                <option value="all">جميع المناطق</option>
+                {regions.map(region => (
+                  <option key={region} value={region}>{region}</option>
+                ))}
+              </select>
 
-            {/* City Filter */}
-            <select
-              value={selectedCity}
-              onChange={(e) => {
-                setSelectedCity(e.target.value);
-                setSelectedDistrict('all');
-              }}
-              disabled={selectedRegion === 'all' && cities.length === 0}
-              className="w-full md:w-auto px-4 py-2 border border-gray-300 rounded-md disabled:opacity-50"
-            >
-              <option value="all">جميع المدن</option>
-              {cities.map(city => (
-                <option key={city} value={city}>{city}</option>
-              ))}
-            </select>
+              {/* City Filter */}
+              <select
+                value={selectedCity}
+                onChange={(e) => {
+                  setSelectedCity(e.target.value);
+                  setSelectedDistrict('all');
+                }}
+                disabled={selectedRegion === 'all' && cities.length === 0}
+                className="w-full md:w-auto px-4 py-2 border border-gray-300 rounded-md disabled:opacity-50"
+              >
+                <option value="all">جميع المدن</option>
+                {cities.map(city => (
+                  <option key={city} value={city}>{city}</option>
+                ))}
+              </select>
 
-            {/* District Filter */}
-            <select
-              value={selectedDistrict}
-              onChange={(e) => setSelectedDistrict(e.target.value)}
-              disabled={selectedCity === 'all' && districts.length === 0}
-              className="w-full md:w-auto px-4 py-2 border border-gray-300 rounded-md disabled:opacity-50"
-            >
-              <option value="all">جميع الأحياء</option>
-              {districts.map(district => (
-                <option key={district} value={district}>{district}</option>
-              ))}
-            </select>
-
+              {/* District Filter */}
+              <select
+                value={selectedDistrict}
+                onChange={(e) => setSelectedDistrict(e.target.value)}
+                disabled={selectedCity === 'all' && districts.length === 0}
+                className="w-full md:w-auto px-4 py-2 border border-gray-300 rounded-md disabled:opacity-50"
+              >
+                <option value="all">جميع الأحياء</option>
+                {districts.map(district => (
+                  <option key={district} value={district}>{district}</option>
+                ))}
+              </select>
+            </div>
             {/* Sort & Offers */}
             <div className="flex flex-col md:flex-row gap-4 mt-4">
               <select

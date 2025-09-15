@@ -13,11 +13,12 @@ const Header = () => {
   };
 
   return (
-    <header className="bg-green-800 text-white shadow-lg">
+    <header className="bg-green-800 text-white shadow-lg relative">
       <div className="container mx-auto px-4 py-4">
         <div className="flex justify-between items-center">
-          {/* Logo Section */}
-          <div className="flex items-center space-x-3 rtl:space-x-reverse">
+
+          {/* ✅ Logo Section — LEFT (UNCHANGED) */}
+          <div className="flex items-center space-x-3 rtl:space-x-reverse z-10">
             <img
               src={logo}
               alt="تشجير - منصة المشاتل"
@@ -26,45 +27,49 @@ const Header = () => {
             <span className="text-xl font-bold tracking-wide">منصة المشاتل</span>
           </div>
 
-          {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center space-x-8 rtl:space-x-reverse">
+          {/* ✅ Desktop Navigation — CENTER (ABSOLUTE POSITIONING) */}
+          <nav className="hidden md:flex absolute left-1/2 transform -translate-x-1/2 space-x-8 rtl:space-x-reverse">
             <Link
               to="/"
               onClick={handleLinkClick}
-              className={`hover:text-yellow-300 transition-colors duration-200 ${location.pathname === '/' ? 'font-bold' : ''}`}
+              className={`hover:text-yellow-300 transition-colors duration-200 px-3 py-2 rounded-lg hover:bg-green-700 ${location.pathname === '/' ? 'font-bold bg-green-700' : ''}`}
             >
               الرئيسية
             </Link>
             <Link
               to="/nurseries"
               onClick={handleLinkClick}
-              className={`hover:text-yellow-300 transition-colors duration-200 ${location.pathname === '/nurseries' ? 'font-bold' : ''}`}
+              className={`hover:text-yellow-300 transition-colors duration-200 px-3 py-2 rounded-lg hover:bg-green-700 ${location.pathname === '/nurseries' ? 'font-bold bg-green-700' : ''}`}
             >
               المشاتل
             </Link>
             <Link
               to="/offers"
               onClick={handleLinkClick}
-              className={`hover:text-yellow-300 transition-colors duration-200 ${location.pathname === '/offers' ? 'font-bold' : ''}`}
+              className={`hover:text-yellow-300 transition-colors duration-200 px-3 py-2 rounded-lg hover:bg-green-700 ${location.pathname === '/offers' ? 'font-bold bg-green-700' : ''}`}
             >
               العروض
             </Link>
             <Link
               to="/contact"
               onClick={handleLinkClick}
-              className={`hover:text-yellow-300 transition-colors duration-200 ${location.pathname === '/contact' ? 'font-bold' : ''}`}
+              className={`hover:text-yellow-300 transition-colors duration-200 px-3 py-2 rounded-lg hover:bg-green-700 ${location.pathname === '/contact' ? 'font-bold bg-green-700' : ''}`}
             >
               اتصل بنا
             </Link>
+          </nav>
+
+          {/* ✅ Register Button — RIGHT */}
+          <div className="hidden md:block z-10">
             <Link to="/register">
-              <button className="bg-green-600 hover:bg-green-700 px-5 py-2 rounded-lg shadow-md transition-all duration-200 transform hover:scale-105 mr-2">
+              <button className="bg-green-600 hover:bg-green-700 px-6 py-2.5 rounded-lg shadow-md transition-all duration-200 transform hover:scale-105 hover:shadow-lg">
                 سجل مشتلك
               </button>
             </Link>
-          </nav>
+          </div>
 
           {/* Mobile Menu Button */}
-          <div className="md:hidden flex items-center">
+          <div className="md:hidden flex items-center z-10">
             <button
               onClick={() => setIsOpen(!isOpen)}
               className="text-white focus:outline-none"
@@ -104,35 +109,35 @@ const Header = () => {
               <Link
                 to="/"
                 onClick={handleLinkClick}
-                className={`py-2 px-4 rounded hover:bg-green-600 transition ${location.pathname === '/' ? 'bg-green-600 font-bold' : ''}`}
+                className={`py-3 px-5 rounded-lg hover:bg-green-600 transition text-lg ${location.pathname === '/' ? 'bg-green-600 font-bold' : ''}`}
               >
                 الرئيسية
               </Link>
               <Link
                 to="/nurseries"
                 onClick={handleLinkClick}
-                className={`py-2 px-4 rounded hover:bg-green-600 transition ${location.pathname === '/nurseries' ? 'bg-green-600 font-bold' : ''}`}
+                className={`py-3 px-5 rounded-lg hover:bg-green-600 transition text-lg ${location.pathname === '/nurseries' ? 'bg-green-600 font-bold' : ''}`}
               >
                 المشاتل
               </Link>
               <Link
                 to="/offers"
                 onClick={handleLinkClick}
-                className={`py-2 px-4 rounded hover:bg-green-600 transition ${location.pathname === '/offers' ? 'bg-green-600 font-bold' : ''}`}
+                className={`py-3 px-5 rounded-lg hover:bg-green-600 transition text-lg ${location.pathname === '/offers' ? 'bg-green-600 font-bold' : ''}`}
               >
                 العروض
               </Link>
               <Link
                 to="/contact"
                 onClick={handleLinkClick}
-                className={`py-2 px-4 rounded hover:bg-green-600 transition ${location.pathname === '/contact' ? 'bg-green-600 font-bold' : ''}`}
+                className={`py-3 px-5 rounded-lg hover:bg-green-600 transition text-lg ${location.pathname === '/contact' ? 'bg-green-600 font-bold' : ''}`}
               >
                 اتصل بنا
               </Link>
               <Link to="/register">
                 <button
                   onClick={handleLinkClick}
-                  className="w-full text-right bg-green-600 hover:bg-green-700 px-5 py-2 rounded-lg shadow transition"
+                  className="w-full text-right bg-green-600 hover:bg-green-700 px-6 py-3 rounded-lg shadow transition text-lg font-medium"
                 >
                   سجل مشتلك
                 </button>
