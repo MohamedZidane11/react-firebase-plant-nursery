@@ -297,24 +297,47 @@ const NurseriesManager = () => {
               {/* Categories */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">التصنيفات</label>
-                <div className="flex flex-wrap gap-2">
-                  {['زهور', 'نخيل', 'نباتات داخلية', 'نباتات خارجية', 'مشاتل مختلطة', 'معدات', 'أدوات الزراعة'].map((cat) => (
-                    <label key={cat} className="flex items-center">
-                      <input
-                        type="checkbox"
-                        checked={formData.categories.includes(cat)}
-                        onChange={() => handleCategoryChange(cat)}
-                        className="mr-2 h-4 w-4 text-green-600"
-                      />
-                      <span className="text-sm">{cat}</span>
-                    </label>
-                  ))}
+
+                {/* Primary Categories */}
+                <div className="mb-6">
+                  <h4 className="text-sm font-medium text-gray-800 mb-2">التصنيف الرئيسي</h4>
+                  <div className="flex flex-wrap gap-2">
+                    {['مشاتل', 'مشاتل مختلطة', 'أدوات الزراعة'].map((cat) => (
+                      <label key={cat} className="flex items-center">
+                        <input
+                          type="checkbox"
+                          checked={formData.categories.includes(cat)}
+                          onChange={() => handleCategoryChange(cat)}
+                          className="mr-2 h-4 w-4 text-green-600"
+                        />
+                        <span className="text-sm">{cat}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Other Categories */}
+                <div>
+                  <h4 className="text-sm font-medium text-gray-800 mb-2">تصنيفات أخرى (اختياري)</h4>
+                  <div className="flex flex-wrap gap-2">
+                    {['نباتات داخلية', 'نباتات خارجية', 'زهور', 'نخيل', 'معدات'].map((cat) => (
+                      <label key={cat} className="flex items-center">
+                        <input
+                          type="checkbox"
+                          checked={formData.categories.includes(cat)}
+                          onChange={() => handleCategoryChange(cat)}
+                          className="mr-2 h-4 w-4 text-green-600"
+                        />
+                        <span className="text-sm">{cat}</span>
+                      </label>
+                    ))}
+                  </div>
                 </div>
               </div>
 
               {/* Services */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">الخدمات</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">الخدمات (اختياري)</label>
                 <div className="flex flex-wrap gap-2">
                   {['delivery', 'consultation', 'maintenance', 'installation'].map((svc) => {
                     const labelMap = {

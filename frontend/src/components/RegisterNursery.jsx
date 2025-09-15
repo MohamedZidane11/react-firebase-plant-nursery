@@ -54,10 +54,12 @@ const RegisterNursery = () => {
     if (!/^[\d+\-\s()]{8,15}$/.test(formData.whatsapp.trim())) {
       newErrors.whatsapp = 'رقم الواتس آب غير صالح';
     }
-    
-    // ✅ Validate categories
-    if (formData.categories.length === 0) {
-      newErrors.categories = 'يرجى اختيار تصنيف واحد على الأقل';
+
+    // ✅ Required: Primary categories
+    const primaryCats = ['مشاتل', 'مشاتل مختلطة', 'أدوات الزراعة'];
+    const hasPrimary = formData.categories.some(cat => primaryCats.includes(cat));
+    if (!hasPrimary) {
+      newErrors.categories = 'يرجى اختيار تصنيف رئيسي على الأقل';
     }
 
     if (Object.keys(newErrors).length > 0) {
@@ -104,6 +106,10 @@ const RegisterNursery = () => {
       setSubmitting(false);
     }
   };
+
+  // ✅ Define categories
+  const primaryCategories = ['مشاتل', 'مشاتل مختلطة', 'أدوات الزراعة'];
+  const otherCategories = ['نباتات داخلية', 'نباتات خارجية', 'زهور', 'نخيل', 'معدات'];
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -168,13 +174,13 @@ const RegisterNursery = () => {
               {errors.whatsapp && <p className="text-red-500 text-sm mt-1">{errors.whatsapp}</p>}
             </div>
 
-            {/* Categories */}
+            {/* Primary Categories */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 <span className="text-red-500">*</span> التصنيف الرئيسي
               </label>
-              <div className="flex flex-wrap gap-2">
-                {['زهور', 'نخيل', 'نباتات داخلية', 'نباتات خارجية', 'مشاتل مختلطة', 'معدات', 'أدوات الزراعة'].map((cat) => (
+              <div className="flex flex-wrap gap-2 mb-4">
+                {primaryCategories.map((cat) => (
                   <label key={cat} className="flex items-center">
                     <input
                       type="checkbox"
@@ -186,7 +192,27 @@ const RegisterNursery = () => {
                   </label>
                 ))}
               </div>
-              {errors.categories && <p className="text-red-500 text-sm mt-1">{errors.categories}</p>}
+              {errors.categories && <p className="text-red-500 text-sm">{errors.categories}</p>}
+            </div>
+
+            {/* Other Categories */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                تصنيفات أخرى (اختياري)
+              </label>
+              <div className="flex flex-wrap gap-2">
+                {otherCategories.map((cat) => (
+                  <label key={cat} className="flex items-center">
+                    <input
+                      type="checkbox"
+                      checked={formData.categories.includes(cat)}
+                      onChange={() => handleCategoryChange(cat)}
+                      className="mr-2 h-4 w-4 text-green-600"
+                    />
+                    <span className="text-sm">{cat}</span>
+                  </label>
+                ))}
+              </div>
             </div>
 
             {/* Location */}
@@ -210,7 +236,7 @@ const RegisterNursery = () => {
             {/* Services */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                الخدمات المقدمة
+                الخدمات المقدمة (اختياري)
               </label>
               <div className="flex flex-wrap gap-2">
                 {['delivery', 'consultation', 'maintenance', 'installation'].map((svc) => {

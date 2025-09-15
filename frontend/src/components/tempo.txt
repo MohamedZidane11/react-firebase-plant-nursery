@@ -1,111 +1,266 @@
-// src/components/OfferCard.jsx
-import React from 'react';
-import { Link } from 'react-router-dom';
-import defaultImage from '../assets/offer_default.png';
+// src/pages/RegisterNursery.jsx
+import React, { useState } from 'react';
+import axios from 'axios';
 
-const OfferCard = ({ offer }) => {
-  // ✅ Make sure offer._id exists
-  if (!offer?.id) {
-    console.error("Offer is missing id:", offer);
-    return null;
-  }
+const RegisterNursery = () => {
+  const [formData, setFormData] = useState({
+    name: '',
+    categories: [],
+    location: '',
+    services: [],
+    featured: false,
+    contactName: '',
+    whatsapp: '',
+  });
 
-  const parseDate = (dateStr) => {
-    if (!dateStr) return null;
-    if (typeof dateStr === 'string' && /^\d{4}-\d{2}-\d{2}/.test(dateStr)) {
-      const [year, month, day] = dateStr.split('-').map(Number);
-      return new Date(year, month - 1, day);
-    }
-    const monthMap = {
-      'يناير': 0, 'فبراير': 1, 'مارس': 2, 'أبريل': 3,
-      'مايو': 4, 'يونيو': 5, 'يوليو': 6, 'أغسطس': 7,
-      'سبتمبر': 8, 'أكتوبر': 9, 'نوفمبر': 10, 'ديسمبر': 11
-    };
-    const match = dateStr.trim().match(/(\d+)\s+([^\s]+)\s+(\d{4})/);
-    if (match) {
-      const day = parseInt(match[1], 10);
-      const monthName = match[2];
-      const year = parseInt(match[3], 10);
-      const month = monthMap[monthName];
-      if (month !== undefined) {
-        return new Date(year, month, day);
-      }
-    }
-    return null;
+  const [errors, setErrors] = useState({});
+  const [submitting, setSubmitting] = useState(false);
+
+  const handleChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: type === 'checkbox' ? checked : value,
+    }));
   };
 
-  const endDate = parseDate(offer.endDate);
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-
-  const timeDiff = endDate ? endDate - today : NaN;
-  const daysLeft = Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
-
-  const getDaysLeftText = () => {
-    if (!endDate) return 'تاريخ غير صالح';
-    if (daysLeft < 0) return 'العرض منتهي';
-    if (daysLeft === 0) return 'ينتهي اليوم';
-    if (daysLeft === 1) return 'يبقى يوم واحد';
-    if (daysLeft <= 7) return `يبقى ${daysLeft} أيام`;
-    return 'متاح حاليًا';
+  const handleCategoryChange = (category) => {
+    setFormData((prev) => ({
+      ...prev,
+      categories: prev.categories.includes(category)
+        ? prev.categories.filter((c) => c !== category)
+        : [...prev.categories, category]
+    }));
   };
 
-  const daysLeftColor = !endDate ? 'text-gray-600' :
-                        daysLeft < 0 ? 'text-red-600' :
-                        daysLeft <= 7 ? 'text-orange-600' :
-                        'text-green-600';
+  const handleServiceChange = (service) => {
+    setFormData((prev) => ({
+      ...prev,
+      services: prev.services.includes(service)
+        ? prev.services.filter((s) => s !== service)
+        : [...prev.services, service]
+    }));
+  };
 
-  const showDiscount = offer.discount !== null && offer.discount > 0;
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    // Validation
+    const newErrors = {};
+    if (!formData.name.trim()) newErrors.name = 'الاسم مطلوب';
+    if (!formData.location.trim()) newErrors.location = 'الموقع مطلوب';
+    if (!formData.contactName.trim()) newErrors.contactName = 'اسم المسئول مطلوب';
+    if (!formData.whatsapp.trim()) newErrors.whatsapp = 'رقم الواتس آب مطلوب';
+    if (!/^[\d+\-\s()]{8,15}$/.test(formData.whatsapp.trim())) {
+      newErrors.whatsapp = 'رقم الواتس آب غير صالح';
+    }
+    
+    // ✅ Validate categories
+    if (formData.categories.length === 0) {
+      newErrors.categories = 'يرجى اختيار تصنيف واحد على الأقل';
+    }
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      return;
+    }
+
+    setSubmitting(true);
+
+    try {
+      const payload = {
+        ...formData,
+        name: formData.name.trim(),
+        location: formData.location.trim(),
+        contactName: formData.contactName.trim(),
+        whatsapp: formData.whatsapp.trim(),
+        submittedAt: new Date().toISOString(),
+        status: 'pending'
+      };
+
+      await axios.post(
+        'https://react-firebase-plant-nursery-production.up.railway.app/api/pending-nurseries',
+        payload
+      );
+
+      alert('تم تسجيل مشتلّك بنجاح! سيقوم الفريق بمراجعته خلال 24 ساعة.');
+
+      // Reset form
+      setFormData({
+        name: '',
+        categories: [],
+        location: '',
+        services: [],
+        featured: false,
+        contactName: '',
+        whatsapp: '',
+      });
+      setErrors({});
+
+    } catch (err) {
+      console.error('Error submitting nursery:', err);
+      alert('فشل في الإرسال. تأكد من الاتصال بالإنترنت.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   return (
-    <div className="w-full sm:max-w-xs mx-auto">
-    <Link to={`/offers/${offer.id}`} className="block"> 
-      <div className="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300">
-        <div className="h-40 bg-orange-50 flex items-center justify-center">
-          <img
-            src={offer.image || defaultImage}
-            alt={offer.title}
-            className="h-full w-full object-cover"
-            onError={(e) => { e.target.src = defaultImage; }}
-          />
-        </div>
+    <div className="min-h-screen bg-gray-50">
+      <main className="container mx-auto p-6">
+        <div className="max-w-3xl mx-auto bg-white p-8 rounded-xl shadow-lg">
+          <h2 className="text-2xl font-bold text-center mb-6 text-green-800">
+            سجل مشتلّك
+          </h2>
 
-        <div className="p-6">
-          <h3 className="text-xl font-bold text-green-800 mb-2">{offer.title}</h3>
-          <p className="text-sm text-gray-600 mb-3">
-            <strong>من:</strong> {offer.nurseryName || 'مشتل غير معروف'}
-          </p>
-
-          {showDiscount && (
-            <div className="mb-3">
-              <span className="bg-red-500 text-white text-sm font-bold px-3 py-1 rounded-full">
-                خصم {offer.discount}%
-              </span>
+          <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Name */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                <span className="text-red-500">*</span> اسم المشتل
+              </label>
+              <input
+                type="text"
+                name="name"
+                value={formData.name}
+                onChange={handleChange}
+                className={`w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-green-500 focus:outline-none ${
+                  errors.name ? 'border-red-500' : 'border-gray-300'
+                }`}
+                placeholder="مثل: مشتل الزهور"
+              />
+              {errors.name && <p className="text-red-500 text-sm mt-1">{errors.name}</p>}
             </div>
-          )}
 
-          <div className="flex justify-between items-center text-sm">
-            <span className={`font-medium ${daysLeftColor}`}>
-              {getDaysLeftText()}
-            </span>
-            <span className="flex items-center text-gray-600">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              <span>{daysLeft < 0 ? 'منتهي' : `${daysLeft} يومًا`}</span>
-            </span>
-          </div>
+            {/* Contact Person */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                <span className="text-red-500">*</span> اسم المسئول
+              </label>
+              <input
+                type="text"
+                name="contactName"
+                value={formData.contactName}
+                onChange={handleChange}
+                className={`w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-green-500 focus:outline-none ${
+                  errors.contactName ? 'border-red-500' : 'border-gray-300'
+                }`}
+                placeholder="مثل: أحمد محمد"
+              />
+              {errors.contactName && <p className="text-red-500 text-sm mt-1">{errors.contactName}</p>}
+            </div>
+
+            {/* WhatsApp Number */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                <span className="text-red-500">*</span> رقم التواصل (واتس آب)
+              </label>
+              <input
+                type="tel"
+                name="whatsapp"
+                value={formData.whatsapp}
+                onChange={handleChange}
+                className={`w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-green-500 focus:outline-none ${
+                  errors.whatsapp ? 'border-red-500' : 'border-gray-300'
+                }`}
+                placeholder="مثل: 966500123456"
+              />
+              {errors.whatsapp && <p className="text-red-500 text-sm mt-1">{errors.whatsapp}</p>}
+            </div>
+
+            {/* Categories */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                <span className="text-red-500">*</span> التصنيف الرئيسي
+              </label>
+              <div className="flex flex-wrap gap-2">
+                {['زهور', 'نخيل', 'نباتات داخلية', 'نباتات خارجية', 'مشاتل مختلطة', 'معدات', 'أدوات الزراعة'].map((cat) => (
+                  <label key={cat} className="flex items-center">
+                    <input
+                      type="checkbox"
+                      checked={formData.categories.includes(cat)}
+                      onChange={() => handleCategoryChange(cat)}
+                      className="mr-2 h-4 w-4 text-green-600"
+                    />
+                    <span className="text-sm">{cat}</span>
+                  </label>
+                ))}
+              </div>
+              {errors.categories && <p className="text-red-500 text-sm mt-1">{errors.categories}</p>}
+            </div>
+
+            {/* Location */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                <span className="text-red-500">*</span> الموقع
+              </label>
+              <input
+                type="text"
+                name="location"
+                value={formData.location}
+                onChange={handleChange}
+                className={`w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-green-500 focus:outline-none ${
+                  errors.location ? 'border-red-500' : 'border-gray-300'
+                }`}
+                placeholder="مثل: الرياض - حي النخيل"
+              />
+              {errors.location && <p className="text-red-500 text-sm mt-1">{errors.location}</p>}
+            </div>
+
+            {/* Services */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                الخدمات المقدمة
+              </label>
+              <div className="flex flex-wrap gap-2">
+                {['delivery', 'consultation', 'maintenance', 'installation'].map((svc) => {
+                  const labelMap = {
+                    delivery: 'التوصيل',
+                    consultation: 'الاستشارات',
+                    maintenance: 'الصيانة',
+                    installation: 'التركيب',
+                  };
+                  return (
+                    <label key={svc} className="flex items-center">
+                      <input
+                        type="checkbox"
+                        checked={formData.services.includes(svc)}
+                        onChange={() => handleServiceChange(svc)}
+                        className="mr-2 h-4 w-4 text-green-600"
+                      />
+                      <span className="text-sm">{labelMap[svc]}</span>
+                    </label>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Featured */}
+            <div>
+              <label className="flex items-center">
+                <input
+                  type="checkbox"
+                  name="featured"
+                  checked={formData.featured}
+                  onChange={handleChange}
+                  className="mr-2 h-4 w-4 text-green-600"
+                />
+                <span className="text-sm">أرغب أن يظهر مشتلي كـ "مميز"</span>
+              </label>
+            </div>
+
+            <button
+              type="submit"
+              disabled={submitting}
+              className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3 rounded-lg transition disabled:opacity-70"
+            >
+              {submitting ? 'جاري الإرسال...' : 'إرسال الطلب'}
+            </button>
+          </form>
         </div>
-
-        {offer.highlighted && (
-          <div className="bg-orange-500 p-2 text-center">
-            <span className="text-white text-sm font-bold">عرض خاص</span>
-          </div>
-        )}
-      </div>
-    </Link>
+      </main>
     </div>
   );
 };
 
-export default OfferCard;
+export default RegisterNursery;
