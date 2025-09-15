@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 import defaultImage from '../assets/offer_default.png';
 
 const OfferCard = ({ offer }) => {
-  // ✅ Make sure offer._id exists
+  // ✅ Make sure offer.id exists
   if (!offer?.id) {
     console.error("Offer is missing id:", offer);
     return null;
@@ -59,51 +59,64 @@ const OfferCard = ({ offer }) => {
 
   return (
     <div className="w-full sm:max-w-xs mx-auto">
-    <Link to={`/offers/${offer.id}`} className="block"> 
-      <div className="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300">
-        <div className="h-40 bg-orange-50 flex items-center justify-center">
-          <img
-            src={offer.image || defaultImage}
-            alt={offer.title}
-            className="h-full w-full object-cover"
-            onError={(e) => { e.target.src = defaultImage; }}
-          />
-        </div>
+      <Link to={`/offers/${offer.id}`} className="block">
+        <div className="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300">
+          <div className="h-40 bg-orange-50 flex items-center justify-center">
+            <img
+              src={offer.image || defaultImage}
+              alt={offer.title}
+              className="h-full w-full object-cover"
+              onError={(e) => { e.target.src = defaultImage; }}
+            />
+          </div>
 
-        <div className="p-6">
-          <h3 className="text-xl font-bold text-green-800 mb-2">{offer.title}</h3>
-          <p className="text-sm text-gray-600 mb-3">
-            <strong>من:</strong> {offer.nurseryName || 'مشتل غير معروف'}
-          </p>
+          <div className="p-6">
+            <h3 className="text-xl font-bold text-green-800 mb-2">{offer.title}</h3>
 
-          {showDiscount && (
-            <div className="mb-3">
-              <span className="bg-red-500 text-white text-sm font-bold px-3 py-1 rounded-full">
-                خصم {offer.discount}%
+            {/* 🔗 Clickable Nursery Name */}
+            <p className="text-sm text-gray-600 mb-3">
+              <strong>من:</strong>{' '}
+              {offer.nurseryId ? (
+                <Link
+                  to={`/nurseries/${offer.nurseryId}`}
+                  onClick={(e) => e.stopPropagation()} // Prevent triggering parent link
+                  className="text-green-600 hover:underline font-medium"
+                >
+                  {offer.nurseryName || 'عرض خاص'}
+                </Link>
+              ) : (
+                <span>{offer.nurseryName || 'مشتل غير معروف'}</span>
+              )}
+            </p>
+
+            {showDiscount && (
+              <div className="mb-3">
+                <span className="bg-red-500 text-white text-sm font-bold px-3 py-1 rounded-full">
+                  خصم {offer.discount}%
+                </span>
+              </div>
+            )}
+
+            <div className="flex justify-between items-center text-sm">
+              <span className={`font-medium ${daysLeftColor}`}>
+                {getDaysLeftText()}
+              </span>
+              <span className="flex items-center text-gray-600">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span>{daysLeft < 0 ? 'منتهي' : `${daysLeft} يومًا`}</span>
               </span>
             </div>
+          </div>
+
+          {offer.highlighted && (
+            <div className="bg-orange-500 p-2 text-center">
+              <span className="text-white text-sm font-bold">عرض خاص</span>
+            </div>
           )}
-
-          <div className="flex justify-between items-center text-sm">
-            <span className={`font-medium ${daysLeftColor}`}>
-              {getDaysLeftText()}
-            </span>
-            <span className="flex items-center text-gray-600">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              <span>{daysLeft < 0 ? 'منتهي' : `${daysLeft} يومًا`}</span>
-            </span>
-          </div>
         </div>
-
-        {offer.highlighted && (
-          <div className="bg-orange-500 p-2 text-center">
-            <span className="text-white text-sm font-bold">عرض خاص</span>
-          </div>
-        )}
-      </div>
-    </Link>
+      </Link>
     </div>
   );
 };
