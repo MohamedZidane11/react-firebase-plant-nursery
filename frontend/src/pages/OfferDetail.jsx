@@ -1,6 +1,6 @@
 // src/pages/OfferDetail.jsx
 import { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom'; // ✅ Add Link
 import defaultImage from '../assets/offer_default.png';
 
 const OfferDetail = () => {
@@ -66,12 +66,21 @@ const OfferDetail = () => {
               </div>
             )}
 
-            {/* Nursery Name */}
+            {/* 🏷️ Nursery Name - Now Clickable */}
             <div className="mb-4">
               <strong className="text-gray-700">من: </strong>
-              <span className="text-green-800 font-medium">
-                {offer.nurseryName || (nursery ? nursery.name : 'مشتل غير معروف')}
-              </span>
+              {offer.nurseryId ? (
+                <Link
+                  to={`/nurseries/${offer.nurseryId}`}
+                  className="text-green-800 font-medium hover:underline transition"
+                >
+                  {offer.nurseryName || (nursery ? nursery.name : 'مشتل غير معروف')}
+                </Link>
+              ) : (
+                <span className="text-green-800 font-medium">
+                  {offer.nurseryName || (nursery ? nursery.name : 'مشتل غير معروف')}
+                </span>
+              )}
             </div>
 
             {/* 📍 الموقع */}
@@ -109,9 +118,9 @@ const OfferDetail = () => {
 
             {/* Back Button */}
             <div className="mt-8">
-              <a href="/offers" className="text-green-600 hover:underline">
+              <Link to="/offers" className="text-green-600 hover:underline">
                 ← العودة إلى العروض
-              </a>
+              </Link>
             </div>
           </div>
         </div>
