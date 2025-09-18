@@ -1,3 +1,4 @@
+{/*
 import { Link } from 'react-router-dom';
 
 const Footer = () => {
@@ -50,3 +51,28 @@ const Footer = () => {
 };
 
 export default Footer;
+*/}
+
+{/* روابط سريعة */}
+import { Link } from 'react-router-dom';
+
+const Footer = () => {
+  return (
+    <footer className="bg-green-800 text-white py-12">
+      <div>
+        <h3 className="text-lg font-semibold mb-4 text-yellow-300">روابط سريعة</h3>
+        <ul className="space-y-2">
+          {siteSettings.footerLinks?.map((link, i) => (
+            <li key={i}>
+              <Link to={`/${link.toLowerCase().replace(' ', '-')}`} className="hover:text-yellow-300">
+                {link}
+              </Link>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </footer>
+  );
+};
+
+export default Footer

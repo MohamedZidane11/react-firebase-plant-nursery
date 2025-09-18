@@ -233,6 +233,44 @@ app.get('/', (req, res) => {
     }
   });
   
+  // ✅ GET site settings
+app.get('/api/settings/site', async (req, res) => {
+  try {
+    const doc = await db.collection('settings').doc('site').get();
+    if (doc.exists) {
+      res.json(doc.data());
+    } else {
+      // Return defaults if not set
+      res.json({
+        title: 'أكبر منصة للمشاتل في المملكة 🌿',
+        subtitle: 'اكتشف أكثر من 500 مشتل ومتجر لأدوات الزراعة في مكان واحد',
+        heroImage: 'https://placehold.co/1200x600/10b981/ffffff?text=Hero+Image',
+        benefits: ['توصيل سريع', 'أفضل الأسعار', 'استشارات مجانية', 'دعم فني متاح'],
+        seo: {
+          title: 'مشاتل النباتات في السعودية',
+          description: 'أكبر منصة تجمع مشاتل النباتات وأدوات الزراعة.',
+          ogImage: 'https://placehold.co/1200x630/10b981/ffffff?text=OG+Image'
+        },
+        contacts: {
+          email: 'info@nursery.com',
+          phone: '0551234567',
+          whatsapp: '966551234567'
+        },
+        footerLinks: ['الرئيسية', 'المشاتل', 'العروض', 'تسجيل مشتل'],
+        social: {
+          instagram: 'nursery.sa',
+          twitter: 'nursery_sa',
+          tiktok: 'nursery.sa',
+          snapchat: 'nursery-sa'
+        }
+      });
+    }
+  } catch (err) {
+    console.error('Error fetching settings:', err);
+    res.status(500).json({ message: 'فشل تحميل الإعدادات' });
+  }
+});
+
 // ✅ Start server
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
