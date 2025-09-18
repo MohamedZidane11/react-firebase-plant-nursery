@@ -340,8 +340,9 @@ const Home = () => {
                       setSelectedCategory(cat.title);
                       setViewMode('category-results');
                     }}
-                    className="bg-green-600 text-white p-6 rounded-xl shadow-lg text-center cursor-pointer hover:bg-green-700 transition-colors"
+                    className="bg-green-600 text-white p-6 rounded-xl shadow-lg text-center cursor-pointer hover:-translate-y-2 transition-transform duration-500 ease-in-out hover:bg-green-700 transition-colors transform"
                   >
+                    
                     <div className="w-20 h-20 mx-auto mb-4 bg-green-500 rounded-full flex items-center justify-center overflow-hidden">
                       {cat.image ? (
                         <img
@@ -357,6 +358,7 @@ const Home = () => {
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                         </svg>
                       )}
+                    
                     </div>
                     <h3 className="text-xl font-bold mb-2">{cat.title}</h3>
                     <p className="text-sm opacity-90">{cat.description || 'تفاصيل غير متوفرة'}</p>
@@ -377,7 +379,7 @@ const Home = () => {
             {/* Outer centering wrapper */}
             <div className="flex justify-center w-full">
               <div 
-                className="flex overflow-x-auto scroll-smooth snap-x snap-mandatory space-x-6 pb-4 hide-scrollbar max-w-full"
+                className="flex overflow-x-auto scroll-smooth snap-x snap-mandatory space-x-6 pt-4 pb-4 hide-scrollbar max-w-full"
                 dir="rtl"
                 style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
               >
@@ -385,7 +387,7 @@ const Home = () => {
                   <Link 
                     key={nursery.id} 
                     to={`/nurseries/${nursery.id}`}
-                    className="flex-shrink-0 snap-start w-full sm:w-80 md:w-64 lg:w-56 xl:w-64"
+                    className="flex-shrink-0 snap-start w-full sm:w-80 md:w-64 lg:w-56 xl:w-64 hover:-translate-y-2 transition-transform duration-500 ease-in-out"
                   >
                     <div className="bg-green-100 p-6 rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 border-2 border-yellow-500 h-full flex flex-col items-center">
                       <div className="w-20 h-20 mb-4 bg-green-200 rounded-full flex items-center justify-center overflow-hidden">
@@ -442,8 +444,13 @@ const Home = () => {
               المشاتل في تصنيف: {selectedCategory}
             </h2>
 
-            <div className="overflow-x-auto pb-4">
-              <div className="flex space-x-6 justify-center">
+            {/* Outer centering wrapper */}
+            <div className="flex justify-center w-full">
+              <div 
+                className="flex overflow-x-auto scroll-smooth snap-x snap-mandatory space-x-6 pb-4 hide-scrollbar max-w-full"
+                dir="rtl"
+                style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+              >
                 {nurseries
                   .filter(nursery => nursery.categories.includes(selectedCategory))
                   .map((nursery) => (
@@ -480,8 +487,10 @@ const Home = () => {
                   ))}
               </div>
 
-              {/* Back to Categories */}
-              <div className="text-center mt-6">
+              
+            </div>
+            {/* Back to Categories */}
+            <div className="text-center mt-6">
                 <button
                   onClick={() => setViewMode('home')}
                   className="text-green-600 hover:underline text-lg"
@@ -489,7 +498,6 @@ const Home = () => {
                   ← عودة الي التصنيفات
                 </button>
               </div>
-            </div>
           </div>
         </section>
       )}
