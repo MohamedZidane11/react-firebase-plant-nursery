@@ -1,9 +1,10 @@
+// src/App.jsx
 import { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { onAuthStateChanged } from 'firebase/auth';
 import { auth } from './firebase/firebase';
 
-// Import all admin pages
+// Import pages
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import NurseriesManager from './pages/NurseriesManager';
@@ -13,6 +14,9 @@ import FiltersManager from './pages/FiltersManager';
 import SponsorsManager from './pages/SponsorsManager';
 import SiteSettings from './pages/SiteSettings';
 import PendingNurseriesManager from './pages/PendingNurseriesManager';
+
+// Import Header
+import AdminHeader from './components/AdminHeader';
 
 function App() {
   const [user, setUser] = useState(null);
@@ -29,67 +33,11 @@ function App() {
   return (
     <Router>
       <div className="min-h-screen bg-gray-50">
-        {/* Top Navigation Bar */}
-        <nav className="bg-white shadow-lg p-4" dir="rtl">
-          <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between">
-            <h1 className="text-2xl font-bold text-green-800">لوحة التحكم</h1>
-
-            {/* Main Navigation Links */}
-            <ul className="flex space-x-1 space-x-reverse text-sm md:text-base">
-              <li>
-                <Link to="/" className="px-4 py-2 font-medium rounded hover:bg-green-100 transition">
-                  🏠 الرئيسية
-                </Link>
-              </li>
-              <li>
-                <Link to="/nurseries" className="px-4 py-2 font-medium rounded hover:bg-green-100 transition">
-                  🌿 المشاتل
-                </Link>
-              </li>
-              <li>
-                <Link to="/offers" className="px-4 py-2 font-medium rounded hover:bg-green-100 transition">
-                  💰 العروض
-                </Link>
-              </li>
-              <li>
-                <Link to="/categories" className="px-4 py-2 font-medium rounded hover:bg-green-100 transition">
-                  🔖 التصنيفات
-                </Link>
-              </li>
-              <li>
-                <Link to="/filters" className="px-4 py-2 font-medium rounded hover:bg-green-100 transition">
-                  🔍 الفلاتر
-                </Link>
-              </li>
-              <li>
-                <Link to="/sponsors" className="px-4 py-2 font-medium rounded hover:bg-green-100 transition">
-                  ✨ الرعاة
-                </Link>
-              </li>
-              <li>
-                <Link to="/pending-nurseries" className="px-4 py-2 font-medium rounded hover:bg-green-100 transition">
-                  📋 المراجعة
-                </Link>
-              </li>
-              <li>
-                <Link to="/settings" className="px-4 py-2 font-medium rounded hover:bg-green-100 transition">
-                  ⚙️ الإعدادات
-                </Link>
-              </li>
-            </ul>
-
-            {/* Logout Button */}
-            <button
-              onClick={() => auth.signOut()}
-              className="bg-red-500 hover:bg-red-600 text-white px-5 py-2 rounded-lg text-sm font-medium transition"
-            >
-              تسجيل الخروج
-            </button>
-          </div>
-        </nav>
+        {/* ✅ Use extracted header */}
+        <AdminHeader />
 
         {/* Main Content */}
-        <main className="py-8 px-4">
+        <main className="pt-28 pb-8 px-4 md:px-6"> {/* Added top padding for sticky header */}
           <div className="max-w-7xl mx-auto">
             <Routes>
               <Route path="/" element={<Dashboard />} />
