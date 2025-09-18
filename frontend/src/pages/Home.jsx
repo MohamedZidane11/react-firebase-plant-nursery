@@ -16,39 +16,47 @@ const Home = () => {
   const [sponsorsLoading, setSponsorsLoading] = useState(true);
   const [results, setResults] = useState([]);
 
-  // ✅ New: Site Settings
+  // ✅ Initialize siteSettings state
   const [siteSettings, setSiteSettings] = useState({
     title: 'أكبر منصة للمشاتل في المملكة 🌿',
     subtitle: 'اكتشف أكثر من 500 مشتل ومتجر لأدوات الزراعة في مكان واحد',
-    heroImage: 'https://placehold.co/1200x600/10b981/ffffff?text=Hero+Image',
+    heroImage: 'https://placehold.co/1200x600/d1f7c4/4ade80?text=Hero+Image',
     benefits: ['توصيل سريع', 'أفضل الأسعار', 'استشارات مجانية', 'دعم فني متاح'],
     contacts: {
       whatsapp: '966551234567'
     }
   });
 
-  // ✅ Fetch site settings
+  // ✅ Fetch site settings from backend
   useEffect(() => {
     const fetchSettings = async () => {
       try {
         const API_BASE = 'https://react-firebase-plant-nursery-production.up.railway.app';
         const response = await fetch(`${API_BASE}/api/settings/site`);
-        if (!response.ok) throw new Error('فشل تحميل إعدادات الموقع');
+        
+        if (!response.ok) throw new Error('Failed to fetch settings');
+
         const data = await response.json();
-        setSiteSettings(prev => ({ ...prev, ...data }));
+        
+        // Update only provided fields
+        setSiteSettings(prev => ({
+          ...prev,
+          ...data,
+          contacts: { ...prev.contacts, ...(data.contacts || {}) },
+          benefits: data.benefits || prev.benefits
+        }));
       } catch (err) {
-        console.warn('Using default site settings:', err);
+        console.warn('Using default site settings:', err.message);
+        // Fallback already set in useState — no need to change
       } finally {
-        setLoading(false);
+        setLoading(false); // This should be here only once all main data loads
       }
     };
 
     fetchSettings();
   }, []);
 
-  // ✅ Keep your existing fetch effects for nurseries, offers, etc.
-  // (No changes needed below unless specified)
-
+  // ✅ Fetch nurseries
   useEffect(() => {
     const fetchNurseries = async () => {
       try {
@@ -65,6 +73,7 @@ const Home = () => {
     fetchNurseries();
   }, []);
 
+  // ✅ Fetch offers
   useEffect(() => {
     const fetchOffers = async () => {
       try {
@@ -81,6 +90,7 @@ const Home = () => {
     fetchOffers();
   }, []);
 
+  // ✅ Fetch categories
   useEffect(() => {
     const fetchCategories = async () => {
       try {
@@ -92,13 +102,12 @@ const Home = () => {
       } catch (err) {
         console.error('Error fetching categories:', err);
         setCategories([]);
-      } finally {
-        setLoading(false);
       }
     };
     fetchCategories();
   }, []);
 
+  // ✅ Fetch sponsors
   useEffect(() => {
     const fetchSponsors = async () => {
       try {
@@ -117,17 +126,25 @@ const Home = () => {
     fetchSponsors();
   }, []);
 
-  // ✅ Search logic remains unchanged...
+  // ✅ Combine and filter results
   useEffect(() => {
     const term = searchTerm.toLowerCase().trim();
-    if (!term) return setResults([]);
+
+    if (!term) {
+      setResults([]);
+      return;
+    }
 
     const results = [];
-    // Nurseries search
+
+    // 🔍 Search nurseries
     nurseries.forEach(n => {
       if (
         n.name.toLowerCase().includes(term) ||
         n.location.toLowerCase().includes(term) ||
+        n.region?.toLowerCase().includes(term) ||
+        n.city?.toLowerCase().includes(term) ||
+        n.district?.toLowerCase().includes(term) ||
         n.categories.some(cat => cat.toLowerCase().includes(term)) ||
         n.services.some(svc => svc.toLowerCase().includes(term))
       ) {
@@ -142,7 +159,7 @@ const Home = () => {
       }
     });
 
-    // Offers search
+    // 🔍 Search offers
     offers.forEach(o => {
       if (
         o.title.toLowerCase().includes(term) ||
@@ -161,7 +178,7 @@ const Home = () => {
       }
     });
 
-    // Categories search
+    // 🔍 Search categories
     categories.forEach(c => {
       if (
         c.title.toLowerCase().includes(term) ||
@@ -194,6 +211,7 @@ const Home = () => {
     return true;
   });
 
+  // Show loading only until everything is ready
   if (loading || sponsorsLoading) {
     return <p className="text-center py-8">جاري التحميل...</p>;
   }
@@ -205,7 +223,13 @@ const Home = () => {
       {/* Hero Section */}
       <section 
         className="bg-gradient-to-r from-green-100 to-green-200 py-16"
-        style={{ backgroundImage: `url(${siteSettings.heroImage})`, backgroundSize: 'cover', backgroundPosition: 'center' }}
+        style={{ 
+          backgroundImage: `url(${siteSettings.heroImage})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundColor: '#000',
+          backgroundBlendMode: 'overlay'
+        }}
       >
         <div className="container mx-auto px-4 text-center relative bg-black bg-opacity-50 text-white py-10 rounded-xl">
           <h1 className="text-4xl md:text-5xl font-bold mb-4">
@@ -221,19 +245,19 @@ const Home = () => {
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-green-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                 </svg>
-                <span className="text-green-800">{benefit}</span>
+                <span>{benefit}</span>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Rest of your page remains the same... */}
-      {/* Search, Categories, Featured, Sponsors etc. */}
+      {/* Rest of your page remains unchanged... */}
+      {/* Keep your search, categories, featured nurseries, etc. */}
       
-      {/* Search Section */}
+      {/* Search */}
       <section className="py-8">
-        {/* Keep your existing search form */}
+        {/* Your existing search form */}
       </section>
 
       {/* Categories Grid */}
@@ -257,19 +281,9 @@ const Home = () => {
         </section>
       )}
 
-      {/* Premium Nurseries */}
-      {viewMode === 'home' && (
-        <section className="py-12 bg-gray-900 text-white">
-          {/* Keep as-is */}
-        </section>
-      )}
+      {/* Premium Nurseries & Sponsors */}
+      {/* Keep as-is */}
 
-      {/* Sponsors Banner */}
-      {viewMode === 'home' && (
-        <section className="py-12 bg-gradient-to-r from-amber-50 to-yellow-50">
-          {/* Keep as-is */}
-        </section>
-      )}
     </div>
   );
 };
