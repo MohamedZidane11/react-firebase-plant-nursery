@@ -340,7 +340,7 @@ const Home = () => {
                       setSelectedCategory(cat.title);
                       setViewMode('category-results');
                     }}
-                    className="bg-green-600 text-white p-6 rounded-xl shadow-lg text-center cursor-pointer hover:-translate-y-2 transition-transform duration-500 ease-in-out hover:bg-green-700 transition-colors transform"
+                    className="bg-green-600 text-white p-6 rounded-xl shadow-lg text-center cursor-pointer hover:scale-103 transition-transform duration-500 ease-in-out hover:bg-green-700 transition-colors transform"
                   >
                     
                     <div className="w-20 h-20 mx-auto mb-4 bg-green-500 rounded-full flex items-center justify-center overflow-hidden">
@@ -502,6 +502,15 @@ const Home = () => {
         </section>
       )}
 
+      {/* ✅ Show All Nurseries Button — center */}
+      <div className="flex items-center justify-center mb-8">
+        <Link to="/nurseries">
+          <button className="text-xl text-white bg-gradient-to-l from-yellow-600 to-yellow-500 hover:bg-green-700 px-10 py-4 rounded-lg shadow-md transition-all duration-200 transform hover:scale-105 hover:shadow-lg">
+          عرض جميع المشاتل 🌿
+          </button>
+        </Link>
+      </div>
+
       {/* Premium Nurseries */}
       {viewMode === 'home' && (
         <section className="py-12 bg-gray-900 text-white">
@@ -511,7 +520,7 @@ const Home = () => {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              <div className="bg-gray-800 border border-yellow-500 p-6 rounded-lg text-center">
+              <div className="bg-gray-800 border border-yellow-500 p-6 rounded-lg text-center hover:-translate-y-2 transition-transform duration-500 ease-in-out">
                 <div className="w-16 h-16 mx-auto mb-4 bg-yellow-500 rounded-full flex items-center justify-center">
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-black" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
@@ -521,7 +530,7 @@ const Home = () => {
                 <p className="text-sm text-gray-300">نباتات داخلية وخارجية مميزة</p>
               </div>
 
-              <div className="bg-gray-800 border border-yellow-500 p-6 rounded-lg text-center">
+              <div className="bg-gray-800 border border-yellow-500 p-6 rounded-lg text-center hover:-translate-y-2 transition-transform duration-500 ease-in-out">
                 <div className="w-16 h-16 mx-auto mb-4 bg-yellow-500 rounded-full flex items-center justify-center">
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-black" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -531,7 +540,7 @@ const Home = () => {
                 <p className="text-sm text-gray-300">تنسيق حدائق احترافي</p>
               </div>
 
-              <div className="bg-gray-800 border border-yellow-500 p-6 rounded-lg text-center">
+              <div className="bg-gray-800 border border-yellow-500 p-6 rounded-lg text-center hover:-translate-y-2 transition-transform duration-500 ease-in-out">
                 <div className="w-16 h-16 mx-auto mb-4 bg-yellow-500 rounded-full flex items-center justify-center">
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-black" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
@@ -541,7 +550,7 @@ const Home = () => {
                 <p className="text-sm text-gray-300">متخصصون في أشجار النخيل النادرة</p>
               </div>
 
-              <div className="bg-gray-800 border border-yellow-500 p-6 rounded-lg text-center">
+              <div className="bg-gray-800 border border-yellow-500 p-6 rounded-lg text-center hover:-translate-y-2 transition-transform duration-500 ease-in-out">
                 <div className="w-16 h-16 mx-auto mb-4 bg-yellow-500 rounded-full flex items-center justify-center">
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-black" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
@@ -565,9 +574,9 @@ const Home = () => {
             {sponsors.length === 0 ? (
               <p className="text-center text-gray-400">لا توجد رعاة حالياً.</p>
             ) : (
-              <div className="flex flex-wrap justify-center items-center gap-8 md:gap-12 overflow-x-auto pb-4">
+              <div className="flex flex-wrap justify-center items-center gap-8 md:gap-12 overflow-x-auto pb-4 pt-3">
                 {sponsors.map((sponsor) => (
-                  <div key={sponsor.id} className="text-center min-w-[120px] md:min-w-[160px]">
+                  <div key={sponsor.id} className="text-center min-w-[120px] md:min-w-[160px] hover:scale-105 transition-transform duration-500 ease-in-out">
                     <div className="w-16 h-16 md:w-20 md:h-20 mx-auto mb-3 bg-yellow-500 border-4 border-yellow-400 rounded-full flex items-center justify-center overflow-hidden">
                       {sponsor.logo ? (
                         <img

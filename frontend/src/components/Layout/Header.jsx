@@ -43,7 +43,7 @@ const Header = () => {
           <div className="flex justify-between items-center">
 
             {/* ✅ Logo Section — LEFT (UNCHANGED) */}
-            <div className="flex items-center space-x-3 rtl:space-x-reverse z-10 mr-8">
+            <div className="flex items-center space-x-3 rtl:space-x-reverse z-10 mr-8 hover:scale-105 transition-transform duration-500 ease-in-out">
               <img
                 src={logo}
                 alt="تشجير - منصة المشاتل"
