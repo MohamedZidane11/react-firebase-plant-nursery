@@ -417,12 +417,58 @@ const Home = () => {
                           </span>
                         ))}
                       </div>
+
+                      {/* ✅ SERVICES ICONS — COPIED FROM NurseryCard.jsx */}
+                      <div className="mt-4 flex justify-center flex-wrap gap-x-6 gap-y-2">
+                        {nursery.services?.includes('consultation') && (
+                          <div className="flex flex-col items-center">
+                            <div className="p-2 bg-gray-100 rounded-full">
+                              <img src="https://img.icons8.com/stickers/26/consultation.png" alt="استشارة" className="w-6 h-6" />
+                            </div>
+                            <span className="inline-flex items-center rounded-full bg-blue-400/10 px-2 py-1 text-xs font-medium text-blue-400 mt-1">
+                              استشارة
+                            </span>
+                          </div>
+                        )}
+
+                        {nursery.services?.includes('delivery') && (
+                          <div className="flex flex-col items-center">
+                            <div className="p-2 bg-gray-100 rounded-full">
+                              <img src="https://img.icons8.com/color/26/truck--v1.png" alt="توصيل" className="w-6 h-6" />
+                            </div>
+                            <span className="inline-flex items-center rounded-full bg-yellow-400/10 px-2 py-1 text-xs font-medium text-yellow-500 mt-1">
+                              توصيل
+                            </span>
+                          </div>
+                        )}
+
+                        {nursery.services?.includes('installation') && (
+                          <div className="flex flex-col items-center">
+                            <div className="p-2 bg-gray-100 rounded-full">
+                              <img src="https://img.icons8.com/offices/26/hand-planting.png" alt="تركيب" className="w-6 h-6" />
+                            </div>
+                            <span className="inline-flex items-center rounded-full bg-green-400/10 px-2 py-1 text-xs font-medium text-green-500 mt-1">
+                              تركيب
+                            </span>
+                          </div>
+                        )}
+
+                        {nursery.services?.includes('maintenance') && (
+                          <div className="flex flex-col items-center">
+                            <div className="p-2 bg-gray-100 rounded-full">
+                              <img src="https://img.icons8.com/office/26/maintenance.png" alt="صيانة" className="w-6 h-6" />
+                            </div>
+                            <span className="inline-flex items-center rounded-full bg-red-400/10 px-2 py-1 text-xs font-medium text-red-400 mt-1">
+                              صيانة
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                      {/* ✅ END SERVICES ICONS */}
                     </div>
                   </Link>
                 ))}
               </div>
-
-              {/* Optional: Scroll indicators or buttons (you can add later) */}
             </div>
 
             {selectedCategory && (
