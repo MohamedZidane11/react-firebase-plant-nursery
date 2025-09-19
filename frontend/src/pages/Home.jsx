@@ -332,7 +332,7 @@ const Home = () => {
             {categories.length === 0 ? (
               <p className="text-center text-gray-500">لا توجد تصنيفات.</p>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                 {categories.map((cat) => (
                   <div
                     key={cat.id}
@@ -340,28 +340,33 @@ const Home = () => {
                       setSelectedCategory(cat.title);
                       setViewMode('category-results');
                     }}
-                    className="bg-green-600 text-white p-6 rounded-xl shadow-lg text-center cursor-pointer hover:scale-103 transition-transform duration-500 ease-in-out hover:bg-green-700 transition-colors transform"
+                    className="text-white rounded-xl shadow-lg text-center cursor-pointer hover:scale-103 transition-transform duration-500 ease-in-out hover:bg-opacity-90 transform"
                   >
-                    
-                    <div className="w-20 h-20 mx-auto mb-4 bg-green-500 rounded-full flex items-center justify-center overflow-hidden">
-                      {cat.image ? (
-                        <img
-                          src={cat.image}
-                          alt={cat.title}
-                          className="w-full h-full object-cover"
-                          onError={(e) => {
-                            e.target.src = 'https://placehold.co/100x100/10b981/ffffff?text=No+Image';
-                          }}
-                        />
-                      ) : (
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                        </svg>
-                      )}
-                    
+                    {/* IMAGE CONTAINER - RED BACKGROUND */}
+                    <div className="bg-gradient-to-l from-green-700 to-green-600 p-6 rounded-t-xl">
+                      <div className="w-20 h-20 mx-auto bg-green-500 rounded-full flex items-center justify-center overflow-hidden">
+                        {cat.image ? (
+                          <img
+                            src={cat.image}
+                            alt={cat.title}
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              e.target.src = 'https://placehold.co/100x100/10b981/ffffff?text=No+Image';
+                            }}
+                          />
+                        ) : (
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                          </svg>
+                        )}
+                      </div>
                     </div>
-                    <h3 className="text-xl font-bold mb-2">{cat.title}</h3>
-                    <p className="text-sm opacity-90">{cat.description || 'تفاصيل غير متوفرة'}</p>
+
+                    {/* TEXT CONTAINER - BLUE BACKGROUND */}
+                    <div className="bg-gradient-to-l from-emerald-700 to-emerald-600 p-6 rounded-b-xl">
+                      <h3 className="text-xl font-bold mb-2">{cat.title}</h3>
+                      <p className="text-sm opacity-90">{cat.description || 'تفاصيل غير متوفرة'}</p>
+                    </div>
                   </div>
                 ))}
               </div>
