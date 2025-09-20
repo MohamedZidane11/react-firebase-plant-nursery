@@ -704,6 +704,27 @@ const Home = () => {
           </div>
         </section>
       )}
+      <section>
+        <div class="mx-auto mt-8 max-w-8xl px-6 sm:mt-8 lg:px-8 mb-8">
+          <div
+            class="relative isolate overflow-hidden bg-gray-900 px-6 py-24 shadow-2xl rounded-2xl sm:rounded-3xl sm:px-18 xl:py-16">
+          
+            <h2 class="mx-auto max-w-2xl text-center text-3xl font-bold tracking-tight text-white sm:text-4xl mb-8">
+              هل تملك مشتلًا؟
+            </h2>
+            <p class="mx-auto mt-2 max-w-xl text-center text-lg leading-8 text-gray-300">
+            انضم إلى منصتنا واحصل على المزيد من العملاء
+            </p>
+            <div className="flex items-center justify-center mb-4 mt-10">
+              <Link to="/register">
+                <button className="text-xl text-white bg-gradient-to-l from-yellow-600 to-yellow-500 hover:bg-green-700 px-10 py-4 rounded-lg shadow-md transition-all duration-200 transform hover:scale-105 hover:shadow-lg">
+                📝 سجل مشتلك الآن
+                </button>
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
     </div>
   );
 };
