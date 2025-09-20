@@ -325,45 +325,57 @@ const Home = () => {
 
       {/* Categories Grid */}
       {viewMode === 'home' && (
-        <section className="py-12 bg-yellow-50">
+        <section className="py-12 bg-gradient-to-br from-yellow-50 via-orange-50 to-red-50">
           <div className="container mx-auto px-4">
             <h2 className="text-3xl font-bold text-center text-green-800 mb-12">التصنيف الرئيسى</h2>
 
             {categories.length === 0 ? (
               <p className="text-center text-gray-500">لا توجد تصنيفات.</p>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                {categories.map((cat) => (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
+                {categories.map((cat, index) => (
                   <div
                     key={cat.id}
                     onClick={() => {
                       setSelectedCategory(cat.title);
                       setViewMode('category-results');
                     }}
-                    className="text-white rounded-xl shadow-lg text-center cursor-pointer hover:scale-103 transition-transform duration-500 ease-in-out hover:bg-opacity-90 transform"
+                    className="text-white rounded-xl shadow-lg text-center cursor-pointer hover:scale-105 transition-all duration-500 ease-in-out transform hover:shadow-2xl"
                   >
-                    {/* IMAGE CONTAINER - RED BACKGROUND */}
-                    <div className="bg-gradient-to-l from-green-700 to-green-600 p-6 rounded-t-xl">
-                      <div className="w-20 h-20 mx-auto bg-green-500 rounded-full flex items-center justify-center overflow-hidden">
+                    {/* IMAGE CONTAINER — Gradient Background */}
+                    <div className={`p-6 rounded-t-xl ${
+                      index % 3 === 0 
+                        ? 'bg-gradient-to-br from-yellow-50 to-yellow-200' 
+                        : index % 3 === 1 
+                          ? 'bg-gradient-to-br from-yellow-50 to-yellow-200' 
+                          : 'bg-gradient-to-br from-yellow-50 to-yellow-200'
+                    }`}>
+                      <div className="w-20 h-20 mx-auto bg-white bg-opacity-20 rounded-full flex items-center justify-center overflow-hidden">
                         {cat.image ? (
                           <img
                             src={cat.image}
                             alt={cat.title}
                             className="w-full h-full object-cover"
                             onError={(e) => {
-                              e.target.src = 'https://placehold.co/100x100/10b981/ffffff?text=No+Image';
+                              e.target.src = 'https://placehold.co/100x100/ffffff/6b7280?text=No+Image';
                             }}
                           />
                         ) : (
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                           </svg>
                         )}
                       </div>
                     </div>
 
-                    {/* TEXT CONTAINER - BLUE BACKGROUND */}
-                    <div className="bg-gradient-to-l from-emerald-700 to-emerald-600 p-6 rounded-b-xl">
+                    {/* TEXT CONTAINER — Matching Gradient */}
+                    <div className={`p-6 rounded-b-xl ${
+                      index % 3 === 0 
+                        ? 'bg-gradient-to-tr from-pink-400 to-rose-500' 
+                        : index % 3 === 1 
+                          ? 'bg-gradient-to-tr from-teal-600 to-emerald-700' 
+                          : 'bg-gradient-to-tr from-blue-400 to-indigo-500'
+                    }`}>
                       <h3 className="text-xl font-bold mb-2">{cat.title}</h3>
                       <p className="text-sm opacity-90">{cat.description || 'تفاصيل غير متوفرة'}</p>
                     </div>
@@ -510,7 +522,7 @@ const Home = () => {
                       to={`/nurseries/${nursery.id}`}
                       className="flex-shrink-0 w-48"
                     >
-                      <div className="bg-green-100 p-6 rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300">
+                      <div className="bg-green-100 p-6 rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 flex flex-col items-center">
                         <div className="w-20 h-20 mx-auto mb-4 bg-green-200 rounded-full flex items-center justify-center overflow-hidden">
                           <img
                             src={nursery.image || defaultNurseryImage}
@@ -523,7 +535,7 @@ const Home = () => {
                         </div>
                         <h3 className="text-lg font-bold text-green-800 text-center">{nursery.name}</h3>
                         <p className="text-sm text-gray-600 text-center">{nursery.location}</p>
-                        <div className="flex justify-center mt-2 space-x-1">
+                        <div className="flex justify-center mt-2 flex-wrap gap-1">
                           {nursery.categories.slice(0, 2).map((cat, i) => (
                             <span
                               key={i}
@@ -533,22 +545,61 @@ const Home = () => {
                             </span>
                           ))}
                         </div>
+
+                        {/* ✅ SERVICES — HORIZONTAL INLINE */}
+                        <div className="mt-3 flex justify-center gap-3 flex-wrap">
+                          {nursery.services?.includes('consultation') && (
+                            <div className="flex flex-col items-center">
+                              <div className="p-1.5 bg-white border border-gray-200 rounded-full">
+                                <img src="https://img.icons8.com/stickers/26/consultation.png" alt="استشارة" className="w-5 h-5" />
+                              </div>
+                              <span className="text-[10px] text-blue-600 font-medium mt-0.5">استشارة</span>
+                            </div>
+                          )}
+
+                          {nursery.services?.includes('delivery') && (
+                            <div className="flex flex-col items-center">
+                              <div className="p-1.5 bg-white border border-gray-200 rounded-full">
+                                <img src="https://img.icons8.com/color/26/truck--v1.png" alt="توصيل" className="w-5 h-5" />
+                              </div>
+                              <span className="text-[10px] text-yellow-600 font-medium mt-0.5">توصيل</span>
+                            </div>
+                          )}
+
+                          {nursery.services?.includes('installation') && (
+                            <div className="flex flex-col items-center">
+                              <div className="p-1.5 bg-white border border-gray-200 rounded-full">
+                                <img src="https://img.icons8.com/offices/26/hand-planting.png" alt="تركيب" className="w-5 h-5" />
+                              </div>
+                              <span className="text-[10px] text-green-600 font-medium mt-0.5">تركيب</span>
+                            </div>
+                          )}
+
+                          {nursery.services?.includes('maintenance') && (
+                            <div className="flex flex-col items-center">
+                              <div className="p-1.5 bg-white border border-gray-200 rounded-full">
+                                <img src="https://img.icons8.com/office/26/maintenance.png" alt="صيانة" className="w-5 h-5" />
+                              </div>
+                              <span className="text-[10px] text-red-600 font-medium mt-0.5">صيانة</span>
+                            </div>
+                          )}
+                        </div>
+                        {/* ✅ END SERVICES */}
                       </div>
                     </Link>
                   ))}
               </div>
-
-              
             </div>
+
             {/* Back to Categories */}
             <div className="text-center mt-6">
-                <button
-                  onClick={() => setViewMode('home')}
-                  className="text-green-600 hover:underline text-lg"
-                >
-                  ← عودة الي التصنيفات
-                </button>
-              </div>
+              <button
+                onClick={() => setViewMode('home')}
+                className="text-green-600 hover:underline text-lg"
+              >
+                ← عودة الي التصنيفات
+              </button>
+            </div>
           </div>
         </section>
       )}
