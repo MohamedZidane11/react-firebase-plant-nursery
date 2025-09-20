@@ -44,11 +44,15 @@ const Header = () => {
 
             {/* ✅ Logo Section — LEFT (UNCHANGED) */}
             <div className="flex items-center space-x-3 rtl:space-x-reverse z-10 mr-8 hover:scale-105 transition-transform duration-500 ease-in-out">
-              <img
-                src={logo}
-                alt="تشجير - منصة المشاتل"
-                className="h-12 w-auto object-contain"
-              />
+              <Link
+                to="/"
+                onClick={handleLinkClick}>
+                <img
+                  src={logo}
+                  alt="تشجير - منصة المشاتل"
+                  className="h-12 w-auto object-contain"
+                />
+              </Link>
               <span className="text-green-800 text-3xl font-bold tracking-wide">منصة المشاتل</span>
             </div>
 
