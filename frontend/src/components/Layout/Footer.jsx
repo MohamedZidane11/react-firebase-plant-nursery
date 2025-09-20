@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 
 const Footer = () => {
   return (
-    <footer className="bg-green-800 text-white py-12">
+    <footer className="bg-green-800 text-white py-10">
       <div className="container mx-auto px-4">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           <div>
@@ -41,7 +41,7 @@ const Footer = () => {
           </div>
         </div>
         
-        <div className="border-t border-green-700 mt-8 pt-8 text-center text-sm">
+        <div className="border-t border-green-700 mt-6 pt-6 text-center text-sm">
           <p>&copy; 2025 منصة المشاتل. جميع الحقوق محفوظة.</p>
         </div>
       </div>
