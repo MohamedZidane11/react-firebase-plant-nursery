@@ -239,7 +239,7 @@ const Nurseries = () => {
             {currentNurseries.length > 0 ? (
               currentNurseries.map((nursery) => (
                 <div className='hover:-translate-y-4 transition-transform duration-500 ease-in-out'>
-                <NurseryCard key={nursery.id} nursery={nursery} />
+                  <NurseryCard key={nursery.id} nursery={nursery} />
                 </div>
               ))
             ) : (
