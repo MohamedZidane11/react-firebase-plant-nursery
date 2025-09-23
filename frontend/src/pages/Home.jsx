@@ -404,7 +404,7 @@ const Home = () => {
                   <Link 
                     key={nursery.id} 
                     to={`/nurseries/${nursery.id}`}
-                    className="flex-shrink-0 snap-start w-full sm:w-80 md:w-64 lg:w-56 xl:w-64 hover:-translate-y-2 transition-transform duration-500 ease-in-out"
+                    className="flex-shrink-0 snap-start w-full sm:w-80 md:w-64 lg:w-56 xl:w-64 hover:-translate-y-4 transition-transform duration-500 ease-in-out"
                   >
                     <div className="bg-green-100 p-6 rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 border-2 border-yellow-500 h-full flex flex-col items-center">
                       <div className="w-20 h-20 mb-4 bg-green-200 rounded-full flex items-center justify-center overflow-hidden">

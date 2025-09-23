@@ -238,7 +238,9 @@ const Nurseries = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {currentNurseries.length > 0 ? (
               currentNurseries.map((nursery) => (
+                <div className='hover:-translate-y-4 transition-transform duration-500 ease-in-out'>
                 <NurseryCard key={nursery.id} nursery={nursery} />
+                </div>
               ))
             ) : (
               <p className="col-span-full text-center text-gray-500 py-8">
