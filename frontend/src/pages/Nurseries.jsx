@@ -4,20 +4,22 @@ import NurseryCard from '../components/NurseryCard';
 
 const Nurseries = () => {
   const [nurseries, setNurseries] = useState([]);
+  const [categories, setCategories] = useState([]); // ✅ Store fetched categories
   const [loading, setLoading] = useState(true);
+  const [loadingCategories, setLoadingCategories] = useState(true); // Optional UX state
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 3;
 
   // 🔍 Filters
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('all');
+  const [selectedCategory, setSelectedCategory] = useState('all'); // 'all' or exact category title
   const [selectedRegion, setSelectedRegion] = useState('all');
   const [selectedCity, setSelectedCity] = useState('all');
   const [selectedDistrict, setSelectedDistrict] = useState('all');
   const [sortBy, setSortBy] = useState('newest');
   const [showOffersOnly, setShowOffersOnly] = useState(false);
 
-  // 🌐 Fetch nurseries from Railway
+  // 🌐 Fetch nurseries
   useEffect(() => {
     const fetchNurseries = async () => {
       try {
@@ -39,7 +41,28 @@ const Nurseries = () => {
     fetchNurseries();
   }, []);
 
-  // 🌆 Build filter options
+  // 🌐 Fetch categories — to populate filter dropdown
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const API_BASE = 'https://react-firebase-plant-nursery-production.up.railway.app';
+        const response = await fetch(`${API_BASE}/api/categories`);
+        
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        
+        const data = await response.json();
+        setCategories(Array.isArray(data) ? data : []);
+      } catch (err) {
+        console.error('Error fetching categories:', err);
+      } finally {
+        setLoadingCategories(false);
+      }
+    };
+
+    fetchCategories();
+  }, []);
+
+  // 🌆 Build filter options (regions, cities, districts)
   const regions = [...new Set(nurseries.map(n => n.region).filter(Boolean))].sort();
   const cities = selectedRegion === 'all'
     ? [...new Set(nurseries.map(n => n.city).filter(Boolean))].sort()
@@ -61,12 +84,10 @@ const Nurseries = () => {
         )
       : true;
 
-    const matchesCategory = selectedCategory === 'all' ? true : nursery.categories.some((cat) => {
-      if (selectedCategory === 'nursery') return ['مشاتل', 'مشاتل مختلطة'].includes(cat);
-      if (selectedCategory === 'tools') return ['معدات', 'أدوات الزراعة'].includes(cat);
-      if (selectedCategory === 'plants') return ['زهور', 'نخيل', 'نباتات داخلية', 'نباتات خارجية'].includes(cat);
-      return false;
-    });
+    // ✅ Filter by exact category match (no grouping)
+    const matchesCategory = selectedCategory === 'all'
+      ? true
+      : nursery.categories.includes(selectedCategory);
 
     const matchesRegion = selectedRegion === 'all' || nursery.region === selectedRegion;
     const matchesCity = selectedCity === 'all' || nursery.city === selectedCity;
@@ -121,16 +142,19 @@ const Nurseries = () => {
                 className="w-full px-4 py-2 border border-gray-300 rounded-md"
               />
 
-              {/* Category Filter */}
+              {/* ✅ Category Filter — Show ALL categories from API */}
               <select
                 value={selectedCategory}
                 onChange={(e) => setSelectedCategory(e.target.value)}
-                className="w-full md:w-auto px-4 py-2 border border-gray-300 rounded-md"
+                disabled={loadingCategories}
+                className="w-full md:w-auto px-4 py-2 border border-gray-300 rounded-md disabled:opacity-50"
               >
                 <option value="all">جميع التصنيفات</option>
-                <option value="nursery">مشاتل</option>
-                <option value="plants">نباتات</option>
-                <option value="tools">أدوات زراعة</option>
+                {categories.map(cat => (
+                  <option key={cat.id} value={cat.title}>
+                    {cat.title}
+                  </option>
+                ))}
               </select>
 
               {/* Region Filter */}
@@ -178,6 +202,7 @@ const Nurseries = () => {
                 ))}
               </select>
             </div>
+
             {/* Sort & Offers */}
             <div className="flex flex-col md:flex-row gap-4 mt-4">
               <select
