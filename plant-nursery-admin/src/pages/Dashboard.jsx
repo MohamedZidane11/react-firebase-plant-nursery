@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { collection, getDocs } from 'firebase/firestore';
 import { db } from '../firebase/firebase';
 
@@ -127,12 +128,16 @@ const Dashboard = () => {
         <div className="text-center">
           <h3 className="text-lg font-semibold text-gray-700 mb-4">الإجراءات السريعة</h3>
           <div className="flex flex-wrap justify-center gap-4">
-            <button className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-full font-medium transition">
-              إضافة مشتل جديد
-            </button>
-            <button className="bg-orange-500 hover:bg-orange-600 text-white px-6 py-3 rounded-full font-medium transition">
-              إضافة عرض جديد
-            </button>
+            <Link to="/nurseries">
+              <button className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-full font-medium transition">
+                إضافة مشتل جديد
+              </button>
+            </Link>
+            <Link to="/offers">
+              <button className="bg-orange-500 hover:bg-orange-600 text-white px-6 py-3 rounded-full font-medium transition">
+                إضافة عرض جديد
+              </button>
+            </Link>
           </div>
         </div>
       </div>
