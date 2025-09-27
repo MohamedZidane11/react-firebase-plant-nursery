@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import defaultNurseryImage from '../assets/nurs_empty.png'; // ✅ Import default image
 
 const Home = () => {
+  // ✅ ALL HOOKS AT THE TOP - BEFORE ANY CONDITIONAL LOGIC
   const [searchTerm, setSearchTerm] = useState('');
   const [activeFilter, setActiveFilter] = useState('all');
   const [selectedCategory, setSelectedCategory] = useState('');
@@ -15,6 +16,14 @@ const Home = () => {
   const [loading, setLoading] = useState(true);
   const [sponsorsLoading, setSponsorsLoading] = useState(true);
   const [results, setResults] = useState([]);
+  
+  // ✅ MOVED siteSettings HOOK TO THE TOP
+  const [siteSettings, setSiteSettings] = useState({
+    title: 'أكبر منصة للمشاتل في المملكة 🌿',
+    subtitle: 'اكتشف أكثر من 500 مشتل ومتجر لأدوات الزراعة في مكان واحد',
+    heroImage: 'https://placehold.co/1600x600/059669/ffffff?text=Plant+Nursery',
+    benefits: ['معلومات كاملة', 'تواصل مباشر', 'خدمات مجانية']
+  });
 
   // ✅ Fetch nurseries
   useEffect(() => {
@@ -92,6 +101,23 @@ const Home = () => {
     fetchSponsors();
   }, []);
 
+  // ✅ MOVED siteSettings useEffect TO THE TOP
+  useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        const API_BASE = 'https://react-firebase-plant-nursery-production.up.railway.app';
+        const response = await fetch(`${API_BASE}/api/settings/site`);
+        if (response.ok) {
+          const data = await response.json();
+          setSiteSettings(data);
+        }
+      } catch (err) {
+        console.warn('Failed to load site settings, using defaults.', err);
+      }
+    };
+    fetchSettings();
+  }, []);
+
   // ✅ Combine and filter results
   useEffect(() => {
     const term = searchTerm.toLowerCase().trim();
@@ -164,6 +190,11 @@ const Home = () => {
     setResults(results);
   }, [searchTerm, nurseries, offers, categories]);
 
+  // ✅ CONDITIONAL RETURN MOVED AFTER ALL HOOKS
+  if (loading || sponsorsLoading) {
+    return <p className="text-center py-8">جاري التحميل...</p>;
+  }
+
   // ✅ Define filters
   const filters = [
     { key: 'all', label: 'الكل' },
@@ -181,10 +212,6 @@ const Home = () => {
     return true;
   });
 
-  if (loading || sponsorsLoading) {
-    return <p className="text-center py-8">جاري التحميل...</p>;
-  }
-
   // ✅ Get featured nurseries (controlled by admin)
   const featuredNurseries = nurseries.filter(n => n.featured);
 
@@ -194,33 +221,21 @@ const Home = () => {
       <section className="bg-gradient-to-r from-green-100 to-green-200 py-16">
         <div className="container mx-auto px-4 text-center">
           <h1 className="text-4xl md:text-5xl font-bold text-green-800 mb-4">
-            أكبر منصة للمشاتل في المملكة 🌿
+            {siteSettings.title || 'أكبر منصة للمشاتل في المملكة 🌿'}
           </h1>
           <p className="text-xl text-gray-700 mb-8">
-            اكتشف أكثر من 500 مشتل ومتجر لأدوات الزراعة في مكان واحد
+            {siteSettings.subtitle || 'اكتشف أكثر من 500 مشتل ومتجر لأدوات الزراعة في مكان واحد'}
           </p>
 
           <div className="flex flex-wrap justify-center gap-6 mb-12">
-            <div className="flex items-center">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-green-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-              </svg>
-              <span className="text-green-800">معلومات كاملة</span>
-            </div>
-
-            <div className="flex items-center">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-green-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-              </svg>
-              <span className="text-green-800">تواصل مباشر</span>
-            </div>
-
-            <div className="flex items-center">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-green-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-              </svg>
-              <span className="text-green-800">خدمات مجانية</span>
-            </div>
+            {(siteSettings.benefits || ['معلومات كاملة', 'تواصل مباشر', 'خدمات مجانية']).map((benefit, i) => (
+              <div key={i} className="flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-green-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+                <span className="text-green-800">{benefit}</span>
+              </div>
+            ))}
           </div>
         </div>
       </section>
@@ -705,14 +720,14 @@ const Home = () => {
         </section>
       )}
       <section>
-        <div class="mx-auto mt-8 max-w-8xl px-6 sm:mt-8 lg:px-8 mb-8">
+        <div className="mx-auto mt-8 max-w-8xl px-6 sm:mt-8 lg:px-8 mb-8">
           <div
-            class="relative isolate overflow-hidden bg-gray-900 px-6 py-24 shadow-2xl rounded-2xl sm:rounded-3xl sm:px-18 xl:py-16">
+            className="relative isolate overflow-hidden bg-gray-900 px-6 py-24 shadow-2xl rounded-2xl sm:rounded-3xl sm:px-18 xl:py-16">
           
-            <h2 class="mx-auto max-w-2xl text-center text-3xl font-bold tracking-tight text-white sm:text-4xl mb-8">
+            <h2 className="mx-auto max-w-2xl text-center text-3xl font-bold tracking-tight text-white sm:text-4xl mb-8">
               هل تملك مشتلًا؟
             </h2>
-            <p class="mx-auto mt-2 max-w-xl text-center text-lg leading-8 text-gray-300">
+            <p className="mx-auto mt-2 max-w-xl text-center text-lg leading-8 text-gray-300">
             انضم إلى منصتنا واحصل على المزيد من العملاء
             </p>
             <div className="flex items-center justify-center mb-4 mt-10">
