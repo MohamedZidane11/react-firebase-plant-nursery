@@ -18,15 +18,16 @@ const SiteSettings = () => {
     contacts: {
       email: '',
       phone: '',
-      whatsapp: ''
+      whatsapp: '',
+      address: ''
     },
     footerLinks: [''],
     social: {
+      facebook: '',
       instagram: '',
-      twitter: '',
-      tiktok: '',
-      snapchat: ''
-    }
+      twitter: ''
+    },
+    about: ['']
   });
 
   const [loading, setLoading] = useState(true);
@@ -44,24 +45,25 @@ const SiteSettings = () => {
           title: 'أكبر منصة للمشاتل في المملكة',
           subtitle: 'اكتشف أكثر من 500 مشتل ومتجر لأدوات الزراعة في مكان واحد',
           heroImage: 'https://placehold.co/1200x600/10b981/ffffff?text=Hero+Image',
-          benefits: ['توصيل سريع', 'أفضل الأسعار', 'استشارات مجانية', 'دعم فني متاح'],
+          benefits: ['معلومات كاملة', 'تواصل مباشر', 'خدمات مجانية'],
           seo: {
             title: 'مشاتل النباتات في السعودية | Plant Nursery Finder',
             description: 'أكبر منصة تجمع مشاتل النباتات وأدوات الزراعة في المملكة.',
             ogImage: 'https://placehold.co/1200x630/10b981/ffffff?text=OG+Image'
           },
           contacts: {
-            email: 'info@nursery.com',
+            email: 'info@nurseries.sa',
             phone: '0551234567',
-            whatsapp: '966551234567'
+            whatsapp: '+4567 123 50 966',
+            address: 'الرياض، المملكة العربية السعودية'
           },
-          footerLinks: ['الرئيسية', 'المشاتل', 'العروض', 'تسجيل مشتل'],
+          footerLinks: ['الرئيسية', 'المشاتل', 'العروض', 'سجل مشتلك'],
           social: {
+            facebook: 'nursery.sa',
             instagram: 'nursery.sa',
-            twitter: 'nursery_sa',
-            tiktok: 'nursery.sa',
-            snapchat: 'nursery-sa'
-          }
+            twitter: 'nursery_sa'
+          },
+          title: 'منصة المشاتل تجمع أفضل المشاتل ومحلات أدوات الزراعة في مكان واحد'
         };
         await setDoc(docRef, {
           ...defaultSettings,

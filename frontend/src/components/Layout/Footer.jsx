@@ -9,8 +9,8 @@ const Footer = () => {
             <h3 className="text-lg font-semibold mb-4 text-yellow-300">تابعنا</h3>
             <ul className="space-y-2">
               <li><a href="#" className="hover:text-yellow-300">فيسبوك</a></li>
-              <li><a href="#" className="hover:text-yellow-300">تويتر</a></li>
               <li><a href="#" className="hover:text-yellow-300">انستجرام</a></li>
+              <li><a href="#" className="hover:text-yellow-300">تويتر</a></li>
             </ul>
           </div>
           
