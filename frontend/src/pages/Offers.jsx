@@ -86,7 +86,7 @@ const Offers = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Hero Section */}
-      <section className="bg-orange-500 text-white py-16">
+      <section className="bg-yellow-600/80 text-white py-16">
         <div className="container mx-auto px-4 text-center">
           <h1 className="text-4xl md:text-5xl font-bold mb-4">
             العروض الخاصة 🎁
@@ -94,7 +94,7 @@ const Offers = () => {
           <p className="text-xl mb-8">
             اكتشف أفضل العروض والخصومات من المشاتل المميزة
           </p>
-          <button className="bg-white text-orange-500 px-8 py-4 rounded-full font-bold text-lg hover:bg-gray-100 transition-colors">
+          <button className="bg-white text-yellow-600/80 px-8 py-4 rounded-full font-bold text-lg hover:bg-gray-100 transition-colors">
             {filteredOffers.length} عرض نشط حالياً 🙌
           </button>
         </div>
@@ -194,7 +194,7 @@ const Offers = () => {
                   onClick={() => handlePageChange(i + 1)}
                   className={`px-4 py-2 rounded-md ${
                     currentPage === i + 1
-                      ? 'bg-orange-500 text-white'
+                      ? 'bg-yellow-600/80 text-white'
                       : 'border border-gray-300 hover:bg-gray-100'
                   }`}
                 >

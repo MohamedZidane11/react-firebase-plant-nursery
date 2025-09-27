@@ -111,7 +111,7 @@ const OfferCard = ({ offer }) => {
           </div>
 
           {offer.highlighted && (
-            <div className="bg-orange-500 p-2 text-center">
+            <div className="bg-yellow-600/80 p-2 text-center">
               <span className="text-white text-sm font-bold">عرض خاص</span>
             </div>
           )}
