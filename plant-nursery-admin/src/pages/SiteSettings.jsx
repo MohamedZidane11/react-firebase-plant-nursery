@@ -249,7 +249,7 @@ const SiteSettings = () => {
             </div>
           </div>
 
-          {/* Footer Links */}
+          {/* Footer Links 
           <div className="bg-white p-8 rounded-2xl shadow-lg border border-gray-100">
             <h2 className="text-2xl font-bold mb-6 text-gray-800">روابط التذييل</h2>
             {settings.footerLinks.map((link, i) => (
@@ -274,12 +274,18 @@ const SiteSettings = () => {
             >
               + إضافة رابط
             </button>
-          </div>
+          </div>*/}
 
           {/* Social Media */}
           <div className="bg-white p-8 rounded-2xl shadow-lg border border-gray-100">
             <h2 className="text-2xl font-bold mb-6 text-gray-800">الروابط الاجتماعية</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+              <input
+                placeholder="فيسبوك (اسم المستخدم)"
+                value={settings.social.facebook}
+                onChange={(e) => handleChange('social.facebook', e.target.value)}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              />
               <input
                 placeholder="إنستغرام (اسم المستخدم)"
                 value={settings.social.instagram}
@@ -290,18 +296,6 @@ const SiteSettings = () => {
                 placeholder="تويتر (اسم المستخدم)"
                 value={settings.social.twitter}
                 onChange={(e) => handleChange('social.twitter', e.target.value)}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-              />
-              <input
-                placeholder="تيك توك (اسم المستخدم)"
-                value={settings.social.tiktok}
-                onChange={(e) => handleChange('social.tiktok', e.target.value)}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-              />
-              <input
-                placeholder="سناب شات (اسم المستخدم)"
-                value={settings.social.snapchat}
-                onChange={(e) => handleChange('social.snapchat', e.target.value)}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
               />
             </div>
