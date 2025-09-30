@@ -21,22 +21,24 @@ const NurseryCard = ({ nursery, offers = [] }) => {
   };
 
   // Get active discount for this nursery
-  const getActiveDiscount = () => {
-    // Find active offers for this nursery
-    const activeOffers = offers.filter(offer => 
-      offer.nurseryId === nursery.id && 
-      offer.published !== false && 
-      !isExpired(offer.endDate)
-    );
-    
-    // Return the highest discount if multiple offers exist
-    if (activeOffers.length > 0) {
-      return Math.max(...activeOffers.map(offer => offer.discount || 0));
-    }
-    return null;
-  };
+const getActiveDiscount = () => {
+  // Find active offers for this nursery that have a valid discount > 0
+  const activeOffersWithDiscount = offers.filter(offer => 
+    offer.nurseryId === nursery.id && 
+    offer.published !== false && 
+    !isExpired(offer.endDate) &&
+    typeof offer.discount === 'number' && 
+    offer.discount > 0 // Only consider discounts greater than 0
+  );
+  
+  // Return the highest discount if multiple offers exist
+  if (activeOffersWithDiscount.length > 0) {
+    return Math.max(...activeOffersWithDiscount.map(offer => offer.discount));
+  }
+  return null; // No valid discount found
+};
 
-  const discount = getActiveDiscount();
+const discount = getActiveDiscount();
 
   return (
     <div className="w-full sm:max-w-xs mx-auto">
