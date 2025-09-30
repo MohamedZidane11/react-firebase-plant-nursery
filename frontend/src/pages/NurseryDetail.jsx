@@ -146,12 +146,12 @@ const NurseryDetail = () => {
                   )}
                   {nursery.services?.includes('installation') && (
                     <button className="bg-green-50 border border-green-300 hover:bg-green-100 text-green-800 px-6 py-3 rounded-lg">
-                      تركيب وصيانة
+                      تركيب
                     </button>
                   )}
                   {nursery.services?.includes('maintenance') && (
                     <button className="bg-green-50 border border-green-300 hover:bg-green-100 text-green-800 px-6 py-3 rounded-lg">
-                      ضمان نباتات
+                      صيانة
                     </button>
                   )}
                 </div>
@@ -243,7 +243,7 @@ const NurseryDetail = () => {
               */}
             {/* Social Media Links */}
             {nursery.socialMedia && (
-              <div className="bg-yellow-200/80 rounded-xl shadow-lg p-8 mt-8">
+              <div className="bg-yellow-100/30 rounded-xl shadow-lg p-8 mt-8">
                 <h4 className="text-xl font-bold text-green-800 mb-6">تابعنا على وسائل التواصل</h4>
                 <div className="flex flex-wrap gap-4">
                   {nursery.socialMedia.instagram && (
