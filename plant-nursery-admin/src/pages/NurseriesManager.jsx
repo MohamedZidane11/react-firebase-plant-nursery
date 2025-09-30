@@ -12,7 +12,7 @@ const NurseriesManager = () => {
   const [editing, setEditing] = useState(null);
   const formRef = useRef();
 
-  // ✅ Initial form data WITHOUT discount field
+  // ✅ Initial form data WITHOUT discount field, WITH social media
   const [formData, setFormData] = useState({
     name: '',
     image: '',
@@ -25,7 +25,14 @@ const NurseriesManager = () => {
     featured: false,
     // discount: null, // Removed discount field
     published: true,
-    phone: '' // Added phone to initial state
+    phone: '',
+    // Social media links (optional)
+    socialMedia: {
+      instagram: '',
+      twitter: '',
+      facebook: '',
+      tiktok: ''
+    }
   });
 
   useLayoutEffect(() => {
@@ -77,6 +84,17 @@ const NurseriesManager = () => {
     }));
   };
 
+  // Handle social media input changes
+  const handleSocialMediaChange = (platform, value) => {
+    setFormData(prev => ({
+      ...prev,
+      socialMedia: {
+        ...prev.socialMedia,
+        [platform]: value
+      }
+    }));
+  };
+
   const handleCategoryChange = (category) => {
     setFormData(prev => ({
       ...prev,
@@ -108,7 +126,14 @@ const NurseriesManager = () => {
       featured: false,
       // discount: null, // Removed discount field
       published: true,
-      phone: ''
+      phone: '',
+      // Reset social media
+      socialMedia: {
+        instagram: '',
+        twitter: '',
+        facebook: '',
+        tiktok: ''
+      }
     });
     setEditing(null);
     setShowForm(false);
@@ -125,6 +150,10 @@ const NurseriesManager = () => {
     try {
       const data = {
         ...formData,
+        // Clean up social media - only save non-empty values
+        socialMedia: Object.fromEntries(
+          Object.entries(formData.socialMedia).filter(([_, value]) => value.trim() !== '')
+        ),
         // discount: formData.discount ? Number(formData.discount) : null, // Removed discount handling
         updatedAt: serverTimestamp(),
         updatedBy: auth.currentUser.email
@@ -174,7 +203,14 @@ const NurseriesManager = () => {
       featured: nursery.featured || false,
       // discount: nursery.discount, // Removed discount field
       published: nursery.published !== false,
-      phone: nursery.phone || '' // Added phone
+      phone: nursery.phone || '',
+      // Social media - provide defaults if not exists
+      socialMedia: {
+        instagram: nursery.socialMedia?.instagram || '',
+        twitter: nursery.socialMedia?.twitter || '',
+        facebook: nursery.socialMedia?.facebook || '',
+        tiktok: nursery.socialMedia?.tiktok || ''
+      }
     });
     setEditing(nursery.id);
     setShowForm(true);
@@ -295,7 +331,7 @@ const NurseriesManager = () => {
                     value={formData.image}
                     onChange={handleChange}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
-                    placeholder="https://example.com/image.jpg    "
+                    placeholder="https://example.com/image.jpg      "
                   />
                 </div>
 
@@ -321,6 +357,53 @@ const NurseriesManager = () => {
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
                     placeholder="+966 55 123 4567"
                   />
+                </div>
+              </div>
+
+              {/* Social Media Links */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">روابط وسائل التواصل الاجتماعي (اختياري)</label>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 mb-1">إنستغرام</label>
+                    <input
+                      type="url"
+                      value={formData.socialMedia.instagram}
+                      onChange={(e) => handleSocialMediaChange('instagram', e.target.value)}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                      placeholder="https://instagram.com/username"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 mb-1">تويتر (X)</label>
+                    <input
+                      type="url"
+                      value={formData.socialMedia.twitter}
+                      onChange={(e) => handleSocialMediaChange('twitter', e.target.value)}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                      placeholder="https://twitter.com/username"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 mb-1">فيسبوك</label>
+                    <input
+                      type="url"
+                      value={formData.socialMedia.facebook}
+                      onChange={(e) => handleSocialMediaChange('facebook', e.target.value)}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                      placeholder="https://facebook.com/username"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 mb-1">تيك توك</label>
+                    <input
+                      type="url"
+                      value={formData.socialMedia.tiktok}
+                      onChange={(e) => handleSocialMediaChange('tiktok', e.target.value)}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                      placeholder="https://tiktok.com/@username"
+                    />
+                  </div>
                 </div>
               </div>
 
@@ -463,6 +546,23 @@ const NurseriesManager = () => {
                         <p className="text-sm text-gray-600">{nursery.location}</p>
                         {discount !== null && (
                           <span className="text-orange-500 text-sm">خصم {discount}%</span>
+                        )}
+                        {/* Display social media count */}
+                        {nursery.socialMedia && (
+                          <div className="flex gap-1 mt-1">
+                            {nursery.socialMedia.instagram && (
+                              <span className="text-blue-400 text-xs">📷</span>
+                            )}
+                            {nursery.socialMedia.twitter && (
+                              <span className="text-blue-400 text-xs">🐦</span>
+                            )}
+                            {nursery.socialMedia.facebook && (
+                              <span className="text-blue-600 text-xs">📘</span>
+                            )}
+                            {nursery.socialMedia.tiktok && (
+                              <span className="text-black text-xs">🎵</span>
+                            )}
+                          </div>
                         )}
                       </div>
                     </div>
