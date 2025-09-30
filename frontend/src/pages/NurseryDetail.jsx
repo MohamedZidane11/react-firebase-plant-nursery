@@ -130,29 +130,44 @@ const NurseryDetail = () => {
                 </div>
               </div>
 
-              {/* Services */}
+              {/* Services — Icons from NurseryCard, full titles preserved */}
               <div className="mb-8">
                 <h3 className="text-xl font-bold text-green-800 mb-4">الخدمات المتاحة</h3>
                 <div className="flex flex-wrap gap-4">
                   {nursery.services?.includes('consultation') && (
-                    <button className="bg-green-50 border border-green-300 hover:bg-green-100 text-green-800 px-6 py-3 rounded-lg">
-                      استشارات
-                    </button>
+                    <div className="flex items-center gap-2 bg-green-50 border border-green-300 hover:bg-green-100 text-green-800 px-4 py-2 rounded-lg">
+                      <div className="p-1 bg-gray-100 rounded-full">
+                        <img src="https://img.icons8.com/stickers/26/consultation.png" alt="استشارات" />
+                      </div>
+                      <span>استشارات</span>
+                    </div>
                   )}
+
                   {nursery.services?.includes('delivery') && (
-                    <button className="bg-green-50 border border-green-300 hover:bg-green-100 text-green-800 px-6 py-3 rounded-lg">
-                      توصيل
-                    </button>
+                    <div className="flex items-center gap-2 bg-green-50 border border-green-300 hover:bg-green-100 text-green-800 px-4 py-2 rounded-lg">
+                      <div className="p-1 bg-gray-100 rounded-full">
+                        <img src="https://img.icons8.com/color/26/truck--v1.png" alt="توصيل" />
+                      </div>
+                      <span>توصيل</span>
+                    </div>
                   )}
+
                   {nursery.services?.includes('installation') && (
-                    <button className="bg-green-50 border border-green-300 hover:bg-green-100 text-green-800 px-6 py-3 rounded-lg">
-                      تركيب
-                    </button>
+                    <div className="flex items-center gap-2 bg-green-50 border border-green-300 hover:bg-green-100 text-green-800 px-4 py-2 rounded-lg">
+                      <div className="p-1 bg-gray-100 rounded-full">
+                        <img src="https://img.icons8.com/offices/26/hand-planting.png" alt="تركيب" />
+                      </div>
+                      <span>تركيب</span>
+                    </div>
                   )}
+
                   {nursery.services?.includes('maintenance') && (
-                    <button className="bg-green-50 border border-green-300 hover:bg-green-100 text-green-800 px-6 py-3 rounded-lg">
-                      صيانة
-                    </button>
+                    <div className="flex items-center gap-2 bg-green-50 border border-green-300 hover:bg-green-100 text-green-800 px-4 py-2 rounded-lg">
+                      <div className="p-1 bg-gray-100 rounded-full">
+                        <img src="https://img.icons8.com/office/26/maintenance.png" alt="صيانة" />
+                      </div>
+                      <span>صيانة</span>
+                    </div>
                   )}
                 </div>
               </div>
