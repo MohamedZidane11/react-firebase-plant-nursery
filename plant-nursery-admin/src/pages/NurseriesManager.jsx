@@ -6,12 +6,13 @@ import { serverTimestamp } from 'firebase/firestore';
 
 const NurseriesManager = () => {
   const [nurseries, setNurseries] = useState([]);
+  const [offers, setOffers] = useState([]); // Add state for offers
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState(null);
   const formRef = useRef();
 
-  // ✅ Initial form data with region/city/district
+  // ✅ Initial form data WITHOUT discount field
   const [formData, setFormData] = useState({
     name: '',
     image: '',
@@ -22,8 +23,9 @@ const NurseriesManager = () => {
     district: '',
     services: [],
     featured: false,
-    discount: null,
-    published: true
+    // discount: null, // Removed discount field
+    published: true,
+    phone: '' // Added phone to initial state
   });
 
   useLayoutEffect(() => {
@@ -31,6 +33,20 @@ const NurseriesManager = () => {
       formRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
   }, [showForm, editing]);
+
+  // ✅ Fetch offers
+  const fetchOffers = async () => {
+    try {
+      const snapshot = await getDocs(collection(db, 'offers'));
+      const list = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+      setOffers(list);
+    } catch (err) {
+      console.error('Error fetching offers:', err);
+    }
+  };
 
   const fetchNurseries = async () => {
     try {
@@ -42,13 +58,15 @@ const NurseriesManager = () => {
       setNurseries(list);
     } catch (err) {
       console.error('Error fetching nurseries:', err);
-    } finally {
-      setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchNurseries();
+    const loadData = async () => {
+      await Promise.all([fetchNurseries(), fetchOffers()]);
+      setLoading(false);
+    };
+    loadData();
   }, []);
 
   const handleChange = (e) => {
@@ -88,7 +106,7 @@ const NurseriesManager = () => {
       district: '',
       services: [],
       featured: false,
-      discount: null,
+      // discount: null, // Removed discount field
       published: true,
       phone: ''
     });
@@ -107,7 +125,7 @@ const NurseriesManager = () => {
     try {
       const data = {
         ...formData,
-        discount: formData.discount ? Number(formData.discount) : null,
+        // discount: formData.discount ? Number(formData.discount) : null, // Removed discount handling
         updatedAt: serverTimestamp(),
         updatedBy: auth.currentUser.email
       };
@@ -154,8 +172,9 @@ const NurseriesManager = () => {
       district: nursery.district || '',
       services: nursery.services || [],
       featured: nursery.featured || false,
-      discount: nursery.discount,
-      published: nursery.published !== false
+      // discount: nursery.discount, // Removed discount field
+      published: nursery.published !== false,
+      phone: nursery.phone || '' // Added phone
     });
     setEditing(nursery.id);
     setShowForm(true);
@@ -205,6 +224,33 @@ const NurseriesManager = () => {
     }
   };
 
+  // Helper function to get discount for a nursery
+  const getNurseryDiscount = (nurseryId) => {
+    // Find active offers for this nursery
+    const activeOffers = offers.filter(offer => 
+      offer.nurseryId === nurseryId && 
+      offer.published !== false && 
+      !isExpired(offer.endDate) &&
+      offer.discount > 0 // Only consider offers with discount greater than 0
+    );
+    
+    // Return the highest discount if multiple offers exist
+    if (activeOffers.length > 0) {
+      return Math.max(...activeOffers.map(offer => offer.discount));
+    }
+    return null;
+  };
+
+  // Helper function to check if offer is expired
+  const isExpired = (endDateStr) => {
+    if (!endDateStr) return false;
+    const end = new Date(endDateStr);
+    const now = new Date();
+    end.setHours(0, 0, 0, 0);
+    now.setHours(0, 0, 0, 0);
+    return end < now;
+  };
+
   if (loading) return <p className="text-center py-8">جاري التحميل...</p>;
 
   return (
@@ -249,7 +295,7 @@ const NurseriesManager = () => {
                     value={formData.image}
                     onChange={handleChange}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
-                    placeholder="https://example.com/image.jpg"
+                    placeholder="https://example.com/image.jpg    "
                   />
                 </div>
 
@@ -265,31 +311,15 @@ const NurseriesManager = () => {
                   />
                 </div>
                 {/* Contact Info */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">رقم الهاتف</label>
-                    <input
-                      type="tel"
-                      name="phone"
-                      value={formData.phone || ''}
-                      onChange={handleChange}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
-                      placeholder="+966 55 123 4567"
-                    />
-                  </div>
-                </div>
-
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">الخصم (%)</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">رقم الهاتف</label>
                   <input
-                    type="number"
-                    name="discount"
-                    value={formData.discount || ''}
+                    type="tel"
+                    name="phone"
+                    value={formData.phone || ''}
                     onChange={handleChange}
-                    min="0"
-                    max="100"
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
-                    placeholder="مثل: 25"
+                    placeholder="+966 55 123 4567"
                   />
                 </div>
               </div>
@@ -413,56 +443,61 @@ const NurseriesManager = () => {
             {nurseries.length === 0 ? (
               <p className="p-8 text-center text-gray-500">لا توجد مشاتل.</p>
             ) : (
-              nurseries.map((nursery) => (
-                <div key={nursery.id} className="p-6 hover:bg-gray-50 flex flex-col md:flex-row md:items-center justify-between gap-4">
-                  <div className="flex items-center gap-4">
-                    <img
-                      src={nursery.image}
-                      alt={nursery.name}
-                      className="w-16 h-16 object-cover rounded-lg"
-                      onError={(e) => {
-                        e.target.src = 'https://placehold.co/100x100/d1f7c4/4ade80?text=No+Image';
-                      }}
-                    />
-                    <div>
-                      <h3 className="font-bold text-gray-800">{nursery.name}</h3>
-                      <p className="text-sm text-gray-600">{nursery.location}</p>
-                      {nursery.discount && (
-                        <span className="text-orange-500 text-sm">خصم {nursery.discount}%</span>
+              nurseries.map((nursery) => {
+                // Get discount from offers for this nursery
+                const discount = getNurseryDiscount(nursery.id);
+                
+                return (
+                  <div key={nursery.id} className="p-6 hover:bg-gray-50 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div className="flex items-center gap-4">
+                      <img
+                        src={nursery.image}
+                        alt={nursery.name}
+                        className="w-16 h-16 object-cover rounded-lg"
+                        onError={(e) => {
+                          e.target.src = 'https://placehold.co/100x100/d1f7c4/4ade80?text=No+Image';
+                        }}
+                      />
+                      <div>
+                        <h3 className="font-bold text-gray-800">{nursery.name}</h3>
+                        <p className="text-sm text-gray-600">{nursery.location}</p>
+                        {discount !== null && (
+                          <span className="text-orange-500 text-sm">خصم {discount}%</span>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="flex flex-wrap gap-2 mt-4 md:mt-0">
+                      {nursery.featured && (
+                        <span className="bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded-full">
+                          مميز
+                        </span>
                       )}
+                      {nursery.published !== false ? (
+                        <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">
+                          منشور
+                        </span>
+                      ) : (
+                        <span className="bg-red-100 text-red-800 text-xs px-2 py-1 rounded-full">
+                          غير منشور
+                        </span>
+                      )}
+                      <button
+                        onClick={() => handleEdit(nursery)}
+                        className="bg-blue-100 hover:bg-blue-200 text-blue-800 text-sm px-3 py-1 rounded transition"
+                      >
+                        تعديل
+                      </button>
+                      <button
+                        onClick={() => handleDelete(nursery.id)}
+                        className="bg-red-100 hover:bg-red-200 text-red-800 text-sm px-3 py-1 rounded transition"
+                      >
+                        حذف
+                      </button>
                     </div>
                   </div>
-
-                  <div className="flex flex-wrap gap-2 mt-4 md:mt-0">
-                    {nursery.featured && (
-                      <span className="bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded-full">
-                        مميز
-                      </span>
-                    )}
-                    {nursery.published !== false ? (
-                      <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">
-                        منشور
-                      </span>
-                    ) : (
-                      <span className="bg-red-100 text-red-800 text-xs px-2 py-1 rounded-full">
-                        غير منشور
-                      </span>
-                    )}
-                    <button
-                      onClick={() => handleEdit(nursery)}
-                      className="bg-blue-100 hover:bg-blue-200 text-blue-800 text-sm px-3 py-1 rounded transition"
-                    >
-                      تعديل
-                    </button>
-                    <button
-                      onClick={() => handleDelete(nursery.id)}
-                      className="bg-red-100 hover:bg-red-200 text-red-800 text-sm px-3 py-1 rounded transition"
-                    >
-                      حذف
-                    </button>
-                  </div>
-                </div>
-              ))
+                );
+              })
             )}
           </div>
         </div>

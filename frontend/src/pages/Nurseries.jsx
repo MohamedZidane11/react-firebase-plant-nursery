@@ -4,6 +4,7 @@ import NurseryCard from '../components/NurseryCard';
 
 const Nurseries = () => {
   const [nurseries, setNurseries] = useState([]);
+  const [offers, setOffers] = useState([]); // ✅ Add state for offers
   const [categories, setCategories] = useState([]); // ✅ Store fetched categories
   const [loading, setLoading] = useState(true);
   const [loadingCategories, setLoadingCategories] = useState(true); // Optional UX state
@@ -33,12 +34,32 @@ const Nurseries = () => {
       } catch (err) {
         console.error('Error fetching nurseries:', err);
         alert('تعذر الاتصال بالخادم');
-      } finally {
-        setLoading(false);
       }
     };
 
     fetchNurseries();
+  }, []);
+
+  // 🌐 Fetch offers
+  useEffect(() => {
+    const fetchOffers = async () => {
+      try {
+        const API_BASE = 'https://react-firebase-plant-nursery-production.up.railway.app';
+        const response = await fetch(`${API_BASE}/api/offers`);
+        
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        
+        const data = await response.json();
+        // Filter only published offers
+        const publishedOffers = Array.isArray(data) ? data.filter(offer => offer.published !== false) : [];
+        setOffers(publishedOffers);
+      } catch (err) {
+        console.error('Error fetching offers:', err);
+        setOffers([]);
+      }
+    };
+
+    fetchOffers();
   }, []);
 
   // 🌐 Fetch categories — to populate filter dropdown
@@ -61,6 +82,31 @@ const Nurseries = () => {
 
     fetchCategories();
   }, []);
+
+  // Helper function to check if offer is expired
+  const isExpired = (endDateStr) => {
+    if (!endDateStr) return false;
+    const end = new Date(endDateStr);
+    const now = new Date();
+    end.setHours(0, 0, 0, 0);
+    now.setHours(0, 0, 0, 0);
+    return end < now;
+  };
+
+  // Helper function to get active discount for a nursery
+  const getActiveDiscount = (nurseryId) => {
+    // Find active offers for this nursery
+    const activeOffers = offers.filter(offer => 
+      offer.nurseryId === nurseryId && 
+      !isExpired(offer.endDate)
+    );
+    
+    // Return the highest discount if multiple offers exist
+    if (activeOffers.length > 0) {
+      return Math.max(...activeOffers.map(offer => offer.discount || 0));
+    }
+    return null;
+  };
 
   // 🌆 Build filter options (regions, cities, districts)
   const regions = [...new Set(nurseries.map(n => n.region).filter(Boolean))].sort();
@@ -92,7 +138,10 @@ const Nurseries = () => {
     const matchesRegion = selectedRegion === 'all' || nursery.region === selectedRegion;
     const matchesCity = selectedCity === 'all' || nursery.city === selectedCity;
     const matchesDistrict = selectedDistrict === 'all' || nursery.district === selectedDistrict;
-    const matchesOffer = showOffersOnly ? nursery.discount !== null : true;
+    
+    // Update: Check for active offers instead of nursery.discount
+    const hasActiveOffer = getActiveDiscount(nursery.id) !== null;
+    const matchesOffer = showOffersOnly ? hasActiveOffer : true;
 
     return matchesSearch && matchesCategory && matchesRegion && matchesCity && matchesDistrict && matchesOffer;
   });
@@ -121,6 +170,13 @@ const Nurseries = () => {
   useEffect(() => {
     setCurrentPage(1);
   }, [searchTerm, selectedCategory, selectedRegion, selectedCity, selectedDistrict, showOffersOnly, sortBy]);
+
+  // Set loading to false when both nurseries and offers are loaded
+  useEffect(() => {
+    if (nurseries.length > 0 || offers.length > 0) {
+      setLoading(false);
+    }
+  }, [nurseries, offers]);
 
   if (loading) {
     return <p className="text-center py-8">جاري التحميل...</p>;
@@ -239,7 +295,11 @@ const Nurseries = () => {
             {currentNurseries.length > 0 ? (
               currentNurseries.map((nursery) => (
                 <div className='hover:-translate-y-4 transition-transform duration-500 ease-in-out'>
-                  <NurseryCard key={nursery.id} nursery={nursery} />
+                  <NurseryCard 
+                    key={nursery.id} 
+                    nursery={nursery} 
+                    offers={offers} // Pass offers to NurseryCard
+                  />
                 </div>
               ))
             ) : (
