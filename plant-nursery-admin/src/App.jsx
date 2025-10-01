@@ -8,6 +8,7 @@ import { auth } from './firebase/firebase';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import NurseriesManager from './pages/NurseriesManager';
+import NurseryForm from './pages/NurseryForm';
 import OffersManager from './pages/OffersManager';
 import CategoriesManager from './pages/CategoriesManager';
 import FiltersManager from './pages/FiltersManager';
@@ -42,6 +43,8 @@ function App() {
             <Routes>
               <Route path="/" element={<Dashboard />} />
               <Route path="/nurseries" element={<NurseriesManager />} />
+              <Route path="/nurseries/add" element={<NurseryForm />} />
+              <Route path="/nurseries/edit/:id" element={<NurseryForm />} />
               <Route path="/offers" element={<OffersManager />} />
               <Route path="/categories" element={<CategoriesManager />} />
               <Route path="/filters" element={<FiltersManager />} />
