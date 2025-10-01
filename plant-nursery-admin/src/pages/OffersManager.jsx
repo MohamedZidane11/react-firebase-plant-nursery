@@ -212,7 +212,7 @@ const OffersManager = () => {
                       >
                         اسم العرض
                         {sortConfig.key === 'title' && (
-                          <span className="mr-1">{sortConfig.direction === 'asc' ? '↑' : '↓'}</span>
+                          <span className="mr-1">{sortConfig.direction === 'asc' ? '↓' : '↑'}</span>
                         )}
                       </th>
                       <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">المشتل</th>

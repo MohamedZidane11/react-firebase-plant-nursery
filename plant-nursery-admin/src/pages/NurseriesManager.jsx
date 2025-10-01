@@ -369,7 +369,7 @@ const NurseriesManager = () => {
                       >
                         اسم المشتل
                         {sortConfig.key === 'name' && (
-                          <span className="mr-1">{sortConfig.direction === 'asc' ? '↑' : '↓'}</span>
+                          <span className="mr-1">{sortConfig.direction === 'asc' ? '↓' : '↑'}</span>
                         )}
                       </th>
                       <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">التصنيف الرئيسي</th>
@@ -381,7 +381,7 @@ const NurseriesManager = () => {
                       >
                         الحالة
                         {sortConfig.key === 'active' && (
-                          <span className="mr-1">{sortConfig.direction === 'asc' ? '↑' : '↓'}</span>
+                          <span className="mr-1">{sortConfig.direction === 'asc' ? '↓' : '↑'}</span>
                         )}
                       </th>
                       <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">العروض</th>
