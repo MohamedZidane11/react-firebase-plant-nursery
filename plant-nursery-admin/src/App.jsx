@@ -10,6 +10,7 @@ import Dashboard from './pages/Dashboard';
 import NurseriesManager from './pages/NurseriesManager';
 import NurseryForm from './pages/NurseryForm';
 import OffersManager from './pages/OffersManager';
+import OfferForm from './pages/OfferForm';
 import CategoriesManager from './pages/CategoriesManager';
 import FiltersManager from './pages/FiltersManager';
 import SponsorsManager from './pages/SponsorsManager';
@@ -46,6 +47,8 @@ function App() {
               <Route path="/nurseries/add" element={<NurseryForm />} />
               <Route path="/nurseries/edit/:id" element={<NurseryForm />} />
               <Route path="/offers" element={<OffersManager />} />
+              <Route path="/offers/add" element={<OfferForm />} />
+              <Route path="/offers/edit/:id" element={<OfferForm />} />
               <Route path="/categories" element={<CategoriesManager />} />
               <Route path="/filters" element={<FiltersManager />} />
               <Route path="/sponsors" element={<SponsorsManager />} />

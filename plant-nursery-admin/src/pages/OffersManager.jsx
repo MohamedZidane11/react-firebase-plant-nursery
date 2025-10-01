@@ -1,48 +1,23 @@
 // src/pages/OffersManager.jsx
-import { useState, useEffect, useRef, useLayoutEffect } from 'react';
-import { db, auth } from '../firebase/firebase';
-import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc } from 'firebase/firestore';
-import { serverTimestamp } from 'firebase/firestore';
+import { useState, useEffect, useMemo } from 'react';
+import { db } from '../firebase/firebase';
+import { collection, getDocs, deleteDoc, doc } from 'firebase/firestore';
+import { useNavigate } from 'react-router-dom';
 
 const OffersManager = () => {
   const [offers, setOffers] = useState([]);
-  const [nurseries, setNurseries] = useState([]); // ✅ Store nurseries
+  const [nurseries, setNurseries] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [showForm, setShowForm] = useState(false);
-  const [editing, setEditing] = useState(null);
-  const formRef = useRef();
+  const navigate = useNavigate();
 
-  const [formData, setFormData] = useState({
-    title: '',
-    description: '',
-    tags: [],
-    endDate: '',
-    discount: null,
-    highlighted: false,
-    published: true,
-    nurseryId: '' // ✅ Add nurseryId
+  const [filters, setFilters] = useState({
+    displayName: '',
+    nurseryId: '',
+    activity: '' // 'active' or 'inactive'
   });
 
-  const scrollToForm = () => {
-    formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'top' });
-  };
+  const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' });
 
-  const isValidDate = (dateString) => {
-    if (!dateString) return false;
-    const date = new Date(dateString);
-    return !isNaN(date.getTime());
-  };
-
-  const isExpired = (endDateStr) => {
-    if (!endDateStr) return false;
-    const end = new Date(endDateStr);
-    const now = new Date();
-    end.setHours(0, 0, 0, 0);
-    now.setHours(0, 0, 0, 0);
-    return end < now;
-  };
-
-  // ✅ Fetch offers
   const fetchOffers = async () => {
     try {
       const snapshot = await getDocs(collection(db, 'offers'));
@@ -56,7 +31,6 @@ const OffersManager = () => {
     }
   };
 
-  // ✅ Fetch nurseries
   const fetchNurseries = async () => {
     try {
       const snapshot = await getDocs(collection(db, 'nurseries'));
@@ -78,84 +52,6 @@ const OffersManager = () => {
     loadData();
   }, []);
 
-  useLayoutEffect(() => {
-    if (showForm && formRef.current && editing) {
-      formRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
-  }, [showForm, editing]);
-
-  const handleChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: type === 'checkbox' ? checked : value
-    }));
-  };
-
-  const handleTagChange = (tag) => {
-    setFormData(prev => ({
-      ...prev,
-      tags: prev.tags.includes(tag)
-        ? prev.tags.filter(t => t !== tag)
-        : [...prev.tags, tag]
-    }));
-  };
-
-  const resetForm = () => {
-    setFormData({
-      title: '',
-      description: '',
-      tags: [],
-      endDate: '',
-      discount: null,
-      highlighted: false,
-      published: true,
-      nurseryId: ''
-    });
-    setEditing(null);
-    setShowForm(false);
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!formData.title.trim() || !formData.description.trim() || !formData.endDate.trim()) {
-      alert('العنوان، الوصف، وتاريخ الانتهاء مطلوبون');
-      return;
-    }
-
-    try {
-      // ✅ Get nursery name if nurseryId is selected
-      const selectedNursery = nurseries.find(n => n.id === formData.nurseryId);
-      const nurseryName = selectedNursery ? selectedNursery.name : '';
-
-      const data = {
-        ...formData,
-        nurseryId: formData.nurseryId || null,
-        nurseryName, // ✅ Save nursery name
-        discount: formData.discount ? Number(formData.discount) : null,
-        updatedAt: serverTimestamp(),
-        updatedBy: auth.currentUser.email
-      };
-
-      if (editing) {
-        await updateDoc(doc(db, 'offers', editing), data);
-        alert('تم تحديث العرض!');
-      } else {
-        await addDoc(collection(db, 'offers'), {
-          ...data,
-          createdAt: serverTimestamp(),
-          createdBy: auth.currentUser.email
-        });
-        alert('تم إضافة العرض!');
-      }
-
-      resetForm();
-      fetchOffers();
-    } catch (err) {
-      alert('خطأ في الحفظ: ' + err.message);
-    }
-  };
-
   const handleDelete = async (id) => {
     if (!confirm('هل أنت متأكد من حذف هذا العرض؟')) return;
     try {
@@ -167,241 +63,278 @@ const OffersManager = () => {
     }
   };
 
-  const handleEdit = (offer) => {
-    setFormData({
-      title: offer.title,
-      description: offer.description,
-      tags: offer.tags || [],
-      endDate: offer.endDate,
-      discount: offer.discount,
-      highlighted: offer.highlighted || false,
-      published: offer.published !== false,
-      nurseryId: offer.nurseryId || '' // ✅ Set nurseryId
-    });
-    setEditing(offer.id);
-    setShowForm(true);
+  const isExpired = (endDateStr) => {
+    if (!endDateStr) return false;
+    const end = new Date(endDateStr);
+    const now = new Date();
+    end.setHours(0, 0, 0, 0);
+    now.setHours(0, 0, 0, 0);
+    return end < now;
   };
+
+  const filteredOffers = useMemo(() => {
+    let result = [...offers];
+
+    if (filters.displayName.trim()) {
+      const term = filters.displayName.trim().toLowerCase();
+      result = result.filter(o => o.title.toLowerCase().includes(term));
+    }
+
+    if (filters.nurseryId) {
+      result = result.filter(o => o.nurseryId === filters.nurseryId);
+    }
+
+    if (filters.activity) {
+      const isActive = filters.activity === 'active';
+      result = result.filter(o => {
+        const active = !isExpired(o.endDate) && o.published !== false;
+        return isActive ? active : !active;
+      });
+    }
+
+    // Apply sorting
+    if (sortConfig.key) {
+      result.sort((a, b) => {
+        if (sortConfig.key === 'title') {
+          return sortConfig.direction === 'asc'
+            ? a.title.localeCompare(b.title)
+            : b.title.localeCompare(a.title);
+        } else if (sortConfig.key === 'active') {
+          const aActive = !isExpired(a.endDate) && a.published !== false ? 1 : 0;
+          const bActive = !isExpired(b.endDate) && b.published !== false ? 1 : 0;
+          return sortConfig.direction === 'asc'
+            ? bActive - aActive
+            : aActive - bActive;
+        }
+        return 0;
+      });
+    }
+
+    return result;
+  }, [offers, filters, sortConfig]);
+
+  const handleFilterChange = (e) => {
+    const { name, value } = e.target;
+    setFilters(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleSort = (key) => {
+    let direction = 'asc';
+    if (sortConfig.key === key && sortConfig.direction === 'asc') {
+      direction = 'desc';
+    }
+    setSortConfig({ key, direction });
+  };
+
+  const isSearching = Object.values(filters).some(val => val !== '');
 
   if (loading) return <p className="text-center py-8">جاري التحميل...</p>;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 to-yellow-50 p-6">
-      <div className="max-w-6xl mx-auto">
-        <div className="flex justify-between items-center mb-8">
+      <div className="max-w-7xl mx-auto">
+        <div className="flex justify-between items-center mb-6">
           <h1 className="text-3xl font-bold text-orange-800">إدارة العروض</h1>
           <button
-            onClick={() => {
-              resetForm();
-              setShowForm(true);
-            }}
+            onClick={() => navigate('/offers/add')}
             className="bg-orange-500 hover:bg-orange-600 text-white px-6 py-3 rounded-lg font-medium transition"
           >
             + إضافة عرض جديد
           </button>
         </div>
 
-        {/* Add/Edit Form */}
-        {showForm && (
-          <div ref={formRef} className="bg-white p-8 rounded-2xl shadow-lg mb-8 border border-orange-100">
-            <h2 className="text-2xl font-bold mb-6">{editing ? 'تعديل عرض' : 'إضافة عرض جديد'}</h2>
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">عنوان العرض</label>
-                  <input
-                    type="text"
-                    name="title"
-                    value={formData.title}
-                    onChange={handleChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
-                    placeholder="خصم 30% على النباتات الداخلية"
-                  />
-                </div>
+        {/* Search Section */}
+        <div className="bg-white rounded-xl shadow-md p-6 mb-8">
+          <h2 className="text-xl font-bold mb-4 text-gray-800">بحث عن عرض</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">اسم العرض</label>
+              <input
+                type="text"
+                name="displayName"
+                value={filters.displayName}
+                onChange={handleFilterChange}
+                maxLength={200}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                placeholder="ابحث بالاسم..."
+              />
+            </div>
 
-                {/* ✅ Nursery Dropdown */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">اسم المشتل</label>
-                  <select
-                    name="nurseryId"
-                    value={formData.nurseryId}
-                    onChange={handleChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
-                  >
-                    <option value="">اختر المشتل (اختياري)</option>
-                    {nurseries.map((nursery) => (
-                      <option key={nursery.id} value={nursery.id}>
-                        {nursery.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">اسم المشتل</label>
+              <select
+                name="nurseryId"
+                value={filters.nurseryId}
+                onChange={handleFilterChange}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md"
+              >
+                <option value="">الكل</option>
+                {nurseries.map(n => (
+                  <option key={n.id} value={n.id}>{n.name}</option>
+                ))}
+              </select>
+            </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">تاريخ الانتهاء</label>
-                  <input
-                    type="date"
-                    name="endDate"
-                    value={formData.endDate}
-                    onChange={handleChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">الخصم (%)</label>
-                  <input
-                    type="number"
-                    name="discount"
-                    value={formData.discount || ''}
-                    onChange={handleChange}
-                    min="0"
-                    max="100"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
-                    placeholder="مثل: 30"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">الوصف</label>
-                <textarea
-                  name="description"
-                  value={formData.description}
-                  onChange={handleChange}
-                  rows="3"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
-                  placeholder="احصل على خصم مميز على تشكيلة واسعة من النباتات الداخلية الجميلة..."
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">التصنيفات</label>
-                <div className="flex flex-wrap gap-2">
-                  {['نباتات داخلية', 'توصيل', 'استشارات', 'أدوات زراعة', 'موسمي'].map((tag) => (
-                    <label key={tag} className="flex items-center">
-                      <input
-                        type="checkbox"
-                        checked={formData.tags.includes(tag)}
-                        onChange={() => handleTagChange(tag)}
-                        className="mr-2 h-4 w-4 text-orange-600"
-                      />
-                      <span className="text-sm">{tag}</span>
-                    </label>
-                  ))}
-                </div>
-              </div>
-
-              <div className="flex items-center">
-                <label className="flex items-center">
-                  <input
-                    type="checkbox"
-                    name="highlighted"
-                    checked={formData.highlighted}
-                    onChange={handleChange}
-                    className="mr-2 h-4 w-4 text-orange-600"
-                  />
-                  <span className="text-sm">مميز</span>
-                </label>
-              </div>
-
-              <div className="flex items-center">
-                <label className="flex items-center">
-                  <input
-                    type="checkbox"
-                    name="published"
-                    checked={formData.published}
-                    onChange={handleChange}
-                    className="mr-2 h-4 w-4 text-orange-600"
-                  />
-                  <span className="text-sm">منشور</span>
-                </label>
-              </div>
-
-              <div className="flex flex-col sm:flex-row gap-4">
-                <button
-                  type="submit"
-                  className="bg-orange-500 hover:bg-orange-600 text-white px-6 py-3 rounded-lg font-medium transition"
-                >
-                  {editing ? 'تحديث' : 'إضافة'}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setShowForm(false)}
-                  className="bg-gray-500 hover:bg-gray-600 text-white px-6 py-3 rounded-lg font-medium transition"
-                >
-                  إلغاء
-                </button>
-              </div>
-            </form>
-          </div>
-        )}
-
-        {/* Offers List */}
-        <div className="bg-white rounded-2xl shadow-lg overflow-hidden border border-orange-100">
-          <div className="p-6 border-b border-gray-200">
-            <h2 className="text-xl font-bold">العروض ({offers.length})</h2>
-          </div>
-          <div className="divide-y divide-gray-100">
-            {offers.length === 0 ? (
-              <p className="p-8 text-center text-gray-500">لا توجد عروض.</p>
-            ) : (
-              offers.map((offer) => (
-                <div key={offer.id} className="p-6 hover:bg-gray-50 flex flex-col md:flex-row md:items-center justify-between gap-4">
-                  <div>
-                    <h3 className="font-bold text-gray-800">{offer.title}</h3>
-                    <p className="text-sm text-gray-600 line-clamp-2">{offer.description}</p>
-                    
-                    {/* Show nursery name */}
-                    {offer.nurseryName && (
-                      <p className="text-sm text-green-600 mt-1">من: {offer.nurseryName}</p>
-                    )}
-
-                    <div className="flex flex-wrap gap-1 mt-2">
-                      {offer.highlighted && (
-                        <span className="bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded-full">
-                          مميز
-                        </span>
-                      )}
-                      {offer.published !== false ? (
-                        <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">
-                          منشور
-                        </span>
-                      ) : (
-                        <span className="bg-red-100 text-red-800 text-xs px-2 py-1 rounded-full">
-                          غير منشور
-                        </span>
-                      )}
-                      {isExpired(offer.endDate) ? (
-                        <span className="bg-gray-100 text-gray-800 text-xs px-2 py-1 rounded-full">
-                          منتهي
-                        </span>
-                      ) : (
-                        <span className="bg-orange-100 text-orange-800 text-xs px-2 py-1 rounded-full">
-                          نشط
-                        </span>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="flex flex-wrap gap-2 mt-4 md:mt-0">
-                    <button
-                      onClick={() => handleEdit(offer)}
-                      className="bg-blue-100 hover:bg-blue-200 text-blue-800 text-sm px-3 py-1 rounded transition"
-                    >
-                      تعديل
-                    </button>
-                    <button
-                      onClick={() => handleDelete(offer.id)}
-                      className="bg-red-100 hover:bg-red-200 text-red-800 text-sm px-3 py-1 rounded transition"
-                    >
-                      حذف
-                    </button>
-                  </div>
-                </div>
-              ))
-            )}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">حالة النشاط</label>
+              <select
+                name="activity"
+                value={filters.activity}
+                onChange={handleFilterChange}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md"
+              >
+                <option value="">الكل</option>
+                <option value="active">نشط</option>
+                <option value="inactive">غير نشط</option>
+              </select>
+            </div>
           </div>
         </div>
+
+        {/* Conditional Rendering */}
+        {isSearching ? (
+          /* 📊 TABLE VIEW */
+          <div className="bg-white rounded-xl shadow-lg overflow-hidden border border-orange-100">
+            <div className="p-4 border-b border-gray-200">
+              <h2 className="text-xl font-bold">نتائج البحث ({filteredOffers.length})</h2>
+            </div>
+
+            {filteredOffers.length === 0 ? (
+              <p className="p-8 text-center text-gray-500">لا توجد نتائج مطابقة</p>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th 
+                        className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
+                        onClick={() => handleSort('title')}
+                      >
+                        اسم العرض
+                        {sortConfig.key === 'title' && (
+                          <span className="mr-1">{sortConfig.direction === 'asc' ? '↑' : '↓'}</span>
+                        )}
+                      </th>
+                      <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">المشتل</th>
+                      <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">الحالة</th>
+                      <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">الإجراءات</th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {filteredOffers.map((offer) => {
+                      const isActive = !isExpired(offer.endDate) && offer.published !== false;
+                      return (
+                        <tr key={offer.id} className="hover:bg-gray-50">
+                          <td className="px-6 py-4 whitespace-nowrap font-medium text-gray-900">{offer.title}</td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {offer.nurseryName || '-'}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                              isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                            }`}>
+                              {isActive ? 'نشط' : 'غير نشط'}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                            <button
+                              onClick={() => navigate(`/offers/edit/${offer.id}`)}
+                              className="text-blue-600 hover:text-blue-900 ml-3"
+                            >
+                              تعديل
+                            </button>
+                            <button
+                              onClick={() => handleDelete(offer.id)}
+                              className="text-red-600 hover:text-red-900 mr-3"
+                            >
+                              حذف
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        ) : (
+          /* 🗂️ CARD VIEW */
+          <div className="bg-white rounded-2xl shadow-lg overflow-hidden border border-orange-100">
+            <div className="p-6 border-b border-gray-200">
+              <h2 className="text-xl font-bold">العروض ({offers.length})</h2>
+            </div>
+            <div className="divide-y divide-gray-100">
+              {offers.length === 0 ? (
+                <p className="p-8 text-center text-gray-500">لا توجد عروض.</p>
+              ) : (
+                offers.map((offer) => (
+                  <div key={offer.id} className="p-6 hover:bg-gray-50 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div>
+                      <div className="flex items-center gap-4">
+                        <img
+                          src={offer.image || '/images/offer_default.png'}
+                          alt={offer.title}
+                          className="w-16 h-16 object-cover rounded-lg border"
+                          onError={(e) => {
+                            e.target.src = '/images/offer_default.png';
+                          }}
+                        />
+                        <div>
+                          <h3 className="font-bold text-gray-800">{offer.title}</h3>
+                          <p className="text-sm text-gray-600 line-clamp-2">{offer.description}</p>
+                          {/* ... rest */}
+                        </div>
+                      </div>
+                      {offer.nurseryName && (
+                        <p className="text-sm text-green-600 mt-1">من: {offer.nurseryName}</p>
+                      )}
+                      <div className="flex flex-wrap gap-1 mt-2">
+                        {offer.highlighted && (
+                          <span className="bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded-full">
+                            مميز
+                          </span>
+                        )}
+                        {offer.published !== false ? (
+                          <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">
+                            منشور
+                          </span>
+                        ) : (
+                          <span className="bg-red-100 text-red-800 text-xs px-2 py-1 rounded-full">
+                            غير منشور
+                          </span>
+                        )}
+                        {isExpired(offer.endDate) ? (
+                          <span className="bg-gray-100 text-gray-800 text-xs px-2 py-1 rounded-full">
+                            منتهي
+                          </span>
+                        ) : (
+                          <span className="bg-orange-100 text-orange-800 text-xs px-2 py-1 rounded-full">
+                            نشط
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex flex-wrap gap-2 mt-4 md:mt-0">
+                      <button
+                        onClick={() => navigate(`/offers/edit/${offer.id}`)}
+                        className="bg-blue-100 hover:bg-blue-200 text-blue-800 text-sm px-3 py-1 rounded transition"
+                      >
+                        تعديل
+                      </button>
+                      <button
+                        onClick={() => handleDelete(offer.id)}
+                        className="bg-red-100 hover:bg-red-200 text-red-800 text-sm px-3 py-1 rounded transition"
+                      >
+                        حذف
+                      </button>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
