@@ -13,6 +13,9 @@ import {
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { auth } from '../firebase/firebase';
 
+// Default image path
+const defaultImage = '/images/nurs_empty.png';
+
 const NurseryForm = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -23,7 +26,7 @@ const NurseryForm = () => {
 
   const [formData, setFormData] = useState({
     name: '',
-    image: '',
+    image: defaultImage, // default image
     categories: [],
     region: '',
     city: '',
@@ -31,7 +34,7 @@ const NurseryForm = () => {
     services: [],
     featured: false,
     published: true,
-    phone: '',
+    phones: [''], // array of phone numbers
     socialMedia: {
       instagram: '',
       twitter: '',
@@ -44,20 +47,18 @@ const NurseryForm = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // Fetch locations
         const locDoc = await getDoc(doc(db, 'locations', 'SA'));
         if (locDoc.exists()) {
           setLocations(locDoc.data().data || []);
         }
 
-        // If editing, load nursery
         if (id) {
           const nurseryDoc = await getDoc(doc(db, 'nurseries', id));
           if (nurseryDoc.exists()) {
             const data = nurseryDoc.data();
             setFormData({
               name: data.name || '',
-              image: data.image || '',
+              image: data.image || defaultImage,
               categories: data.categories || [],
               region: data.region || '',
               city: data.city || '',
@@ -65,7 +66,7 @@ const NurseryForm = () => {
               services: data.services || [],
               featured: data.featured || false,
               published: data.published !== false,
-              phone: data.phone || '',
+              phones: Array.isArray(data.phones) && data.phones.length > 0 ? data.phones : [''],
               socialMedia: {
                 instagram: data.socialMedia?.instagram || '',
                 twitter: data.socialMedia?.twitter || '',
@@ -73,7 +74,7 @@ const NurseryForm = () => {
                 tiktok: data.socialMedia?.tiktok || ''
               }
             });
-            setImagePreview(data.image || '');
+            setImagePreview(data.image || defaultImage);
           }
         }
       } catch (err) {
@@ -122,6 +123,24 @@ const NurseryForm = () => {
     }));
   };
 
+  const handlePhoneChange = (index, value) => {
+    // Allow only digits, max 15
+    const cleaned = value.replace(/\D/g, '').slice(0, 15);
+    const newPhones = [...formData.phones];
+    newPhones[index] = cleaned;
+    setFormData((prev) => ({ ...prev, phones: newPhones }));
+  };
+
+  const addPhoneField = () => {
+    setFormData((prev) => ({ ...prev, phones: [...prev.phones, ''] }));
+  };
+
+  const removePhoneField = (index) => {
+    if (formData.phones.length <= 1) return;
+    const newPhones = formData.phones.filter((_, i) => i !== index);
+    setFormData((prev) => ({ ...prev, phones: newPhones }));
+  };
+
   const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (file) {
@@ -131,7 +150,7 @@ const NurseryForm = () => {
   };
 
   const uploadImage = async () => {
-    if (!imageFile) return formData.image;
+    if (!imageFile) return formData.image || defaultImage;
 
     const storageRef = ref(storage, `nurseries/${Date.now()}_${imageFile.name}`);
     await uploadBytes(storageRef, imageFile);
@@ -142,21 +161,48 @@ const NurseryForm = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!formData.name.trim() || !formData.region || !formData.city || !formData.district) {
-      alert('الاسم والمنطقة والمدينة والحي مطلوبة');
+    // Validate name
+    if (!formData.name.trim()) {
+      alert('اسم المشتل مطلوب');
+      return;
+    }
+
+    // Validate location
+    if (!formData.region || !formData.city || !formData.district) {
+      alert('المنطقة، المدينة، والحي مطلوبة');
+      return;
+    }
+
+    // Validate at least one main category
+    const mainCategories = ['مشاتل', 'مشاتل مختلطة', 'أدوات الزراعة'];
+    const hasMainCategory = formData.categories.some(cat => mainCategories.includes(cat));
+    if (!hasMainCategory) {
+      alert('يجب اختيار تصنيف رئيسي واحد على الأقل (مشاتل، مشاتل مختلطة، أدوات الزراعة)');
+      return;
+    }
+
+    // Validate phones: at least one non-empty
+    const validPhones = formData.phones.filter(p => p.trim() !== '');
+    if (validPhones.length === 0) {
+      alert('يجب إدخال رقم تواصل واحد على الأقل');
       return;
     }
 
     try {
       setLoading(true);
       const imageUrl = await uploadImage();
+      const fullLocation = `${formData.region} - ${formData.city} - ${formData.district}`;
 
       const data = {
         ...formData,
+        location: fullLocation, // ✅ ADD THIS
         image: imageUrl,
-        socialMedia: Object.fromEntries(
-          Object.entries(formData.socialMedia).filter(([_, v]) => v.trim() !== '')
-        ),
+        phones: validPhones,
+        socialMedia: Object.keys(formData.socialMedia).some(key => formData.socialMedia[key].trim() !== '')
+          ? Object.fromEntries(
+              Object.entries(formData.socialMedia).filter(([_, v]) => v.trim() !== '')
+            )
+          : null, // ✅ Save null if empty
         updatedAt: serverTimestamp(),
         updatedBy: auth.currentUser.email
       };
@@ -181,7 +227,6 @@ const NurseryForm = () => {
     }
   };
 
-  // Get cities & districts based on selection
   const cities = locations.find(loc => loc.region === formData.region)?.cities || [];
   const districts = cities.find(c => c.name === formData.city)?.districts || [];
 
@@ -205,41 +250,28 @@ const NurseryForm = () => {
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Name */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">اسم المشتل</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2"><span className="text-red-500">*</span>اسم المشتل</label>
               <input
                 type="text"
                 name="name"
                 value={formData.name}
                 onChange={handleChange}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg"
+                placeholder="يمكنك استخدام الحروف، الأرقام، والرموز"
                 required
               />
             </div>
 
-            {/* Image Upload - Enhanced UI */}
+            {/* Image Upload */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">صورة المشتل</label>
               <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-dashed border-gray-300 rounded-lg hover:border-green-400 transition">
                 <div className="space-y-1 text-center">
-                  <svg
-                    className="mx-auto h-12 w-12 text-gray-400"
-                    stroke="currentColor"
-                    fill="none"
-                    viewBox="0 0 48 48"
-                    aria-hidden="true"
-                  >
-                    <path
-                      d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
+                  <svg className="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
+                    <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
                   <div className="flex text-sm text-gray-600">
-                    <label
-                      htmlFor="file-upload"
-                      className="relative cursor-pointer bg-white rounded-md font-medium text-green-600 hover:text-green-500 focus-within:outline-none"
-                    >
+                    <label htmlFor="file-upload" className="relative cursor-pointer bg-white rounded-md font-medium text-green-600 hover:text-green-500">
                       <span>رفع صورة</span>
                       <input
                         id="file-upload"
@@ -260,7 +292,7 @@ const NurseryForm = () => {
                   <img
                     src={imagePreview}
                     alt="معاينة الصورة"
-                    className="w-32 h-32 object-cover rounded-lg border border-gray-200 shadow-sm"
+                    className="w-32 h-32 object-cover rounded-lg border"
                   />
                 </div>
               )}
@@ -269,7 +301,7 @@ const NurseryForm = () => {
             {/* Location Dropdowns */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">المنطقة</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2"><span className="text-red-500">*</span>المنطقة</label>
                 <select name="region" value={formData.region} onChange={handleChange} className="w-full px-4 py-3 border border-gray-300 rounded-lg" required>
                   <option value="">اختر المنطقة</option>
                   {locations.map((loc) => (
@@ -281,7 +313,7 @@ const NurseryForm = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">المدينة</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2"><span className="text-red-500">*</span>المدينة</label>
                 <select name="city" value={formData.city} onChange={handleChange} className="w-full px-4 py-3 border border-gray-300 rounded-lg" disabled={!formData.region} required>
                   <option value="">اختر المدينة</option>
                   {cities.map((city) => (
@@ -293,7 +325,7 @@ const NurseryForm = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">الحي</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2"><span className="text-red-500">*</span>الحي</label>
                 <select name="district" value={formData.district} onChange={handleChange} className="w-full px-4 py-3 border border-gray-300 rounded-lg" disabled={!formData.city} required>
                   <option value="">اختر الحي</option>
                   {districts.map((dist) => (
@@ -305,16 +337,39 @@ const NurseryForm = () => {
               </div>
             </div>
 
-            {/* Phone */}
+            {/* Phone Numbers */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">رقم التواصل (واتس آب)</label>
-              <input
-                type="tel"
-                name="phone"
-                value={formData.phone}
-                onChange={handleChange}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg"
-              />
+              <label className="block text-sm font-medium text-gray-700 mb-2"><span className="text-red-500">*</span>
+                أرقام التواصل (واتس آب) - أدخل أرقام صحيحة بدون رموز (مثل: 966501234567)
+              </label>
+              {formData.phones.map((phone, index) => (
+                <div key={index} className="flex gap-2 mb-2">
+                  <input
+                    type="tel"
+                    value={phone}
+                    onChange={(e) => handlePhoneChange(index, e.target.value)}
+                    className="flex-1 px-4 py-2 border border-gray-300 rounded"
+                    placeholder="966501234567"
+                    maxLength={15}
+                  />
+                  {formData.phones.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={() => removePhoneField(index)}
+                      className="px-3 bg-red-100 text-red-600 rounded hover:bg-red-200"
+                    >
+                      حذف
+                    </button>
+                  )}
+                </div>
+              ))}
+              <button
+                type="button"
+                onClick={addPhoneField}
+                className="text-green-600 text-sm hover:underline"
+              >
+                + إضافة رقم آخر
+              </button>
             </div>
 
             {/* Social Media */}
@@ -343,9 +398,8 @@ const NurseryForm = () => {
 
             {/* Categories */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">التصنيفات</label>
               <div className="mb-4">
-                <h4 className="text-sm font-medium text-gray-800 mb-2">التصنيف الرئيسي</h4>
+                <h4 className="text-sm font-medium text-gray-800 mb-2"><span className="text-red-500">*</span>التصنيف الرئيسي (اختر واحدًا على الأقل)</h4>
                 <div className="flex flex-wrap gap-2">
                   {['مشاتل', 'مشاتل مختلطة', 'أدوات الزراعة'].map((cat) => (
                     <label key={cat} className="flex items-center">
