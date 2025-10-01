@@ -111,12 +111,16 @@ const NurseryDetail = () => {
                 </div>
                 <div className="bg-gray-50 p-4 rounded-lg">
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-gray-600">رقم التواصل</span>
+                    <span className="text-gray-600">ارقام التواصل</span>
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.54 1.06l-1.519.76a11.042 11.042 0 006.105 6.105l.76-1.519a1 1 0 011.06-.54l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
                     </svg>
                   </div>
-                  <p className="text-green-800">{nursery.phone || '+966 55 123 4567'}</p>
+                  <p className="text-green-800">
+                    {nursery.phones && nursery.phones.length > 0 
+                      ? nursery.phones.join(', ') 
+                      : '+966 55 123 4567'}
+                  </p>
                 </div>
                 <div className="bg-gray-50 p-4 rounded-lg">
                   <div className="flex items-center justify-between mb-2">
@@ -208,15 +212,19 @@ const NurseryDetail = () => {
               <h3 className="text-xl font-bold text-green-800 mb-6">معلومات التواصل</h3>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 
-                {/* Phone */}
-                {nursery.phone && (
-                  <div className="flex items-center">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                {/* Phone Numbers */}
+                {nursery.phones && nursery.phones.length > 0 && (
+                  <div className="flex items-start">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-green-500 mt-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.54 1.06l-1.519.76a11.042 11.042 0 006.105 6.105l.76-1.519a1 1 0 011.06-.54l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
                     </svg>
                     <div className="ml-4">
-                      <p className="text-sm text-gray-500">رقم الجوال</p>
-                      <p className="font-medium text-green-800">{nursery.phone}</p>
+                      <p className="text-sm text-gray-500">أرقام الجوال</p>
+                      <div className="space-y-1">
+                        {nursery.phones.map((phone, index) => (
+                          <p key={index} className="font-medium text-green-800">{phone}</p>
+                        ))}
+                      </div>
                     </div>
                   </div>
                 )}
