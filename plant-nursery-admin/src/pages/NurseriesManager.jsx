@@ -36,10 +36,23 @@ const NurseriesManager = () => {
   const fetchNurseries = async () => {
     try {
       const snapshot = await getDocs(collection(db, 'nurseries'));
-      const list = snapshot.docs
-        .map((doc) => ({ id: doc.id, ...doc.data() }))
-        .sort((a, b) => (b.featured || 0) - (a.featured || 0));
-      setNurseries(list);
+      const list = snapshot.docs.map((doc) => {
+        const data = doc.data();
+        // Convert Firestore timestamp to JS Date for sorting
+        const createdAt = data.createdAt?.toDate?.() || new Date(0);
+        return {
+          id: doc.id,
+          ...data,
+          _sortDate: createdAt // temporary field for sorting
+        };
+      });
+  
+      // Sort by date: newest first
+      list.sort((a, b) => b._sortDate - a._sortDate);
+  
+      // Remove temporary field before saving
+      const cleanedList = list.map(({ _sortDate, ...rest }) => rest);
+      setNurseries(cleanedList);
     } catch (err) {
       console.error('Error fetching nurseries:', err);
     }
