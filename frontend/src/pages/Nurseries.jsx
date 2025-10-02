@@ -148,8 +148,15 @@ const Nurseries = () => {
 
   // 📊 Sort
   const sortedNurseries = [...filteredNurseries].sort((a, b) => {
-    if (sortBy === 'newest') return b.id.localeCompare(a.id);
-    if (sortBy === 'popular') return (b.featured ? 1 : 0) - (a.featured ? 1 : 0);
+    if (sortBy === 'newest') {
+      // Use createdAt if available, fallback to id (less reliable)
+      const dateA = a.createdAt ? new Date(a.createdAt) : new Date(0);
+      const dateB = b.createdAt ? new Date(b.createdAt) : new Date(0);
+      return dateB - dateA; // Newest first
+    }
+    if (sortBy === 'popular') {
+      return (b.featured ? 1 : 0) - (a.featured ? 1 : 0);
+    }
     return 0;
   });
 

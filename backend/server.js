@@ -33,7 +33,15 @@ app.get('/api/nurseries', async (req, res) => {
     snapshot.forEach(doc => {
       const data = doc.data();
       if (data.published !== false) {
-        list.push({ id: doc.id, ...data });
+        // Convert Firestore Timestamps to ISO strings
+        const cleanData = { ...data };
+        if (cleanData.createdAt && typeof cleanData.createdAt.toDate === 'function') {
+          cleanData.createdAt = cleanData.createdAt.toDate().toISOString();
+        }
+        if (cleanData.updatedAt && typeof cleanData.updatedAt.toDate === 'function') {
+          cleanData.updatedAt = cleanData.updatedAt.toDate().toISOString();
+        }
+        list.push({ id: doc.id, ...cleanData });
       }
     });
     res.json(list);
