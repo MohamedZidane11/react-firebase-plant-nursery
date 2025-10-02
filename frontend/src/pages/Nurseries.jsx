@@ -191,6 +191,17 @@ const Nurseries = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      {/* Hero Section */}
+      <section className="bg-gradient-to-l from-yellow-700/80 to-emerald-800 text-white py-16">
+        <div className="container mx-auto px-4 text-center">
+          <h1 className="text-4xl md:text-5xl font-bold mb-4">
+          دليل المشاتل الشامل 🌻
+          </h1>
+          <p className="text-xl mb-6 pt-6">
+          اكتشف أكثر من 500 مشتل في جميع أنحاء المملكة
+          </p>
+        </div>
+      </section>
       {/* Filters */}
       <section className="py-8">
         <div className="container mx-auto px-4">
@@ -202,7 +213,7 @@ const Nurseries = () => {
                 placeholder="ابحث عن مشتل، منطقة، أو تصنيف..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-md"
+                className="w-full px-4 py-2 border border-green-800 rounded-full bg-gradient-to-r from-gray-100/80 to-gray-100 mb-6"
               />
 
               {/* ✅ Category Filter — Show ALL categories from API */}
@@ -210,7 +221,7 @@ const Nurseries = () => {
                 value={selectedCategory}
                 onChange={(e) => setSelectedCategory(e.target.value)}
                 disabled={loadingCategories}
-                className="w-full md:w-auto px-4 py-2 border border-gray-300 rounded-md disabled:opacity-50"
+                className="w-full md:w-auto px-4 py-2 border border-green-800 rounded-full disabled:opacity-50"
               >
                 <option value="all">جميع التصنيفات</option>
                 {categories.map(cat => (
@@ -228,7 +239,7 @@ const Nurseries = () => {
                   setSelectedCity('all');
                   setSelectedDistrict('all');
                 }}
-                className="w-full md:w-auto px-4 py-2 border border-gray-300 rounded-md"
+                className="w-full md:w-auto px-4 py-2 border border-green-800 rounded-full"
               >
                 <option value="all">جميع المناطق</option>
                 {regions.map(region => (
@@ -244,7 +255,7 @@ const Nurseries = () => {
                   setSelectedDistrict('all');
                 }}
                 disabled={selectedRegion === 'all' && cities.length === 0}
-                className="w-full md:w-auto px-4 py-2 border border-gray-300 rounded-md disabled:opacity-50"
+                className="w-full md:w-auto px-4 py-2 border border-green-800 rounded-full disabled:opacity-50"
               >
                 <option value="all">جميع المدن</option>
                 {cities.map(city => (
@@ -257,7 +268,7 @@ const Nurseries = () => {
                 value={selectedDistrict}
                 onChange={(e) => setSelectedDistrict(e.target.value)}
                 disabled={selectedCity === 'all' && districts.length === 0}
-                className="w-full md:w-auto px-4 py-2 border border-gray-300 rounded-md disabled:opacity-50"
+                className="w-full md:w-auto px-4 py-2 border border-green-800 rounded-full disabled:opacity-50"
               >
                 <option value="all">جميع الأحياء</option>
                 {districts.map(district => (
@@ -271,19 +282,19 @@ const Nurseries = () => {
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value)}
-                className="px-4 py-2 border border-gray-300 rounded-md"
+                className="px-4 py-2 border border-green-800 rounded-full"
               >
                 <option value="newest">الترتيب حسب: الأحدث</option>
                 <option value="popular">الأكثر شهرة</option>
               </select>
 
               <div className="flex items-center">
-                <label className="mr-2 text-sm">عروض حالية فقط</label>
+                <label className="mr-2 px-4 py-3 text-sm border bg-yellow-500/80 rounded-full ml-2 hover:bg-yellow-600/80 transition-all duration-500 ease-in-out">المشاتل ذات عروض فقط</label>
                 <input
                   type="checkbox"
                   checked={showOffersOnly}
                   onChange={(e) => setShowOffersOnly(e.target.checked)}
-                  className="h-4 w-4"
+                  className="h-4 w-4 border border-yellow-600/80"
                 />
               </div>
             </div>
@@ -295,7 +306,7 @@ const Nurseries = () => {
       <section className="py-12">
         <div className="container mx-auto px-4">
           <div className="flex justify-between items-center mb-6">
-            <p className="text-gray-600">عُثر على {sortedNurseries.length} مشتل</p>
+            <p className="font-bold text-green-800">عُثر على {sortedNurseries.length} مشتل</p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">

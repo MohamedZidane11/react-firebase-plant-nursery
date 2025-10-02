@@ -69,7 +69,7 @@ const NurseryDetail = () => {
                 onError={(e) => {
                   e.target.src = defaultNurseryImage;
                 }}
-                className="w-32 h-32 object-contain"
+                className="w-250 h-64 object-fill round-full border rounded-md"
               />
             </div>
             

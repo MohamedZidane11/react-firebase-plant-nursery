@@ -44,7 +44,7 @@ const discount = getActiveDiscount();
     <div className="w-full sm:max-w-xs mx-auto">
     <Link to={`/nurseries/${nursery.id}`} className="block">
       <div className={`rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300 ${nursery.featured ? 'border-2 border-orange-500' : ''}`}>
-        <div className="bg-green-100 p-6 relative">
+        <div className="bg-green-100 relative">
           {/* Discount Badge */}
           <div className="absolute top-3 left-3">
             {discount && (
@@ -72,7 +72,7 @@ const discount = getActiveDiscount();
               src={nursery.image || defaultImage}
               alt={nursery.name}
               onError={(e) => { e.target.src = defaultImage; }}
-              className="w-32 h-32 object-contain"
+              className="w-80 h-42 object-fill rounded-t"
             />
           </div>
         </div>
