@@ -177,7 +177,7 @@ const NurseryForm = () => {
 
     // Validate location
     if (!formData.region || !formData.city ) {
-      alert('المنطقة، المدينة مطلوبين');
+      alert('المنطقة، المدينة مطلوبتان');
       return;
     }
 
@@ -346,8 +346,8 @@ const NurseryForm = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2"><span className="text-red-500">*</span>الحي</label>
-                <select name="district" value={formData.district} onChange={handleChange} className="w-full px-4 py-3 border border-gray-300 rounded-lg" disabled={!formData.city} required>
+                <label className="block text-sm font-medium text-gray-700 mb-2">الحي</label>
+                <select name="district" value={formData.district} onChange={handleChange} className="w-full px-4 py-3 border border-gray-300 rounded-lg" disabled={!formData.city}>
                   <option value="">اختر الحي</option>
                   {districts.map((dist) => (
                     <option key={dist} value={dist}>
