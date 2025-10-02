@@ -151,8 +151,16 @@ const NurseryForm = () => {
 
   const uploadImage = async () => {
     if (!imageFile) return formData.image || defaultImage;
-
-    const storageRef = ref(storage, `nurseries/${Date.now()}_${imageFile.name}`);
+  
+    // Generate unique file name
+    const fileName = `${Date.now()}_${imageFile.name}`;
+    
+    // Use nursery ID if editing, or generate temp ID if new
+    const nurseryId = id || `temp_${Date.now()}`;
+    
+    // New path: nurs_images/{nurseryId}/fileName
+    const storageRef = ref(storage, `nurs_images/${nurseryId}/${fileName}`);
+    
     await uploadBytes(storageRef, imageFile);
     const url = await getDownloadURL(storageRef);
     return url;
@@ -168,8 +176,8 @@ const NurseryForm = () => {
     }
 
     // Validate location
-    if (!formData.region || !formData.city || !formData.district) {
-      alert('المنطقة، المدينة، والحي مطلوبة');
+    if (!formData.region || !formData.city ) {
+      alert('المنطقة، المدينة مطلوبين');
       return;
     }
 
@@ -192,33 +200,46 @@ const NurseryForm = () => {
       setLoading(true);
       const imageUrl = await uploadImage();
       const fullLocation = `${formData.region} - ${formData.city} - ${formData.district}`;
-
+  
       const data = {
         ...formData,
-        location: fullLocation, // ✅ ADD THIS
-        image: imageUrl,
+        location: fullLocation,
+        image: imageUrl, // temporary URL
         phones: validPhones,
         socialMedia: Object.keys(formData.socialMedia).some(key => formData.socialMedia[key].trim() !== '')
           ? Object.fromEntries(
               Object.entries(formData.socialMedia).filter(([_, v]) => v.trim() !== '')
             )
-          : null, // ✅ Save null if empty
+          : null,
         updatedAt: serverTimestamp(),
         updatedBy: auth.currentUser.email
       };
-
+  
       if (id) {
+        // Update existing
         await updateDoc(doc(db, 'nurseries', id), data);
         alert('تم التحديث!');
       } else {
-        await addDoc(collection(db, 'nurseries'), {
+        // Create new
+        const docRef = await addDoc(collection(db, 'nurseries'), {
           ...data,
           createdAt: serverTimestamp(),
           createdBy: auth.currentUser.email
         });
+  
+        // ✅ FIX IMAGE PATH FOR NEW NURSERY
+        if (imageFile) {
+          const newStorageRef = ref(storage, `nurs_images/${docRef.id}/${Date.now()}_${imageFile.name}`);
+          await uploadBytes(newStorageRef, imageFile);
+          const newUrl = await getDownloadURL(newStorageRef);
+          
+          // Update Firestore with correct image URL
+          await updateDoc(doc(db, 'nurseries', docRef.id), { image: newUrl });
+        }
+  
         alert('تم الإضافة!');
       }
-
+  
       navigate('/nurseries');
     } catch (err) {
       alert('خطأ: ' + err.message);
