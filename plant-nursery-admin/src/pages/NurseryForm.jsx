@@ -1,4 +1,3 @@
-// src/pages/NurseryForm.jsx
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { db, storage } from '../firebase/firebase';
@@ -10,10 +9,10 @@ import {
   updateDoc,
   serverTimestamp
 } from 'firebase/firestore';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
 import { auth } from '../firebase/firebase';
 
-// Default image path
+// Default image from public folder
 const defaultImage = '/images/nurs_empty.png';
 
 const NurseryForm = () => {
@@ -22,11 +21,11 @@ const NurseryForm = () => {
   const [loading, setLoading] = useState(true);
   const [locations, setLocations] = useState([]);
   const [imageFile, setImageFile] = useState(null);
-  const [imagePreview, setImagePreview] = useState('');
+  const [imagePreview, setImagePreview] = useState(defaultImage);
 
   const [formData, setFormData] = useState({
     name: '',
-    image: defaultImage, // default image
+    image: defaultImage,
     categories: [],
     region: '',
     city: '',
@@ -34,7 +33,7 @@ const NurseryForm = () => {
     services: [],
     featured: false,
     published: true,
-    phones: [''], // array of phone numbers
+    phones: [''],
     socialMedia: {
       instagram: '',
       twitter: '',
@@ -56,9 +55,10 @@ const NurseryForm = () => {
           const nurseryDoc = await getDoc(doc(db, 'nurseries', id));
           if (nurseryDoc.exists()) {
             const data = nurseryDoc.data();
+            const imageUrl = data.image || defaultImage;
             setFormData({
               name: data.name || '',
-              image: data.image || defaultImage,
+              image: imageUrl,
               categories: data.categories || [],
               region: data.region || '',
               city: data.city || '',
@@ -74,7 +74,7 @@ const NurseryForm = () => {
                 tiktok: data.socialMedia?.tiktok || ''
               }
             });
-            setImagePreview(data.image || defaultImage);
+            setImagePreview(imageUrl);
           }
         }
       } catch (err) {
@@ -86,6 +86,17 @@ const NurseryForm = () => {
 
     fetchData();
   }, [id]);
+
+  const deleteImageFromStorage = async (imageUrl) => {
+    try {
+      if (imageUrl?.includes('firebasestorage.googleapis.com')) {
+        const imageRef = ref(storage, imageUrl);
+        await deleteObject(imageRef);
+      }
+    } catch (err) {
+      console.warn('Could not delete old image from storage:', err);
+    }
+  };
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -124,7 +135,6 @@ const NurseryForm = () => {
   };
 
   const handlePhoneChange = (index, value) => {
-    // Allow only digits, max 15
     const cleaned = value.replace(/\D/g, '').slice(0, 15);
     const newPhones = [...formData.phones];
     newPhones[index] = cleaned;
@@ -150,15 +160,10 @@ const NurseryForm = () => {
   };
 
   const uploadImage = async () => {
-    if (!imageFile) return formData.image || defaultImage;
-  
-    // Generate unique file name
+    if (!imageFile) return formData.image;
+
     const fileName = `${Date.now()}_${imageFile.name}`;
-    
-    // Use nursery ID if editing, or generate temp ID if new
     const nurseryId = id || `temp_${Date.now()}`;
-    
-    // New path: nurs_images/{nurseryId}/fileName
     const storageRef = ref(storage, `nurs_images/${nurseryId}/${fileName}`);
     
     await uploadBytes(storageRef, imageFile);
@@ -169,27 +174,22 @@ const NurseryForm = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Validate name
     if (!formData.name.trim()) {
       alert('اسم المشتل مطلوب');
       return;
     }
-
-    // Validate location
-    if (!formData.region || !formData.city ) {
+    if (!formData.region || !formData.city) {
       alert('المنطقة، المدينة مطلوبتان');
       return;
     }
 
-    // Validate at least one main category
     const mainCategories = ['مشاتل', 'مشاتل مختلطة', 'أدوات الزراعة'];
     const hasMainCategory = formData.categories.some(cat => mainCategories.includes(cat));
     if (!hasMainCategory) {
-      alert('يجب اختيار تصنيف رئيسي واحد على الأقل (مشاتل، مشاتل مختلطة، أدوات الزراعة)');
+      alert('يجب اختيار تصنيف رئيسي واحد على الأقل');
       return;
     }
 
-    // Validate phones: at least one non-empty
     const validPhones = formData.phones.filter(p => p.trim() !== '');
     if (validPhones.length === 0) {
       alert('يجب إدخال رقم تواصل واحد على الأقل');
@@ -198,13 +198,20 @@ const NurseryForm = () => {
 
     try {
       setLoading(true);
-      const imageUrl = await uploadImage();
+      
+      let imageUrl = formData.image;
+      if (imageFile) {
+        if (id && formData.image?.includes('firebasestorage.googleapis.com')) {
+          await deleteImageFromStorage(formData.image);
+        }
+        imageUrl = await uploadImage();
+      }
+
       const fullLocation = `${formData.region} - ${formData.city} - ${formData.district}`;
-  
       const data = {
         ...formData,
         location: fullLocation,
-        image: imageUrl, // temporary URL
+        image: imageUrl,
         phones: validPhones,
         socialMedia: Object.keys(formData.socialMedia).some(key => formData.socialMedia[key].trim() !== '')
           ? Object.fromEntries(
@@ -214,32 +221,27 @@ const NurseryForm = () => {
         updatedAt: serverTimestamp(),
         updatedBy: auth.currentUser.email
       };
-  
+
       if (id) {
-        // Update existing
         await updateDoc(doc(db, 'nurseries', id), data);
         alert('تم التحديث!');
       } else {
-        // Create new
         const docRef = await addDoc(collection(db, 'nurseries'), {
           ...data,
           createdAt: serverTimestamp(),
           createdBy: auth.currentUser.email
         });
-  
-        // ✅ FIX IMAGE PATH FOR NEW NURSERY
+
         if (imageFile) {
           const newStorageRef = ref(storage, `nurs_images/${docRef.id}/${Date.now()}_${imageFile.name}`);
           await uploadBytes(newStorageRef, imageFile);
           const newUrl = await getDownloadURL(newStorageRef);
-          
-          // Update Firestore with correct image URL
           await updateDoc(doc(db, 'nurseries', docRef.id), { image: newUrl });
         }
-  
+
         alert('تم الإضافة!');
       }
-  
+
       navigate('/nurseries');
     } catch (err) {
       alert('خطأ: ' + err.message);
@@ -309,15 +311,29 @@ const NurseryForm = () => {
                 </div>
               </div>
               {imagePreview && (
-                <div className="mt-4 flex justify-center">
+                <div className="mt-4 flex flex-col items-center">
                   <img
                     src={imagePreview}
                     alt="معاينة الصورة"
-                    className="w-32 h-32 object-cover rounded-lg border"
+                    className="w-32 h-32 object-cover rounded-lg border mb-2"
                   />
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      await deleteImageFromStorage(formData.image);
+                      setImageFile(null);
+                      setImagePreview(defaultImage);
+                      setFormData(prev => ({ ...prev, image: defaultImage }));
+                    }}
+                    className="text-red-600 hover:text-red-800 text-sm font-medium flex items-center gap-1"
+                  >
+                    🗑️ حذف الصورة
+                  </button>
                 </div>
               )}
             </div>
+
+            {/* Location, Phones, Social, Categories, Services, Options — same as before */}
 
             {/* Location Dropdowns */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">

@@ -291,7 +291,6 @@ const OffersManager = () => {
                         <div>
                           <h3 className="font-bold text-gray-800">{offer.title}</h3>
                           <p className="text-sm text-gray-600 line-clamp-2">{offer.description}</p>
-                          {/* ... rest */}
                         </div>
                       </div>
                       {offer.nurseryName && (

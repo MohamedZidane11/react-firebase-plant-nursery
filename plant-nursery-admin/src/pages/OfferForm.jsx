@@ -1,4 +1,3 @@
-// src/pages/OfferForm.jsx
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { db, storage, auth } from '../firebase/firebase';
@@ -11,7 +10,10 @@ import {
   updateDoc,
   serverTimestamp
 } from 'firebase/firestore';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
+
+// Default image from public folder
+const defaultImage = '/images/offer_default.png';
 
 const OfferForm = () => {
   const { id } = useParams();
@@ -19,7 +21,7 @@ const OfferForm = () => {
   const [loading, setLoading] = useState(true);
   const [nurseries, setNurseries] = useState([]);
   const [imageFile, setImageFile] = useState(null);
-  const [imagePreview, setImagePreview] = useState('');
+  const [imagePreview, setImagePreview] = useState(defaultImage);
 
   const [formData, setFormData] = useState({
     title: '',
@@ -30,10 +32,9 @@ const OfferForm = () => {
     highlighted: false,
     published: true,
     nurseryId: '',
-    image: '/images/offer_default.png' // ✅ Default image
+    image: defaultImage
   });
 
-  // Fetch nurseries + offer (if editing)
   useEffect(() => {
     const fetchNurseries = async () => {
       try {
@@ -55,6 +56,7 @@ const OfferForm = () => {
           const offerDoc = await getDoc(doc(db, 'offers', id));
           if (offerDoc.exists()) {
             const data = offerDoc.data();
+            const imageUrl = data.image || defaultImage;
             setFormData({
               title: data.title || '',
               description: data.description || '',
@@ -64,9 +66,9 @@ const OfferForm = () => {
               highlighted: data.highlighted || false,
               published: data.published !== false,
               nurseryId: data.nurseryId || '',
-              image: data.image || '/images/offer_default.png'
+              image: imageUrl
             });
-            setImagePreview(data.image || '/images/offer_default.png');
+            setImagePreview(imageUrl);
           }
         } catch (err) {
           console.error('Error loading offer:', err);
@@ -77,6 +79,17 @@ const OfferForm = () => {
 
     loadData();
   }, [id]);
+
+  const deleteImageFromStorage = async (imageUrl) => {
+    try {
+      if (imageUrl?.includes('firebasestorage.googleapis.com')) {
+        const imageRef = ref(storage, imageUrl);
+        await deleteObject(imageRef);
+      }
+    } catch (err) {
+      console.warn('Could not delete old offer image:', err);
+    }
+  };
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -121,7 +134,14 @@ const OfferForm = () => {
 
     try {
       setLoading(true);
-      const imageUrl = await uploadImage();
+      
+      let imageUrl = formData.image;
+      if (imageFile) {
+        if (id && formData.image?.includes('firebasestorage.googleapis.com')) {
+          await deleteImageFromStorage(formData.image);
+        }
+        imageUrl = await uploadImage();
+      }
 
       const selectedNursery = nurseries.find(n => n.id === formData.nurseryId);
       const nurseryName = selectedNursery ? selectedNursery.name : '';
@@ -205,10 +225,11 @@ const OfferForm = () => {
                   />
                   <button
                     type="button"
-                    onClick={() => {
+                    onClick={async () => {
+                      await deleteImageFromStorage(formData.image);
                       setImageFile(null);
-                      setImagePreview('/images/offer_default.png');
-                      setFormData(prev => ({ ...prev, image: '/images/offer_default.png' }));
+                      setImagePreview(defaultImage);
+                      setFormData(prev => ({ ...prev, image: defaultImage }));
                     }}
                     className="text-red-600 hover:text-red-800 text-sm font-medium flex items-center gap-1"
                   >
@@ -218,7 +239,7 @@ const OfferForm = () => {
               )}
             </div>
 
-            {/* Rest of the form (same as before) */}
+            {/* Rest of form — same as your original */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">عنوان العرض</label>
