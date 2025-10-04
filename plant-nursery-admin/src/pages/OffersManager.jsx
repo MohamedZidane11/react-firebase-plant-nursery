@@ -25,6 +25,14 @@ const OffersManager = () => {
         id: doc.id,
         ...doc.data()
       }));
+  
+      // Sort by createdAt: newest first
+      list.sort((a, b) => {
+        const aTime = a.createdAt?.toDate?.() || new Date(0);
+        const bTime = b.createdAt?.toDate?.() || new Date(0);
+        return bTime - aTime; // descending = newest first
+      });
+  
       setOffers(list);
     } catch (err) {
       console.error('Error fetching offers:', err);

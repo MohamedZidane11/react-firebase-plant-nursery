@@ -197,12 +197,23 @@ const OfferForm = () => {
                 </div>
               </div>
               {imagePreview && (
-                <div className="mt-4 flex justify-center">
+                <div className="mt-4 flex flex-col items-center">
                   <img
                     src={imagePreview}
                     alt="معاينة الصورة"
-                    className="w-32 h-32 object-cover rounded-lg border"
+                    className="w-32 h-32 object-cover rounded-lg border mb-2"
                   />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setImageFile(null);
+                      setImagePreview('/images/offer_default.png');
+                      setFormData(prev => ({ ...prev, image: '/images/offer_default.png' }));
+                    }}
+                    className="text-red-600 hover:text-red-800 text-sm font-medium flex items-center gap-1"
+                  >
+                    🗑️ حذف الصورة
+                  </button>
                 </div>
               )}
             </div>
