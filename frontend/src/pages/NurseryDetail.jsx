@@ -281,46 +281,46 @@ const NurseryDetail = () => {
           </div>
 
           {/* Current Offers */}
-<div className="mt-12">
-  <h2 className="text-3xl font-bold text-green-800 mb-6">🎁 العروض الحالية </h2>
-  {offers.length > 0 ? (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      {offers.map((offer) => (
-        <div key={offer.id} className="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-2xl transition-shadow duration-300 hover:-translate-y-2 transition-transform duration-500 ease-in-out">
-          {/* Offer Image */}
-          <div className="h-48 overflow-hidden">
-            <img
-              src={offer.image || '/images/offer_default.png'} // fallback if no image
-              alt={offer.title}
-              className="w-full h-full object-cover"
-              onError={(e) => {
-                e.target.src = '/images/offer_default.png'; // or use imported default if preferred
-              }}
-            />
-          </div>
+          <div className="mt-12">
+            <h2 className="text-3xl font-bold text-green-800 mb-6">🎁 العروض الحالية </h2>
+            {offers.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {offers.map((offer) => (
+                  <div key={offer.id} className="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-2xl transition-shadow duration-300 hover:-translate-y-2 transition-transform duration-500 ease-in-out">
+                    {/* Offer Image */}
+                    <div className="h-48 overflow-hidden">
+                      <img
+                        src={offer.image || '/images/offer_default.png'} // fallback if no image
+                        alt={offer.title}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          e.target.src = '/images/offer_default.png'; // or use imported default if preferred
+                        }}
+                      />
+                    </div>
 
-          {/* Offer Content */}
-          <div className="p-6 bg-orange-300/50">
-            <div className="flex justify-between items-start mb-3">
-              <h3 className="text-lg font-bold text-gray-800">{offer.title}</h3>
-              {offer.discount && (
-                <span className="bg-red-500 text-white text-sm font-bold px-2 py-1 rounded-full whitespace-nowrap">
-                  خصم {offer.discount}%
-                </span>
-              )}
-            </div>
-            <p className="text-gray-600 text-sm mb-4 line-clamp-2">{offer.description}</p>
-            <div className="text-xs text-gray-500">
-              <strong>ينتهي في:</strong> {offer.endDate || 'غير محدد'}
-            </div>
+                    {/* Offer Content */}
+                    <div className="p-6 bg-orange-300/50">
+                      <div className="flex justify-between items-start mb-3">
+                        <h3 className="text-lg font-bold text-gray-800">{offer.title}</h3>
+                        {offer.discount && (
+                          <span className="bg-red-500 text-white text-sm font-bold px-2 py-1 rounded-full whitespace-nowrap">
+                            خصم {offer.discount}%
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-gray-800 text-base mb-4 line-clamp-2">{offer.description}</p>
+                      <div className="text-sm text-red-700 font-bold">
+                        <strong>⏰ ينتهي في:</strong> {offer.endDate || 'غير محدد'}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-gray-600">لا توجد عروض حالية من هذا المشتل.</p>
+            )}
           </div>
-        </div>
-      ))}
-    </div>
-  ) : (
-    <p className="text-gray-600">لا توجد عروض حالية من هذا المشتل.</p>
-  )}
-</div>
 
           {/* Social Media */}
           {nursery.socialMedia && (

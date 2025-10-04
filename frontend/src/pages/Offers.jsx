@@ -54,7 +54,24 @@ const Offers = () => {
 
     return true;
   }).sort((a, b) => {
-    if (sortBy === 'newest') return b._id - a._id; // or use createdAt if available
+    if (sortBy === 'newest') {
+      // Helper to normalize createdAt to a Date
+      const parseDate = (dateField) => {
+        if (!dateField) return new Date(0);
+        
+        // If it's a Firestore Timestamp object (has _seconds)
+        if (typeof dateField === 'object' && dateField._seconds) {
+          return new Date(dateField._seconds * 1000);
+        }
+        
+        // If it's a string (ISO format)
+        return new Date(dateField);
+      };
+  
+      const aTime = parseDate(a.createdAt);
+      const bTime = parseDate(b.createdAt);
+      return bTime - aTime; // newest first
+    }
     if (sortBy === 'popular') return (b.highlighted ? 1 : 0) - (a.highlighted ? 1 : 0);
     if (sortBy === 'lowest_price' && a.discount !== null && b.discount !== null) {
       return a.discount - b.discount;
