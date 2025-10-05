@@ -1,4 +1,4 @@
-// firebase.js
+// firebase.js - Unified Firebase Admin initialization
 import admin from 'firebase-admin';
 
 // Get the service account JSON string from environment
@@ -10,21 +10,22 @@ if (!serviceAccountJson) {
 
 let serviceAccount;
 try {
-  // Parse the JSON string (Railway passes it as a string)
+  // Parse the JSON string (Railway/Vercel passes it as a string)
   serviceAccount = JSON.parse(serviceAccountJson);
 } catch (err) {
-  console.error('Raw value of FIREBASE_SERVICE_ACCOUNT:', serviceAccountJson); // Debug
-  throw new Error('❌ Invalid JSON in FIREBASE_SERVICE_ACCOUNT: ' + err.message);
+  console.error('❌ Failed to parse FIREBASE_SERVICE_ACCOUNT:', err.message);
+  throw new Error('Invalid JSON in FIREBASE_SERVICE_ACCOUNT: ' + err.message);
 }
 
-// Initialize Firebase Admin
+// Initialize Firebase Admin (only once)
 if (!admin.apps.length) {
   admin.initializeApp({
     credential: admin.credential.cert(serviceAccount),
+    storageBucket: `${serviceAccount.project_id}.firebasestorage.app`,
   });
+  console.log('✅ Firebase Admin initialized successfully');
 }
 
-// Get Firestore
-const db = admin.firestore();
-
-export { db };
+// Export Firestore and Storage
+export const db = admin.firestore();
+export const adminStorage = admin.storage();
