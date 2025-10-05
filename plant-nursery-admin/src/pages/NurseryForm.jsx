@@ -22,13 +22,13 @@ const NurseryForm = () => {
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState(defaultImage);
   const [albumFiles, setAlbumFiles] = useState([]);
-  const [albumPreviews, setAlbumPreviews] = useState([]);
+  const [albumPreviews, setAlbumPreviews] = useState([]); // Only for NEW files
 
   const [formData, setFormData] = useState({
     name: '',
-    description: '', // ✅ Added description
+    description: '',
     image: defaultImage,
-    album: [], // ✅ Added album array
+    album: [],
     categories: [],
     region: '',
     city: '',
@@ -62,7 +62,7 @@ const NurseryForm = () => {
             
             setFormData({
               name: data.name || '',
-              description: data.description || '', // ✅ Load description
+              description: data.description || '',
               image: imageUrl,
               album: albumUrls,
               categories: data.categories || [],
@@ -81,7 +81,9 @@ const NurseryForm = () => {
               }
             });
             setImagePreview(imageUrl);
-            setAlbumPreviews(albumUrls);
+            // ✅ DO NOT initialize albumPreviews with saved URLs
+            setAlbumPreviews([]);
+            setAlbumFiles([]);
           }
         }
       } catch (err) {
@@ -94,7 +96,6 @@ const NurseryForm = () => {
     fetchData();
   }, [id]);
 
-  // Delete single image from storage
   const deleteImageFromStorage = async (imageUrl) => {
     try {
       if (imageUrl?.includes('firebasestorage.googleapis.com')) {
@@ -106,7 +107,6 @@ const NurseryForm = () => {
     }
   };
 
-  // Delete album image from storage and state
   const deleteAlbumImage = async (index) => {
     const imageUrl = formData.album[index];
     if (imageUrl) {
@@ -114,10 +114,7 @@ const NurseryForm = () => {
     }
     
     const newAlbum = formData.album.filter((_, i) => i !== index);
-    const newPreviews = albumPreviews.filter((_, i) => i !== index);
-    
     setFormData(prev => ({ ...prev, album: newAlbum }));
-    setAlbumPreviews(newPreviews);
   };
 
   const handleChange = (e) => {
@@ -186,7 +183,7 @@ const NurseryForm = () => {
     if (files.length > 0) {
       const newPreviews = files.map(file => URL.createObjectURL(file));
       setAlbumFiles(prev => [...prev, ...files]);
-      setAlbumPreviews(prev => [...prev, ...newPreviews]);
+      setAlbumPreviews(prev => [...prev, ...newPreviews]); // Only new previews
     }
   };
 
@@ -257,10 +254,10 @@ const NurseryForm = () => {
       const fullLocation = `${formData.region} - ${formData.city} - ${formData.district}`;
       const data = {
         ...formData,
-        description: formData.description.trim(), // ✅ Save description
+        description: formData.description.trim(),
         location: fullLocation,
         image: imageUrl,
-        album: albumUrls, // ✅ Save album
+        album: albumUrls,
         phones: validPhones,
         socialMedia: Object.keys(formData.socialMedia).some(key => formData.socialMedia[key].trim() !== '')
           ? Object.fromEntries(
@@ -281,7 +278,6 @@ const NurseryForm = () => {
           createdBy: auth.currentUser.email
         });
 
-        // Fix main image path for new nursery
         if (imageFile) {
           const newStorageRef = ref(storage, `nurs_images/${docRef.id}/${Date.now()}_${imageFile.name}`);
           await uploadBytes(newStorageRef, imageFile);
@@ -335,7 +331,7 @@ const NurseryForm = () => {
               />
             </div>
 
-            {/* Description - NEW */}
+            {/* Description */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">وصف المشتل</label>
               <textarea
@@ -396,7 +392,7 @@ const NurseryForm = () => {
               )}
             </div>
 
-            {/* Album Upload - NEW */}
+            {/* Album Upload */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">ألبوم الصور (اختياري)</label>
               <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-dashed border-gray-300 rounded-lg hover:border-green-400 transition">
@@ -428,8 +424,9 @@ const NurseryForm = () => {
                 <div className="mt-4">
                   <h4 className="text-sm font-medium text-gray-700 mb-2">الصور المضافة:</h4>
                   <div className="flex flex-wrap gap-2">
+                    {/* New (unsaved) previews */}
                     {albumPreviews.map((preview, index) => (
-                      <div key={index} className="relative">
+                      <div key={`new-${index}`} className="relative">
                         <img
                           src={preview}
                           alt={`معاينة ${index + 1}`}
@@ -438,7 +435,6 @@ const NurseryForm = () => {
                         <button
                           type="button"
                           onClick={() => {
-                            // Remove from previews (new files)
                             const newPreviews = albumPreviews.filter((_, i) => i !== index);
                             const newFiles = albumFiles.filter((_, i) => i !== index);
                             setAlbumPreviews(newPreviews);
@@ -450,8 +446,10 @@ const NurseryForm = () => {
                         </button>
                       </div>
                     ))}
+
+                    {/* Existing (saved) images */}
                     {formData.album.map((url, index) => (
-                      <div key={`existing-${index}`} className="relative">
+                      <div key={`saved-${index}`} className="relative">
                         <img
                           src={url}
                           alt={`صورة ${index + 1}`}
@@ -474,7 +472,7 @@ const NurseryForm = () => {
               )}
             </div>
 
-            {/* Rest of the form (Location, Phones, etc.) - same as before */}
+            {/* Rest of form (Location, Phones, etc.) — same as before */}
 
             {/* Location Dropdowns */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">

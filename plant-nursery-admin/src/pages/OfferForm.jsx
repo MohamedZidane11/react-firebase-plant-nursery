@@ -22,7 +22,7 @@ const OfferForm = () => {
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState(defaultImage);
   const [albumFiles, setAlbumFiles] = useState([]);
-  const [albumPreviews, setAlbumPreviews] = useState([]);
+  const [albumPreviews, setAlbumPreviews] = useState([]); // Only for NEW files
 
   const [formData, setFormData] = useState({
     title: '',
@@ -34,7 +34,7 @@ const OfferForm = () => {
     published: true,
     nurseryId: '',
     image: defaultImage,
-    album: [] // ✅ Added album array
+    album: []
   });
 
   useEffect(() => {
@@ -71,10 +71,12 @@ const OfferForm = () => {
               published: data.published !== false,
               nurseryId: data.nurseryId || '',
               image: imageUrl,
-              album: albumUrls // ✅ Load album
+              album: albumUrls
             });
             setImagePreview(imageUrl);
-            setAlbumPreviews(albumUrls);
+            // ✅ DO NOT initialize albumPreviews with saved URLs
+            setAlbumPreviews([]);
+            setAlbumFiles([]);
           }
         } catch (err) {
           console.error('Error loading offer:', err);
@@ -86,7 +88,6 @@ const OfferForm = () => {
     loadData();
   }, [id]);
 
-  // Delete single image from storage
   const deleteImageFromStorage = async (imageUrl) => {
     try {
       if (imageUrl?.includes('firebasestorage.googleapis.com')) {
@@ -98,7 +99,6 @@ const OfferForm = () => {
     }
   };
 
-  // Delete album image from storage and state
   const deleteAlbumImage = async (index) => {
     const imageUrl = formData.album[index];
     if (imageUrl) {
@@ -106,10 +106,7 @@ const OfferForm = () => {
     }
     
     const newAlbum = formData.album.filter((_, i) => i !== index);
-    const newPreviews = albumPreviews.filter((_, i) => i !== index);
-    
     setFormData(prev => ({ ...prev, album: newAlbum }));
-    setAlbumPreviews(newPreviews);
   };
 
   const handleChange = (e) => {
@@ -142,7 +139,7 @@ const OfferForm = () => {
     if (files.length > 0) {
       const newPreviews = files.map(file => URL.createObjectURL(file));
       setAlbumFiles(prev => [...prev, ...files]);
-      setAlbumPreviews(prev => [...prev, ...newPreviews]);
+      setAlbumPreviews(prev => [...prev, ...newPreviews]); // Only new previews
     }
   };
 
@@ -194,7 +191,7 @@ const OfferForm = () => {
       const data = {
         ...formData,
         image: imageUrl,
-        album: albumUrls, // ✅ Save album
+        album: albumUrls,
         nurseryId: formData.nurseryId || null,
         nurseryName,
         discount: formData.discount ? Number(formData.discount) : null,
@@ -285,7 +282,7 @@ const OfferForm = () => {
               )}
             </div>
 
-            {/* Album Upload - NEW */}
+            {/* Album Upload */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">ألبوم الصور (اختياري)</label>
               <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-dashed border-gray-300 rounded-lg hover:border-orange-400 transition">
@@ -317,8 +314,9 @@ const OfferForm = () => {
                 <div className="mt-4">
                   <h4 className="text-sm font-medium text-gray-700 mb-2">الصور المضافة:</h4>
                   <div className="flex flex-wrap gap-2">
+                    {/* New (unsaved) previews */}
                     {albumPreviews.map((preview, index) => (
-                      <div key={index} className="relative">
+                      <div key={`new-${index}`} className="relative">
                         <img
                           src={preview}
                           alt={`معاينة ${index + 1}`}
@@ -327,7 +325,6 @@ const OfferForm = () => {
                         <button
                           type="button"
                           onClick={() => {
-                            // Remove from previews (new files)
                             const newPreviews = albumPreviews.filter((_, i) => i !== index);
                             const newFiles = albumFiles.filter((_, i) => i !== index);
                             setAlbumPreviews(newPreviews);
@@ -339,8 +336,10 @@ const OfferForm = () => {
                         </button>
                       </div>
                     ))}
+
+                    {/* Existing (saved) images */}
                     {formData.album.map((url, index) => (
-                      <div key={`existing-${index}`} className="relative">
+                      <div key={`saved-${index}`} className="relative">
                         <img
                           src={url}
                           alt={`صورة ${index + 1}`}
