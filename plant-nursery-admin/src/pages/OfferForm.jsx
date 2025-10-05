@@ -1,6 +1,7 @@
+// src/pages/OfferForm.jsx
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { db, storage, auth } from '../firebase/firebase';
+import { db, auth } from '../firebase/firebase';
 import {
   collection,
   doc,
@@ -10,9 +11,9 @@ import {
   updateDoc,
   serverTimestamp
 } from 'firebase/firestore';
-import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
 
 const defaultImage = '/images/offer_default.png';
+const API_BASE = 'https://react-firebase-plant-nursery-production.up.railway.app'; // Update if needed
 
 const OfferForm = () => {
   const { id } = useParams();
@@ -22,7 +23,7 @@ const OfferForm = () => {
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState(defaultImage);
   const [albumFiles, setAlbumFiles] = useState([]);
-  const [albumPreviews, setAlbumPreviews] = useState([]); // Only for NEW files
+  const [albumPreviews, setAlbumPreviews] = useState([]);
 
   const [formData, setFormData] = useState({
     title: '',
@@ -36,6 +37,25 @@ const OfferForm = () => {
     image: defaultImage,
     album: []
   });
+
+  // Upload via backend
+  const uploadToBackend = async (file, folder) => {
+    const formData = new FormData();
+    formData.append('image', file);
+    formData.append('folder', folder);
+
+    const res = await fetch(`${API_BASE}/api/upload`, {
+      method: 'POST',
+      body: formData,
+    });
+
+    if (!res.ok) {
+      const error = await res.json().catch(() => ({}));
+      throw new Error(error.error || 'فشل رفع الصورة');
+    }
+    const data = await res.json();
+    return data.url;
+  };
 
   useEffect(() => {
     const fetchNurseries = async () => {
@@ -60,7 +80,6 @@ const OfferForm = () => {
             const data = offerDoc.data();
             const imageUrl = data.image || defaultImage;
             const albumUrls = data.album || [];
-            
             setFormData({
               title: data.title || '',
               description: data.description || '',
@@ -74,7 +93,6 @@ const OfferForm = () => {
               album: albumUrls
             });
             setImagePreview(imageUrl);
-            // ✅ DO NOT initialize albumPreviews with saved URLs
             setAlbumPreviews([]);
             setAlbumFiles([]);
           }
@@ -87,27 +105,6 @@ const OfferForm = () => {
 
     loadData();
   }, [id]);
-
-  const deleteImageFromStorage = async (imageUrl) => {
-    try {
-      if (imageUrl?.includes('firebasestorage.googleapis.com')) {
-        const imageRef = ref(storage, imageUrl);
-        await deleteObject(imageRef);
-      }
-    } catch (err) {
-      console.warn('Could not delete image:', err);
-    }
-  };
-
-  const deleteAlbumImage = async (index) => {
-    const imageUrl = formData.album[index];
-    if (imageUrl) {
-      await deleteImageFromStorage(imageUrl);
-    }
-    
-    const newAlbum = formData.album.filter((_, i) => i !== index);
-    setFormData(prev => ({ ...prev, album: newAlbum }));
-  };
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -139,30 +136,13 @@ const OfferForm = () => {
     if (files.length > 0) {
       const newPreviews = files.map(file => URL.createObjectURL(file));
       setAlbumFiles(prev => [...prev, ...files]);
-      setAlbumPreviews(prev => [...prev, ...newPreviews]); // Only new previews
+      setAlbumPreviews(prev => [...prev, ...newPreviews]);
     }
   };
 
-  const uploadImage = async () => {
-    if (!imageFile) return formData.image;
-
-    const storageRef = ref(storage, `offers_images/${Date.now()}_${imageFile.name}`);
-    await uploadBytes(storageRef, imageFile);
-    return await getDownloadURL(storageRef);
-  };
-
-  const uploadAlbumImages = async () => {
-    if (albumFiles.length === 0) return formData.album;
-
-    const uploadPromises = albumFiles.map(async (file, index) => {
-      const fileName = `${Date.now()}_${index}_${file.name}`;
-      const storageRef = ref(storage, `offers_album/${fileName}`);
-      await uploadBytes(storageRef, file);
-      return await getDownloadURL(storageRef);
-    });
-
-    const newUrls = await Promise.all(uploadPromises);
-    return [...formData.album, ...newUrls];
+  const deleteAlbumImage = (index) => {
+    const newAlbum = formData.album.filter((_, i) => i !== index);
+    setFormData(prev => ({ ...prev, album: newAlbum }));
   };
 
   const handleSubmit = async (e) => {
@@ -171,19 +151,17 @@ const OfferForm = () => {
       alert('العنوان، الوصف، وتاريخ الانتهاء مطلوبون');
       return;
     }
-
     try {
       setLoading(true);
-      
+
       let imageUrl = formData.image;
       if (imageFile) {
-        if (id && formData.image?.includes('firebasestorage.googleapis.com')) {
-          await deleteImageFromStorage(formData.image);
-        }
-        imageUrl = await uploadImage();
+        imageUrl = await uploadToBackend(imageFile, 'offers_images');
       }
 
-      const albumUrls = await uploadAlbumImages();
+      const albumUploads = albumFiles.map(file => uploadToBackend(file, 'offers_album'));
+      const newAlbumUrls = await Promise.all(albumUploads);
+      const albumUrls = [...formData.album, ...newAlbumUrls];
 
       const selectedNursery = nurseries.find(n => n.id === formData.nurseryId);
       const nurseryName = selectedNursery ? selectedNursery.name : '';
@@ -210,7 +188,6 @@ const OfferForm = () => {
         });
         alert('تم إضافة العرض!');
       }
-
       navigate('/offers');
     } catch (err) {
       alert('خطأ في الحفظ: ' + err.message);
@@ -230,7 +207,6 @@ const OfferForm = () => {
         >
           ← العودة إلى قائمة العروض
         </button>
-
         <div className="bg-white p-8 rounded-2xl shadow-lg">
           <h2 className="text-2xl font-bold mb-6">{id ? 'تعديل عرض' : 'إضافة عرض جديد'}</h2>
           <form onSubmit={handleSubmit} className="space-y-6">
@@ -268,8 +244,7 @@ const OfferForm = () => {
                   />
                   <button
                     type="button"
-                    onClick={async () => {
-                      await deleteImageFromStorage(formData.image);
+                    onClick={() => {
                       setImageFile(null);
                       setImagePreview(defaultImage);
                       setFormData(prev => ({ ...prev, image: defaultImage }));
@@ -308,13 +283,10 @@ const OfferForm = () => {
                   <p className="text-xs text-gray-500">يمكنك رفع عدة صور (حتى 5MB لكل صورة)</p>
                 </div>
               </div>
-
-              {/* Album Previews */}
               {(albumPreviews.length > 0 || formData.album.length > 0) && (
                 <div className="mt-4">
                   <h4 className="text-sm font-medium text-gray-700 mb-2">الصور المضافة:</h4>
                   <div className="flex flex-wrap gap-2">
-                    {/* New (unsaved) previews */}
                     {albumPreviews.map((preview, index) => (
                       <div key={`new-${index}`} className="relative">
                         <img
@@ -336,8 +308,6 @@ const OfferForm = () => {
                         </button>
                       </div>
                     ))}
-
-                    {/* Existing (saved) images */}
                     {formData.album.map((url, index) => (
                       <div key={`saved-${index}`} className="relative">
                         <img
@@ -375,7 +345,6 @@ const OfferForm = () => {
                   placeholder="خصم 30% على النباتات الداخلية"
                 />
               </div>
-
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">اسم المشتل</label>
                 <select
@@ -392,7 +361,6 @@ const OfferForm = () => {
                   ))}
                 </select>
               </div>
-
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">تاريخ الانتهاء</label>
                 <input
@@ -403,7 +371,6 @@ const OfferForm = () => {
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg"
                 />
               </div>
-
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">الخصم (%)</label>
                 <input
@@ -418,7 +385,6 @@ const OfferForm = () => {
                 />
               </div>
             </div>
-
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">الوصف</label>
               <textarea
@@ -430,7 +396,6 @@ const OfferForm = () => {
                 placeholder="احصل على خصم مميز..."
               />
             </div>
-
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">التصنيفات</label>
               <div className="flex flex-wrap gap-2">
@@ -447,7 +412,6 @@ const OfferForm = () => {
                 ))}
               </div>
             </div>
-
             <div className="flex flex-wrap gap-6">
               <label className="flex items-center">
                 <input
@@ -470,7 +434,6 @@ const OfferForm = () => {
                 <span className="text-sm">منشور</span>
               </label>
             </div>
-
             <div className="flex gap-4 pt-4">
               <button
                 type="submit"

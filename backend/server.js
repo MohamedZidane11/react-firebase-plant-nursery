@@ -12,7 +12,8 @@ const app = express();
 const allowedOrigins = [
   'https://react-firebase-plant-nursery.vercel.app', // ✅ No trailing spaces
   'https://plant-nursery-admin.vercel.app',
-  'http://localhost:5173'
+  'http://localhost:5173',
+  'http://localhost:5174'
 ];
 
 app.use(cors({

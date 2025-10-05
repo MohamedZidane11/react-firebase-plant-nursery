@@ -1,6 +1,7 @@
+// src/pages/NurseryForm.jsx
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { db, storage } from '../firebase/firebase';
+import { db } from '../firebase/firebase';
 import {
   collection,
   doc,
@@ -9,10 +10,10 @@ import {
   updateDoc,
   serverTimestamp
 } from 'firebase/firestore';
-import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
 import { auth } from '../firebase/firebase';
 
 const defaultImage = '/images/nurs_empty.png';
+const API_BASE = 'https://react-firebase-plant-nursery-production.up.railway.app'; // Update if needed
 
 const NurseryForm = () => {
   const { id } = useParams();
@@ -22,7 +23,7 @@ const NurseryForm = () => {
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState(defaultImage);
   const [albumFiles, setAlbumFiles] = useState([]);
-  const [albumPreviews, setAlbumPreviews] = useState([]); // Only for NEW files
+  const [albumPreviews, setAlbumPreviews] = useState([]);
 
   const [formData, setFormData] = useState({
     name: '',
@@ -45,6 +46,25 @@ const NurseryForm = () => {
       tiktok: ''
     }
   });
+
+  // Upload image via backend
+  const uploadToBackend = async (file, folder) => {
+    const formData = new FormData();
+    formData.append('image', file);
+    formData.append('folder', folder);
+
+    const res = await fetch(`${API_BASE}/api/upload`, {
+      method: 'POST',
+      body: formData,
+    });
+
+    if (!res.ok) {
+      const error = await res.json().catch(() => ({}));
+      throw new Error(error.error || 'فشل رفع الصورة');
+    }
+    const data = await res.json();
+    return data.url;
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -83,7 +103,6 @@ const NurseryForm = () => {
               }
             });
             setImagePreview(imageUrl);
-            // ✅ DO NOT initialize albumPreviews with saved URLs
             setAlbumPreviews([]);
             setAlbumFiles([]);
           }
@@ -97,27 +116,6 @@ const NurseryForm = () => {
 
     fetchData();
   }, [id]);
-
-  const deleteImageFromStorage = async (imageUrl) => {
-    try {
-      if (imageUrl?.includes('firebasestorage.googleapis.com')) {
-        const imageRef = ref(storage, imageUrl);
-        await deleteObject(imageRef);
-      }
-    } catch (err) {
-      console.warn('Could not delete image:', err);
-    }
-  };
-
-  const deleteAlbumImage = async (index) => {
-    const imageUrl = formData.album[index];
-    if (imageUrl) {
-      await deleteImageFromStorage(imageUrl);
-    }
-    
-    const newAlbum = formData.album.filter((_, i) => i !== index);
-    setFormData(prev => ({ ...prev, album: newAlbum }));
-  };
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -185,34 +183,14 @@ const NurseryForm = () => {
     if (files.length > 0) {
       const newPreviews = files.map(file => URL.createObjectURL(file));
       setAlbumFiles(prev => [...prev, ...files]);
-      setAlbumPreviews(prev => [...prev, ...newPreviews]); // Only new previews
+      setAlbumPreviews(prev => [...prev, ...newPreviews]);
     }
   };
 
-  const uploadImage = async () => {
-    if (!imageFile) return formData.image;
-
-    const fileName = `${Date.now()}_${imageFile.name}`;
-    const nurseryId = id || `temp_${Date.now()}`;
-    const storageRef = ref(storage, `nurs_images/${nurseryId}/${fileName}`);
-    
-    await uploadBytes(storageRef, imageFile);
-    return await getDownloadURL(storageRef);
-  };
-
-  const uploadAlbumImages = async () => {
-    if (albumFiles.length === 0) return formData.album;
-
-    const nurseryId = id || `temp_${Date.now()}`;
-    const uploadPromises = albumFiles.map(async (file, index) => {
-      const fileName = `${Date.now()}_${index}_${file.name}`;
-      const storageRef = ref(storage, `nurs_album/${nurseryId}/${fileName}`);
-      await uploadBytes(storageRef, file);
-      return await getDownloadURL(storageRef);
-    });
-
-    const newUrls = await Promise.all(uploadPromises);
-    return [...formData.album, ...newUrls];
+  // Delete from form only (no Storage delete)
+  const deleteAlbumImage = (index) => {
+    const newAlbum = formData.album.filter((_, i) => i !== index);
+    setFormData(prev => ({ ...prev, album: newAlbum }));
   };
 
   const handleSubmit = async (e) => {
@@ -245,13 +223,12 @@ const NurseryForm = () => {
       
       let imageUrl = formData.image;
       if (imageFile) {
-        if (id && formData.image?.includes('firebasestorage.googleapis.com')) {
-          await deleteImageFromStorage(formData.image);
-        }
-        imageUrl = await uploadImage();
+        imageUrl = await uploadToBackend(imageFile, 'nurs_images');
       }
 
-      const albumUrls = await uploadAlbumImages();
+      const albumUploads = albumFiles.map(file => uploadToBackend(file, 'nurs_album'));
+      const newAlbumUrls = await Promise.all(albumUploads);
+      const albumUrls = [...formData.album, ...newAlbumUrls];
 
       const fullLocation = `${formData.region} - ${formData.city} - ${formData.district}`;
       const data = {
@@ -279,14 +256,6 @@ const NurseryForm = () => {
           createdAt: serverTimestamp(),
           createdBy: auth.currentUser.email
         });
-
-        if (imageFile) {
-          const newStorageRef = ref(storage, `nurs_images/${docRef.id}/${Date.now()}_${imageFile.name}`);
-          await uploadBytes(newStorageRef, imageFile);
-          const newUrl = await getDownloadURL(newStorageRef);
-          await updateDoc(doc(db, 'nurseries', docRef.id), { image: newUrl });
-        }
-
         alert('تم الإضافة!');
       }
 
@@ -380,8 +349,7 @@ const NurseryForm = () => {
                   />
                   <button
                     type="button"
-                    onClick={async () => {
-                      await deleteImageFromStorage(formData.image);
+                    onClick={() => {
                       setImageFile(null);
                       setImagePreview(defaultImage);
                       setFormData(prev => ({ ...prev, image: defaultImage }));
@@ -421,12 +389,10 @@ const NurseryForm = () => {
                 </div>
               </div>
 
-              {/* Album Previews */}
               {(albumPreviews.length > 0 || formData.album.length > 0) && (
                 <div className="mt-4">
                   <h4 className="text-sm font-medium text-gray-700 mb-2">الصور المضافة:</h4>
                   <div className="flex flex-wrap gap-2">
-                    {/* New (unsaved) previews */}
                     {albumPreviews.map((preview, index) => (
                       <div key={`new-${index}`} className="relative">
                         <img
@@ -448,8 +414,6 @@ const NurseryForm = () => {
                         </button>
                       </div>
                     ))}
-
-                    {/* Existing (saved) images */}
                     {formData.album.map((url, index) => (
                       <div key={`saved-${index}`} className="relative">
                         <img
@@ -473,8 +437,6 @@ const NurseryForm = () => {
                 </div>
               )}
             </div>
-
-            {/* Rest of form (Location, Phones, etc.) — same as before */}
 
             {/* Location Dropdowns */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
