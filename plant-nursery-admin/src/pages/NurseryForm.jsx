@@ -12,7 +12,6 @@ import {
 import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
 import { auth } from '../firebase/firebase';
 
-// Default image from public folder
 const defaultImage = '/images/nurs_empty.png';
 
 const NurseryForm = () => {
@@ -22,10 +21,14 @@ const NurseryForm = () => {
   const [locations, setLocations] = useState([]);
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState(defaultImage);
+  const [albumFiles, setAlbumFiles] = useState([]);
+  const [albumPreviews, setAlbumPreviews] = useState([]);
 
   const [formData, setFormData] = useState({
     name: '',
+    description: '', // ✅ Added description
     image: defaultImage,
+    album: [], // ✅ Added album array
     categories: [],
     region: '',
     city: '',
@@ -42,7 +45,6 @@ const NurseryForm = () => {
     }
   });
 
-  // Fetch locations + nursery (if editing)
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -56,9 +58,13 @@ const NurseryForm = () => {
           if (nurseryDoc.exists()) {
             const data = nurseryDoc.data();
             const imageUrl = data.image || defaultImage;
+            const albumUrls = data.album || [];
+            
             setFormData({
               name: data.name || '',
+              description: data.description || '', // ✅ Load description
               image: imageUrl,
+              album: albumUrls,
               categories: data.categories || [],
               region: data.region || '',
               city: data.city || '',
@@ -75,6 +81,7 @@ const NurseryForm = () => {
               }
             });
             setImagePreview(imageUrl);
+            setAlbumPreviews(albumUrls);
           }
         }
       } catch (err) {
@@ -87,6 +94,7 @@ const NurseryForm = () => {
     fetchData();
   }, [id]);
 
+  // Delete single image from storage
   const deleteImageFromStorage = async (imageUrl) => {
     try {
       if (imageUrl?.includes('firebasestorage.googleapis.com')) {
@@ -94,8 +102,22 @@ const NurseryForm = () => {
         await deleteObject(imageRef);
       }
     } catch (err) {
-      console.warn('Could not delete old image from storage:', err);
+      console.warn('Could not delete image:', err);
     }
+  };
+
+  // Delete album image from storage and state
+  const deleteAlbumImage = async (index) => {
+    const imageUrl = formData.album[index];
+    if (imageUrl) {
+      await deleteImageFromStorage(imageUrl);
+    }
+    
+    const newAlbum = formData.album.filter((_, i) => i !== index);
+    const newPreviews = albumPreviews.filter((_, i) => i !== index);
+    
+    setFormData(prev => ({ ...prev, album: newAlbum }));
+    setAlbumPreviews(newPreviews);
   };
 
   const handleChange = (e) => {
@@ -159,6 +181,15 @@ const NurseryForm = () => {
     }
   };
 
+  const handleAlbumChange = (e) => {
+    const files = Array.from(e.target.files);
+    if (files.length > 0) {
+      const newPreviews = files.map(file => URL.createObjectURL(file));
+      setAlbumFiles(prev => [...prev, ...files]);
+      setAlbumPreviews(prev => [...prev, ...newPreviews]);
+    }
+  };
+
   const uploadImage = async () => {
     if (!imageFile) return formData.image;
 
@@ -167,8 +198,22 @@ const NurseryForm = () => {
     const storageRef = ref(storage, `nurs_images/${nurseryId}/${fileName}`);
     
     await uploadBytes(storageRef, imageFile);
-    const url = await getDownloadURL(storageRef);
-    return url;
+    return await getDownloadURL(storageRef);
+  };
+
+  const uploadAlbumImages = async () => {
+    if (albumFiles.length === 0) return formData.album;
+
+    const nurseryId = id || `temp_${Date.now()}`;
+    const uploadPromises = albumFiles.map(async (file, index) => {
+      const fileName = `${Date.now()}_${index}_${file.name}`;
+      const storageRef = ref(storage, `nurs_album/${nurseryId}/${fileName}`);
+      await uploadBytes(storageRef, file);
+      return await getDownloadURL(storageRef);
+    });
+
+    const newUrls = await Promise.all(uploadPromises);
+    return [...formData.album, ...newUrls];
   };
 
   const handleSubmit = async (e) => {
@@ -207,11 +252,15 @@ const NurseryForm = () => {
         imageUrl = await uploadImage();
       }
 
+      const albumUrls = await uploadAlbumImages();
+
       const fullLocation = `${formData.region} - ${formData.city} - ${formData.district}`;
       const data = {
         ...formData,
+        description: formData.description.trim(), // ✅ Save description
         location: fullLocation,
         image: imageUrl,
+        album: albumUrls, // ✅ Save album
         phones: validPhones,
         socialMedia: Object.keys(formData.socialMedia).some(key => formData.socialMedia[key].trim() !== '')
           ? Object.fromEntries(
@@ -232,6 +281,7 @@ const NurseryForm = () => {
           createdBy: auth.currentUser.email
         });
 
+        // Fix main image path for new nursery
         if (imageFile) {
           const newStorageRef = ref(storage, `nurs_images/${docRef.id}/${Date.now()}_${imageFile.name}`);
           await uploadBytes(newStorageRef, imageFile);
@@ -285,9 +335,22 @@ const NurseryForm = () => {
               />
             </div>
 
-            {/* Image Upload */}
+            {/* Description - NEW */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">صورة المشتل</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">وصف المشتل</label>
+              <textarea
+                name="description"
+                value={formData.description}
+                onChange={handleChange}
+                rows="4"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg"
+                placeholder="وصف مفصل عن المشتل، خدماته، تاريخه، إلخ..."
+              />
+            </div>
+
+            {/* Main Image Upload */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">صورة المشتل الرئيسية</label>
               <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-dashed border-gray-300 rounded-lg hover:border-green-400 transition">
                 <div className="space-y-1 text-center">
                   <svg className="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
@@ -333,7 +396,85 @@ const NurseryForm = () => {
               )}
             </div>
 
-            {/* Location, Phones, Social, Categories, Services, Options — same as before */}
+            {/* Album Upload - NEW */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">ألبوم الصور (اختياري)</label>
+              <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-dashed border-gray-300 rounded-lg hover:border-green-400 transition">
+                <div className="space-y-1 text-center">
+                  <svg className="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
+                    <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                  <div className="flex text-sm text-gray-600">
+                    <label htmlFor="album-upload" className="relative cursor-pointer bg-white rounded-md font-medium text-green-600 hover:text-green-500">
+                      <span>إضافة صور</span>
+                      <input
+                        id="album-upload"
+                        name="album-upload"
+                        type="file"
+                        accept="image/*"
+                        multiple
+                        className="sr-only"
+                        onChange={handleAlbumChange}
+                      />
+                    </label>
+                    <p className="pl-1">أو اسحب الملفات هنا</p>
+                  </div>
+                  <p className="text-xs text-gray-500">يمكنك رفع عدة صور (حتى 10MB لكل صورة)</p>
+                </div>
+              </div>
+
+              {/* Album Previews */}
+              {(albumPreviews.length > 0 || formData.album.length > 0) && (
+                <div className="mt-4">
+                  <h4 className="text-sm font-medium text-gray-700 mb-2">الصور المضافة:</h4>
+                  <div className="flex flex-wrap gap-2">
+                    {albumPreviews.map((preview, index) => (
+                      <div key={index} className="relative">
+                        <img
+                          src={preview}
+                          alt={`معاينة ${index + 1}`}
+                          className="w-20 h-20 object-cover rounded border"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            // Remove from previews (new files)
+                            const newPreviews = albumPreviews.filter((_, i) => i !== index);
+                            const newFiles = albumFiles.filter((_, i) => i !== index);
+                            setAlbumPreviews(newPreviews);
+                            setAlbumFiles(newFiles);
+                          }}
+                          className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs"
+                        >
+                          ×
+                        </button>
+                      </div>
+                    ))}
+                    {formData.album.map((url, index) => (
+                      <div key={`existing-${index}`} className="relative">
+                        <img
+                          src={url}
+                          alt={`صورة ${index + 1}`}
+                          className="w-20 h-20 object-cover rounded border"
+                          onError={(e) => {
+                            e.target.src = defaultImage;
+                          }}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => deleteAlbumImage(index)}
+                          className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs"
+                        >
+                          ×
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Rest of the form (Location, Phones, etc.) - same as before */}
 
             {/* Location Dropdowns */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
