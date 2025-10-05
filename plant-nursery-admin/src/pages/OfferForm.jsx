@@ -34,11 +34,10 @@ const OfferForm = () => {
     highlighted: false,
     published: true,
     nurseryId: '',
-    image: defaultImage,
+    image: null, // ✅ Changed from defaultImage to null
     album: []
   });
 
-  // Upload via backend with offerId
   const uploadToBackend = async (file, folder, offerId = null) => {
     const formData = new FormData();
     formData.append('image', file);
@@ -81,7 +80,7 @@ const OfferForm = () => {
           const offerDoc = await getDoc(doc(db, 'offers', id));
           if (offerDoc.exists()) {
             const data = offerDoc.data();
-            const imageUrl = data.image || defaultImage;
+            const imageUrl = data.image || null; // ✅ null instead of defaultImage
             const albumUrls = data.album || [];
             setFormData({
               title: data.title || '',
@@ -95,7 +94,7 @@ const OfferForm = () => {
               image: imageUrl,
               album: albumUrls
             });
-            setImagePreview(imageUrl);
+            setImagePreview(imageUrl || defaultImage); // ✅ Preview uses default if null
             setAlbumPreviews([]);
             setAlbumFiles([]);
           }
@@ -166,10 +165,10 @@ const OfferForm = () => {
           imageUrl = await uploadToBackend(imageFile, 'offers_images', id);
         }
       } else {
-        // Creating: first create with placeholder
+        // Creating: first create with null image
         const docRef = await addDoc(collection(db, 'offers'), {
           ...formData,
-          image: defaultImage,
+          image: null, // ✅ Store null instead of defaultImage
           album: [],
           createdAt: serverTimestamp(),
           createdBy: auth.currentUser.email,
@@ -198,7 +197,7 @@ const OfferForm = () => {
 
       const finalData = {
         ...formData,
-        image: imageUrl,
+        image: imageUrl || null, // ✅ Store null if no image
         album: albumUrls,
         nurseryId: formData.nurseryId || null,
         nurseryName,
@@ -277,7 +276,7 @@ const OfferForm = () => {
                     onClick={() => {
                       setImageFile(null);
                       setImagePreview(defaultImage);
-                      setFormData(prev => ({ ...prev, image: defaultImage }));
+                      setFormData(prev => ({ ...prev, image: null })); // ✅ Set to null
                     }}
                     className="text-red-600 hover:text-red-800 text-sm font-medium flex items-center gap-1"
                   >
@@ -362,7 +361,7 @@ const OfferForm = () => {
               )}
             </div>
 
-            {/* Rest of the form */}
+            {/* Rest of the form fields remain the same */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">عنوان العرض</label>
