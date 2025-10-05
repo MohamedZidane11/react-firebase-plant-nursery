@@ -2,9 +2,9 @@
 import express from 'express';
 import cors from 'cors';
 import { db } from './firebase.js';
+import { adminStorage } from './firebaseAdmin.js';
 import multer from 'multer';
 import path from 'path';
-import { adminStorage } from './firebaseAdmin.js';
 
 const app = express();
 

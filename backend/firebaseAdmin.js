@@ -1,16 +1,19 @@
 // firebaseAdmin.js
 import admin from 'firebase-admin';
-import fs from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
 
-// Resolve __dirname in ES modules
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const serviceAccountJson = process.env.FIREBASE_SERVICE_ACCOUNT;
 
-// Read the service account JSON file
-const serviceAccountPath = path.join(__dirname, 'FIREBASE_SERVICE_ACCOUNT.json');
-const serviceAccount = JSON.parse(fs.readFileSync(serviceAccountPath, 'utf8'));
+if (!serviceAccountJson) {
+  throw new Error('❌ FIREBASE_SERVICE_ACCOUNT is not set in environment variables');
+}
+
+let serviceAccount;
+try {
+  serviceAccount = JSON.parse(serviceAccountJson);
+} catch (err) {
+  console.error('Invalid FIREBASE_SERVICE_ACCOUNT JSON:', err.message);
+  throw new Error('❌ Failed to parse FIREBASE_SERVICE_ACCOUNT');
+}
 
 if (!admin.apps.length) {
   admin.initializeApp({
