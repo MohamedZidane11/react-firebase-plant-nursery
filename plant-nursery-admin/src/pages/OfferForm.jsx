@@ -13,7 +13,7 @@ import {
 } from 'firebase/firestore';
 
 const defaultImage = '/images/offer_default.png';
-const API_BASE = 'https://react-firebase-plant-nursery-production.up.railway.app'; // Update if needed
+const API_BASE = 'https://react-firebase-plant-nursery-production.up.railway.app';
 
 const OfferForm = () => {
   const { id } = useParams();
@@ -38,11 +38,14 @@ const OfferForm = () => {
     album: []
   });
 
-  // Upload via backend
-  const uploadToBackend = async (file, folder) => {
+  // Upload via backend with offerId
+  const uploadToBackend = async (file, folder, offerId = null) => {
     const formData = new FormData();
     formData.append('image', file);
     formData.append('folder', folder);
+    if (offerId) {
+      formData.append('offerId', offerId);
+    }
 
     const res = await fetch(`${API_BASE}/api/upload`, {
       method: 'POST',
@@ -155,18 +158,45 @@ const OfferForm = () => {
       setLoading(true);
 
       let imageUrl = formData.image;
-      if (imageFile) {
-        imageUrl = await uploadToBackend(imageFile, 'offers_images');
+      let finalOfferId = id;
+
+      if (id) {
+        // Editing
+        if (imageFile) {
+          imageUrl = await uploadToBackend(imageFile, 'offers_images', id);
+        }
+      } else {
+        // Creating: first create with placeholder
+        const docRef = await addDoc(collection(db, 'offers'), {
+          ...formData,
+          image: defaultImage,
+          album: [],
+          createdAt: serverTimestamp(),
+          createdBy: auth.currentUser.email,
+          updatedAt: serverTimestamp(),
+          updatedBy: auth.currentUser.email
+        });
+        finalOfferId = docRef.id;
+
+        if (imageFile) {
+          imageUrl = await uploadToBackend(imageFile, 'offers_images', docRef.id);
+        }
       }
 
-      const albumUploads = albumFiles.map(file => uploadToBackend(file, 'offers_album'));
-      const newAlbumUrls = await Promise.all(albumUploads);
-      const albumUrls = [...formData.album, ...newAlbumUrls];
+      // Upload album
+      let albumUrls = formData.album;
+      if (albumFiles.length > 0) {
+        const uploadPromises = albumFiles.map(file =>
+          uploadToBackend(file, 'offers_album', finalOfferId)
+        );
+        const newAlbumUrls = await Promise.all(uploadPromises);
+        albumUrls = [...formData.album, ...newAlbumUrls];
+      }
 
       const selectedNursery = nurseries.find(n => n.id === formData.nurseryId);
       const nurseryName = selectedNursery ? selectedNursery.name : '';
 
-      const data = {
+      const finalData = {
         ...formData,
         image: imageUrl,
         album: albumUrls,
@@ -178,16 +208,16 @@ const OfferForm = () => {
       };
 
       if (id) {
-        await updateDoc(doc(db, 'offers', id), data);
-        alert('تم تحديث العرض!');
+        await updateDoc(doc(db, 'offers', id), finalData);
       } else {
-        await addDoc(collection(db, 'offers'), {
-          ...data,
+        await updateDoc(doc(db, 'offers', finalOfferId), {
+          ...finalData,
           createdAt: serverTimestamp(),
           createdBy: auth.currentUser.email
         });
-        alert('تم إضافة العرض!');
       }
+
+      alert(id ? 'تم تحديث العرض!' : 'تم إضافة العرض!');
       navigate('/offers');
     } catch (err) {
       alert('خطأ في الحفظ: ' + err.message);

@@ -13,7 +13,7 @@ import {
 import { auth } from '../firebase/firebase';
 
 const defaultImage = '/images/nurs_empty.png';
-const API_BASE = 'https://react-firebase-plant-nursery-production.up.railway.app'; // Update if needed
+const API_BASE = 'https://react-firebase-plant-nursery-production.up.railway.app';
 
 const NurseryForm = () => {
   const { id } = useParams();
@@ -47,11 +47,14 @@ const NurseryForm = () => {
     }
   });
 
-  // Upload image via backend
-  const uploadToBackend = async (file, folder) => {
+  // Upload via backend with nurseryId
+  const uploadToBackend = async (file, folder, nurseryId = null) => {
     const formData = new FormData();
     formData.append('image', file);
     formData.append('folder', folder);
+    if (nurseryId) {
+      formData.append('nurseryId', nurseryId);
+    }
 
     const res = await fetch(`${API_BASE}/api/upload`, {
       method: 'POST',
@@ -222,16 +225,50 @@ const NurseryForm = () => {
       setLoading(true);
       
       let imageUrl = formData.image;
-      if (imageFile) {
-        imageUrl = await uploadToBackend(imageFile, 'nurs_images');
+      let finalNurseryId = id;
+
+      if (id) {
+        // Editing: upload with nurseryId
+        if (imageFile) {
+          imageUrl = await uploadToBackend(imageFile, 'nurs_images', id);
+        }
+      } else {
+        // Creating: first create nursery with placeholder
+        const docRef = await addDoc(collection(db, 'nurseries'), {
+          ...formData,
+          image: defaultImage,
+          album: [],
+          location: `${formData.region} - ${formData.city} - ${formData.district}`,
+          phones: validPhones,
+          socialMedia: Object.keys(formData.socialMedia).some(key => formData.socialMedia[key].trim() !== '')
+            ? Object.fromEntries(Object.entries(formData.socialMedia).filter(([_, v]) => v.trim() !== ''))
+            : null,
+          createdAt: serverTimestamp(),
+          createdBy: auth.currentUser.email,
+          updatedAt: serverTimestamp(),
+          updatedBy: auth.currentUser.email
+        });
+        finalNurseryId = docRef.id;
+
+        // Now upload main image with real ID
+        if (imageFile) {
+          imageUrl = await uploadToBackend(imageFile, 'nurs_images', docRef.id);
+        }
       }
 
-      const albumUploads = albumFiles.map(file => uploadToBackend(file, 'nurs_album'));
-      const newAlbumUrls = await Promise.all(albumUploads);
-      const albumUrls = [...formData.album, ...newAlbumUrls];
+      // Upload album images
+      let albumUrls = formData.album;
+      if (albumFiles.length > 0) {
+        const uploadPromises = albumFiles.map(file =>
+          uploadToBackend(file, 'nurs_album', finalNurseryId)
+        );
+        const newAlbumUrls = await Promise.all(uploadPromises);
+        albumUrls = [...formData.album, ...newAlbumUrls];
+      }
 
+      // Final update
       const fullLocation = `${formData.region} - ${formData.city} - ${formData.district}`;
-      const data = {
+      const finalData = {
         ...formData,
         description: formData.description.trim(),
         location: fullLocation,
@@ -239,26 +276,23 @@ const NurseryForm = () => {
         album: albumUrls,
         phones: validPhones,
         socialMedia: Object.keys(formData.socialMedia).some(key => formData.socialMedia[key].trim() !== '')
-          ? Object.fromEntries(
-              Object.entries(formData.socialMedia).filter(([_, v]) => v.trim() !== '')
-            )
+          ? Object.fromEntries(Object.entries(formData.socialMedia).filter(([_, v]) => v.trim() !== ''))
           : null,
         updatedAt: serverTimestamp(),
         updatedBy: auth.currentUser.email
       };
 
       if (id) {
-        await updateDoc(doc(db, 'nurseries', id), data);
-        alert('تم التحديث!');
+        await updateDoc(doc(db, 'nurseries', id), finalData);
       } else {
-        const docRef = await addDoc(collection(db, 'nurseries'), {
-          ...data,
+        await updateDoc(doc(db, 'nurseries', finalNurseryId), {
+          ...finalData,
           createdAt: serverTimestamp(),
           createdBy: auth.currentUser.email
         });
-        alert('تم الإضافة!');
       }
 
+      alert(id ? 'تم التحديث!' : 'تم الإضافة!');
       navigate('/nurseries');
     } catch (err) {
       alert('خطأ: ' + err.message);

@@ -51,20 +51,27 @@ app.post('/api/upload', upload.single('image'), async (req, res) => {
       return res.status(400).json({ error: 'No image file provided' });
     }
 
-    // Allowed folders
-    const allowedFolders = ['nurs_images', 'nurs_album', 'offers_images', 'offers_album'];
-    const folder = req.body.folder?.trim() || 'uploads'; // default fallback
+    const { folder, nurseryId, offerId } = req.body;
 
-    if (!allowedFolders.includes(folder)) {
+    // Validate folder
+    const allowedFolders = ['nurs_images', 'nurs_album', 'offers_images', 'offers_album'];
+    if (!folder || !allowedFolders.includes(folder)) {
       return res.status(400).json({ error: `Invalid folder. Allowed: ${allowedFolders.join(', ')}` });
+    }
+
+    // Build path with ID if applicable
+    let basePath = folder;
+    if (folder.startsWith('nurs_') && nurseryId) {
+      basePath = `${folder}/${nurseryId}`;
+    } else if (folder.startsWith('offers_') && offerId) {
+      basePath = `${folder}/${offerId}`;
     }
 
     const timestamp = Date.now();
     const cleanName = req.file.originalname.replace(/\s+/g, '_').replace(/[^a-zA-Z0-9._-]/g, '');
     const fileName = `${timestamp}_${cleanName}`;
-    const filePath = `${folder}/${fileName}`;
+    const filePath = `${basePath}/${fileName}`;
 
-    // Upload to Firebase Storage
     const bucket = adminStorage.bucket();
     const file = bucket.file(filePath);
 
@@ -74,23 +81,21 @@ app.post('/api/upload', upload.single('image'), async (req, res) => {
       },
     });
 
-    // Make file publicly readable
     await file.makePublic();
 
-    // Construct public URL
     const publicUrl = `https://firebasestorage.googleapis.com/v0/b/${bucket.name}/o/${encodeURIComponent(filePath)}?alt=media`;
 
     res.status(200).json({
       url: publicUrl,
-      path: filePath // useful for future deletion
+      path: filePath
     });
   } catch (error) {
     console.error('Upload error:', error);
-    res.status(500).json({ error: 'Failed to upload image. Please try again.' });
+    res.status(500).json({ error: 'Failed to upload image.' });
   }
 });
 
-// ✅ GET all nurseries
+// ✅ GET all nurseries - with proper timestamp handling
 app.get('/api/nurseries', async (req, res) => {
   try {
     const snapshot = await db.collection('nurseries').get();
@@ -100,17 +105,37 @@ app.get('/api/nurseries', async (req, res) => {
       if (data.published !== false) {
         // Convert Firestore Timestamps to ISO strings
         const cleanData = { ...data };
-        if (cleanData.createdAt && typeof cleanData.createdAt.toDate === 'function') {
-          cleanData.createdAt = cleanData.createdAt.toDate().toISOString();
+        
+        // Handle createdAt
+        if (cleanData.createdAt) {
+          if (typeof cleanData.createdAt.toDate === 'function') {
+            cleanData.createdAt = cleanData.createdAt.toDate().toISOString();
+          } else if (cleanData.createdAt._seconds) {
+            // Handle pending serverTimestamp
+            cleanData.createdAt = new Date(cleanData.createdAt._seconds * 1000).toISOString();
+          } else if (typeof cleanData.createdAt === 'string') {
+            // Already a string, keep it
+            cleanData.createdAt = cleanData.createdAt;
+          }
         }
-        if (cleanData.updatedAt && typeof cleanData.updatedAt.toDate === 'function') {
-          cleanData.updatedAt = cleanData.updatedAt.toDate().toISOString();
+        
+        // Handle updatedAt
+        if (cleanData.updatedAt) {
+          if (typeof cleanData.updatedAt.toDate === 'function') {
+            cleanData.updatedAt = cleanData.updatedAt.toDate().toISOString();
+          } else if (cleanData.updatedAt._seconds) {
+            cleanData.updatedAt = new Date(cleanData.updatedAt._seconds * 1000).toISOString();
+          } else if (typeof cleanData.updatedAt === 'string') {
+            cleanData.updatedAt = cleanData.updatedAt;
+          }
         }
+        
         list.push({ id: doc.id, ...cleanData });
       }
     });
     res.json(list);
   } catch (err) {
+    console.error('Error fetching nurseries:', err);
     res.status(500).json({ message: 'فشل تحميل المشاتل' });
   }
 });
