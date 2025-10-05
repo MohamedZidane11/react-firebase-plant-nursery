@@ -2,6 +2,9 @@
 import express from 'express';
 import cors from 'cors';
 import { db } from './firebase.js';
+import multer from 'multer';
+import path from 'path';
+import { adminStorage } from './firebaseAdmin.js';
 
 const app = express();
 
@@ -25,6 +28,67 @@ app.use(cors({
 }));
 
 app.use(express.json({ limit: '10mb' }));
+
+// Configure multer: store in memory
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: {
+    fileSize: 10 * 1024 * 1024, // 10 MB max
+  },
+  fileFilter: (req, file, cb) => {
+    if (file.mimetype.startsWith('image/')) {
+      cb(null, true);
+    } else {
+      cb(new Error('Only image files (JPEG, PNG, GIF, etc.) are allowed!'), false);
+    }
+  }
+});
+
+// ✅ POST /api/upload — secure image upload
+app.post('/api/upload', upload.single('image'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: 'No image file provided' });
+    }
+
+    // Allowed folders
+    const allowedFolders = ['nurs_images', 'nurs_album', 'offers_images', 'offers_album'];
+    const folder = req.body.folder?.trim() || 'uploads'; // default fallback
+
+    if (!allowedFolders.includes(folder)) {
+      return res.status(400).json({ error: `Invalid folder. Allowed: ${allowedFolders.join(', ')}` });
+    }
+
+    const timestamp = Date.now();
+    const cleanName = req.file.originalname.replace(/\s+/g, '_').replace(/[^a-zA-Z0-9._-]/g, '');
+    const fileName = `${timestamp}_${cleanName}`;
+    const filePath = `${folder}/${fileName}`;
+
+    // Upload to Firebase Storage
+    const bucket = adminStorage.bucket();
+    const file = bucket.file(filePath);
+
+    await file.save(req.file.buffer, {
+      metadata: {
+        contentType: req.file.mimetype,
+      },
+    });
+
+    // Make file publicly readable
+    await file.makePublic();
+
+    // Construct public URL
+    const publicUrl = `https://firebasestorage.googleapis.com/v0/b/${bucket.name}/o/${encodeURIComponent(filePath)}?alt=media`;
+
+    res.status(200).json({
+      url: publicUrl,
+      path: filePath // useful for future deletion
+    });
+  } catch (error) {
+    console.error('Upload error:', error);
+    res.status(500).json({ error: 'Failed to upload image. Please try again.' });
+  }
+});
 
 // ✅ GET all nurseries
 app.get('/api/nurseries', async (req, res) => {
