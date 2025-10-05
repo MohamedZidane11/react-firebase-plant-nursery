@@ -4,16 +4,16 @@ import NurseryCard from '../components/NurseryCard';
 
 const Nurseries = () => {
   const [nurseries, setNurseries] = useState([]);
-  const [offers, setOffers] = useState([]); // ✅ Add state for offers
-  const [categories, setCategories] = useState([]); // ✅ Store fetched categories
+  const [offers, setOffers] = useState([]);
+  const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [loadingCategories, setLoadingCategories] = useState(true); // Optional UX state
+  const [loadingCategories, setLoadingCategories] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 3;
 
   // 🔍 Filters
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('all'); // 'all' or exact category title
+  const [selectedCategory, setSelectedCategory] = useState('all');
   const [selectedRegion, setSelectedRegion] = useState('all');
   const [selectedCity, setSelectedCity] = useState('all');
   const [selectedDistrict, setSelectedDistrict] = useState('all');
@@ -30,10 +30,13 @@ const Nurseries = () => {
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         
         const data = await response.json();
+        console.log('Fetched nurseries:', data); // Debug log
         setNurseries(Array.isArray(data) ? data : []);
       } catch (err) {
         console.error('Error fetching nurseries:', err);
-        alert('تعذر الاتصال بالخادم');
+        setNurseries([]); // Set empty array on error
+      } finally {
+        setLoading(false); // ✅ Always stop loading
       }
     };
 
@@ -50,7 +53,6 @@ const Nurseries = () => {
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         
         const data = await response.json();
-        // Filter only published offers
         const publishedOffers = Array.isArray(data) ? data.filter(offer => offer.published !== false) : [];
         setOffers(publishedOffers);
       } catch (err) {
@@ -62,7 +64,7 @@ const Nurseries = () => {
     fetchOffers();
   }, []);
 
-  // 🌐 Fetch categories — to populate filter dropdown
+  // 🌐 Fetch categories
   useEffect(() => {
     const fetchCategories = async () => {
       try {
@@ -95,13 +97,11 @@ const Nurseries = () => {
 
   // Helper function to get active discount for a nursery
   const getActiveDiscount = (nurseryId) => {
-    // Find active offers for this nursery
     const activeOffers = offers.filter(offer => 
       offer.nurseryId === nurseryId && 
       !isExpired(offer.endDate)
     );
     
-    // Return the highest discount if multiple offers exist
     if (activeOffers.length > 0) {
       return Math.max(...activeOffers.map(offer => offer.discount || 0));
     }
@@ -124,22 +124,20 @@ const Nurseries = () => {
   const filteredNurseries = nurseries.filter((nursery) => {
     const matchesSearch = searchTerm
       ? nursery.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        nursery.location.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        nursery.categories.some(cat =>
+        (nursery.location && nursery.location.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (Array.isArray(nursery.categories) && nursery.categories.some(cat =>
           cat.toLowerCase().includes(searchTerm.toLowerCase())
-        )
+        ))
       : true;
 
-    // ✅ Filter by exact category match (no grouping)
     const matchesCategory = selectedCategory === 'all'
       ? true
-      : nursery.categories.includes(selectedCategory);
+      : Array.isArray(nursery.categories) && nursery.categories.includes(selectedCategory);
 
     const matchesRegion = selectedRegion === 'all' || nursery.region === selectedRegion;
     const matchesCity = selectedCity === 'all' || nursery.city === selectedCity;
     const matchesDistrict = selectedDistrict === 'all' || nursery.district === selectedDistrict;
     
-    // Update: Check for active offers instead of nursery.discount
     const hasActiveOffer = getActiveDiscount(nursery.id) !== null;
     const matchesOffer = showOffersOnly ? hasActiveOffer : true;
 
@@ -149,10 +147,9 @@ const Nurseries = () => {
   // 📊 Sort
   const sortedNurseries = [...filteredNurseries].sort((a, b) => {
     if (sortBy === 'newest') {
-      // Use createdAt if available, fallback to id (less reliable)
       const dateA = a.createdAt ? new Date(a.createdAt) : new Date(0);
       const dateB = b.createdAt ? new Date(b.createdAt) : new Date(0);
-      return dateB - dateA; // Newest first
+      return dateB - dateA;
     }
     if (sortBy === 'popular') {
       return (b.featured ? 1 : 0) - (a.featured ? 1 : 0);
@@ -177,13 +174,6 @@ const Nurseries = () => {
   useEffect(() => {
     setCurrentPage(1);
   }, [searchTerm, selectedCategory, selectedRegion, selectedCity, selectedDistrict, showOffersOnly, sortBy]);
-
-  // Set loading to false when both nurseries and offers are loaded
-  useEffect(() => {
-    if (nurseries.length > 0 || offers.length > 0) {
-      setLoading(false);
-    }
-  }, [nurseries, offers]);
 
   if (loading) {
     return <p className="text-center py-8">جاري التحميل...</p>;
@@ -216,7 +206,7 @@ const Nurseries = () => {
                 className="w-full px-4 py-2 border border-green-800 rounded-full bg-gradient-to-r from-gray-100/80 to-gray-100 mb-6"
               />
 
-              {/* ✅ Category Filter — Show ALL categories from API */}
+              {/* Category Filter */}
               <select
                 value={selectedCategory}
                 onChange={(e) => setSelectedCategory(e.target.value)}
@@ -312,11 +302,10 @@ const Nurseries = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {currentNurseries.length > 0 ? (
               currentNurseries.map((nursery) => (
-                <div className='hover:-translate-y-4 transition-transform duration-500 ease-in-out'>
+                <div key={nursery.id} className='hover:-translate-y-4 transition-transform duration-500 ease-in-out'>
                   <NurseryCard 
-                    key={nursery.id} 
                     nursery={nursery} 
-                    offers={offers} // Pass offers to NurseryCard
+                    offers={offers}
                   />
                 </div>
               ))
