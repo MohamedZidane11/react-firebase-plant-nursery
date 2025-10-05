@@ -95,6 +95,37 @@ app.post('/api/upload', upload.single('image'), async (req, res) => {
   }
 });
 
+// DELETE /api/delete-image
+app.delete('/api/delete-image', async (req, res) => {
+  try {
+    const { url } = req.body;
+    if (!url) {
+      return res.status(400).json({ error: 'Image URL is required' });
+    }
+
+    // Validate it's your bucket
+    const bucketName = adminStorage.bucket().name;
+    if (!url.includes(bucketName)) {
+      return res.status(400).json({ error: 'Invalid image URL' });
+    }
+
+    // Extract file path from URL
+    const urlObj = new URL(url);
+    let filePath = urlObj.pathname.split('/o/')[1];
+    if (filePath) {
+      filePath = decodeURIComponent(filePath.split('?')[0]);
+      const file = adminStorage.bucket().file(filePath);
+      await file.delete();
+      res.status(200).json({ message: 'Image deleted successfully' });
+    } else {
+      res.status(400).json({ error: 'Invalid URL format' });
+    }
+  } catch (error) {
+    console.error('Delete error:', error);
+    res.status(500).json({ error: 'Failed to delete image' });
+  }
+});
+
 // ✅ GET all nurseries - with proper timestamp handling
 app.get('/api/nurseries', async (req, res) => {
   try {

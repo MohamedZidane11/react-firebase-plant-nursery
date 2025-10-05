@@ -125,13 +125,13 @@ const NurseryDetail = () => {
           <div className="flex flex-col md:flex-row items-center gap-8">
             {/* Left: Text */}
             <div className="md:w-1/2">
-              <h1 className="text-4xl font-bold mb-2">{nursery.name}</h1>
+              <h1 className="text-4xl font-bold mb-2 pb-2">{nursery.name}</h1>
               {nursery.description && (
-                <p className="text-lg mb-4 opacity-90">
+                <p className="text-lg mb-4 opacity-90 pt-4 pb-4">
                   {nursery.description}
                 </p>
               )}
-              <div className="flex flex-wrap gap-2 mb-6">
+              <div className="flex flex-wrap gap-2 mb-6 pb-4">
                 {nursery.categories?.map((category, index) => (
                   <span
                     key={index}
@@ -365,6 +365,19 @@ const NurseryDetail = () => {
                   <a href={nursery.socialMedia.facebook} target="_blank" rel="noopener noreferrer" className="flex items-center text-blue-600 hover:text-blue-800">
                     <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" /></svg>
                     <span className="ml-2">فيسبوك</span>
+                  </a>
+                )}
+                {nursery.socialMedia.snapchat && (
+                  <a
+                    href={nursery.socialMedia.snapchat}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center text-yellow-500 hover:text-yellow-700"
+                  >
+                    <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.753 15.753c-.293.293-.768.293-1.061 0L12 11.061l-4.692 4.692c-.293.293-.768.293-1.061 0-.293-.293-.293-.768 0-1.061L10.939 12 6.247 7.308c-.293-.293-.293-.768 0-1.061.293-.293.768-.293 1.061 0L12 10.939l4.692-4.692c.293-.293.768-.293 1.061 0 .293.293.293.768 0 1.061L13.061 12l4.692 4.692c.293.294.293.769 0 1.061z" />
+                    </svg>
+                    <span className="ml-2">سناب شات</span>
                   </a>
                 )}
                 {nursery.socialMedia.tiktok && (
