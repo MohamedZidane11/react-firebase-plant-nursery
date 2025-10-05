@@ -61,28 +61,28 @@ const Header = () => {
               <Link
                 to="/"
                 onClick={handleLinkClick}
-                className={`hover:text-yellow-300 hover:scale-105 transition-colors duration-200 px-3 py-2 rounded-lg hover:bg-green-700 ${location.pathname === '/' ? 'text-white font-bold bg-green-700' : ''}`}
+                className={`text-lg hover:text-yellow-300 hover:scale-105 transition-colors duration-200 px-3 py-2 rounded-lg hover:bg-green-700 ${location.pathname === '/' ? 'text-white font-bold bg-green-700' : ''}`}
               >
               🏠 الرئيسية
               </Link>
               <Link
                 to="/nurseries"
                 onClick={handleLinkClick}
-                className={`hover:text-yellow-300 hover:scale-105 transition-colors duration-200 px-3 py-2 rounded-lg hover:bg-green-700 ${location.pathname === '/nurseries' ? 'text-white font-bold bg-green-700' : ''}`}
+                className={`text-lg hover:text-yellow-300 hover:scale-105 transition-colors duration-200 px-3 py-2 rounded-lg hover:bg-green-700 ${location.pathname === '/nurseries' ? 'text-white font-bold bg-green-700' : ''}`}
               >
               🌿 المشاتل
               </Link>
               <Link
                 to="/offers"
                 onClick={handleLinkClick}
-                className={`hover:text-yellow-300 hover:scale-105 transition-colors duration-200 px-3 py-2 rounded-lg hover:bg-green-700 ${location.pathname === '/offers' ? 'text-white font-bold bg-green-700' : ''}`}
+                className={`text-lg hover:text-yellow-300 hover:scale-105 transition-colors duration-200 px-3 py-2 rounded-lg hover:bg-green-700 ${location.pathname === '/offers' ? 'text-white font-bold bg-green-700' : ''}`}
               >
               🎯 العروض
               </Link>
               <Link
                 to="/contact"
                 onClick={handleLinkClick}
-                className={`hover:text-yellow-300 hover:scale-105 transition-colors duration-200 px-3 py-2 rounded-lg hover:bg-green-700 ${location.pathname === '/contact' ? 'text-white font-bold bg-green-700' : ''}`}
+                className={`text-lg hover:text-yellow-300 hover:scale-105 transition-colors duration-200 px-3 py-2 rounded-lg hover:bg-green-700 ${location.pathname === '/contact' ? 'text-white font-bold bg-green-700' : ''}`}
               >
               📞 اتصل بنا
               </Link>
