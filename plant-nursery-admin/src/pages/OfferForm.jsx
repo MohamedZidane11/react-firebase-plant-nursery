@@ -34,9 +34,33 @@ const OfferForm = () => {
     highlighted: false,
     published: true,
     nurseryId: '',
-    image: null, // ✅ Changed from defaultImage to null
+    image: null,
     album: []
   });
+
+  // Delete image via backend API
+  const deleteImageFromStorage = async (imageUrl) => {
+    try {
+      if (!imageUrl || !imageUrl.includes('firebasestorage.googleapis.com')) {
+        return;
+      }
+
+      const response = await fetch(`${API_BASE}/api/delete-image`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ url: imageUrl }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({}));
+        console.warn('Failed to delete image:', error.error || 'Unknown error');
+      }
+    } catch (err) {
+      console.warn('Could not delete image:', err);
+    }
+  };
 
   const uploadToBackend = async (file, folder, offerId = null) => {
     const formData = new FormData();
@@ -80,7 +104,7 @@ const OfferForm = () => {
           const offerDoc = await getDoc(doc(db, 'offers', id));
           if (offerDoc.exists()) {
             const data = offerDoc.data();
-            const imageUrl = data.image || null; // ✅ null instead of defaultImage
+            const imageUrl = data.image || null;
             const albumUrls = data.album || [];
             setFormData({
               title: data.title || '',
@@ -94,7 +118,7 @@ const OfferForm = () => {
               image: imageUrl,
               album: albumUrls
             });
-            setImagePreview(imageUrl || defaultImage); // ✅ Preview uses default if null
+            setImagePreview(imageUrl || defaultImage);
             setAlbumPreviews([]);
             setAlbumFiles([]);
           }
@@ -142,7 +166,9 @@ const OfferForm = () => {
     }
   };
 
-  const deleteAlbumImage = (index) => {
+  const deleteAlbumImage = async (index) => {
+    const imageUrl = formData.album[index];
+    await deleteImageFromStorage(imageUrl);
     const newAlbum = formData.album.filter((_, i) => i !== index);
     setFormData(prev => ({ ...prev, album: newAlbum }));
   };
@@ -162,13 +188,16 @@ const OfferForm = () => {
       if (id) {
         // Editing
         if (imageFile) {
+          if (formData.image && formData.image.includes('firebasestorage.googleapis.com')) {
+            await deleteImageFromStorage(formData.image);
+          }
           imageUrl = await uploadToBackend(imageFile, 'offers_images', id);
         }
       } else {
         // Creating: first create with null image
         const docRef = await addDoc(collection(db, 'offers'), {
           ...formData,
-          image: null, // ✅ Store null instead of defaultImage
+          image: null,
           album: [],
           createdAt: serverTimestamp(),
           createdBy: auth.currentUser.email,
@@ -197,7 +226,7 @@ const OfferForm = () => {
 
       const finalData = {
         ...formData,
-        image: imageUrl || null, // ✅ Store null if no image
+        image: imageUrl || null,
         album: albumUrls,
         nurseryId: formData.nurseryId || null,
         nurseryName,
@@ -273,10 +302,13 @@ const OfferForm = () => {
                   />
                   <button
                     type="button"
-                    onClick={() => {
+                    onClick={async () => {
+                      if (formData.image && formData.image.includes('firebasestorage.googleapis.com')) {
+                        await deleteImageFromStorage(formData.image);
+                      }
                       setImageFile(null);
                       setImagePreview(defaultImage);
-                      setFormData(prev => ({ ...prev, image: null })); // ✅ Set to null
+                      setFormData(prev => ({ ...prev, image: null }));
                     }}
                     className="text-red-600 hover:text-red-800 text-sm font-medium flex items-center gap-1"
                   >
@@ -361,7 +393,7 @@ const OfferForm = () => {
               )}
             </div>
 
-            {/* Rest of the form fields remain the same */}
+            {/* Rest of the form fields */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">عنوان العرض</label>

@@ -1,7 +1,7 @@
 // src/pages/NurseryForm.jsx
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { db, storage } from '../firebase/firebase';
+import { db, auth } from '../firebase/firebase';
 import {
   collection,
   doc,
@@ -10,11 +10,9 @@ import {
   updateDoc,
   serverTimestamp
 } from 'firebase/firestore';
-import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
-import { auth } from '../firebase/firebase';
 
 const defaultImage = '/images/nurs_empty.png';
-const API_BASE = 'https://react-firebase-plant-nursery-production.up.railway.app'; // Fixed: no trailing spaces
+const API_BASE = 'https://react-firebase-plant-nursery-production.up.railway.app';
 
 const NurseryForm = () => {
   const { id } = useParams();
@@ -29,7 +27,7 @@ const NurseryForm = () => {
   const [formData, setFormData] = useState({
     name: '',
     description: '',
-    image: defaultImage,
+    image: null,
     album: [],
     categories: [],
     region: '',
@@ -48,17 +46,50 @@ const NurseryForm = () => {
     }
   });
 
-  // Delete image from Firebase Storage
+  // Delete image via backend API
   const deleteImageFromStorage = async (imageUrl) => {
     try {
-      if (imageUrl?.includes('firebasestorage.googleapis.com')) {
-        const imageRef = ref(storage, imageUrl);
-        await deleteObject(imageRef);
+      if (!imageUrl || !imageUrl.includes('firebasestorage.googleapis.com')) {
+        return;
+      }
+
+      const response = await fetch(`${API_BASE}/api/delete-image`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ url: imageUrl }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({}));
+        console.warn('Failed to delete image:', error.error || 'Unknown error');
       }
     } catch (err) {
       console.warn('Could not delete image:', err);
-      // Don't block form update if delete fails
     }
+  };
+
+  // Upload image via backend
+  const uploadToBackend = async (file, folder, nurseryId = null) => {
+    const formData = new FormData();
+    formData.append('image', file);
+    formData.append('folder', folder);
+    if (nurseryId) {
+      formData.append('nurseryId', nurseryId);
+    }
+
+    const res = await fetch(`${API_BASE}/api/upload`, {
+      method: 'POST',
+      body: formData,
+    });
+
+    if (!res.ok) {
+      const error = await res.json().catch(() => ({}));
+      throw new Error(error.error || 'فشل رفع الصورة');
+    }
+    const data = await res.json();
+    return data.url;
   };
 
   useEffect(() => {
@@ -73,7 +104,7 @@ const NurseryForm = () => {
           const nurseryDoc = await getDoc(doc(db, 'nurseries', id));
           if (nurseryDoc.exists()) {
             const data = nurseryDoc.data();
-            const imageUrl = data.image || defaultImage;
+            const imageUrl = data.image || null;
             const albumUrls = data.album || [];
             
             setFormData({
@@ -97,7 +128,7 @@ const NurseryForm = () => {
                 tiktok: data.socialMedia?.tiktok || ''
               }
             });
-            setImagePreview(imageUrl);
+            setImagePreview(imageUrl || defaultImage);
             setAlbumPreviews([]);
             setAlbumFiles([]);
           }
@@ -182,34 +213,11 @@ const NurseryForm = () => {
     }
   };
 
-  // ✅ Delete album image from Storage + form
   const deleteAlbumImage = async (index) => {
     const imageUrl = formData.album[index];
     await deleteImageFromStorage(imageUrl);
     const newAlbum = formData.album.filter((_, i) => i !== index);
     setFormData(prev => ({ ...prev, album: newAlbum }));
-  };
-
-  const uploadImage = async () => {
-    if (!imageFile) return formData.image;
-    const fileName = `${Date.now()}_${imageFile.name}`;
-    const nurseryId = id || `temp_${Date.now()}`;
-    const storageRef = ref(storage, `nurs_images/${nurseryId}/${fileName}`);
-    await uploadBytes(storageRef, imageFile);
-    return await getDownloadURL(storageRef);
-  };
-
-  const uploadAlbumImages = async () => {
-    if (albumFiles.length === 0) return formData.album;
-    const nurseryId = id || `temp_${Date.now()}`;
-    const uploadPromises = albumFiles.map(async (file, index) => {
-      const fileName = `${Date.now()}_${index}_${file.name}`;
-      const storageRef = ref(storage, `nurs_album/${nurseryId}/${fileName}`);
-      await uploadBytes(storageRef, file);
-      return await getDownloadURL(storageRef);
-    });
-    const newUrls = await Promise.all(uploadPromises);
-    return [...formData.album, ...newUrls];
   };
 
   const handleSubmit = async (e) => {
@@ -241,52 +249,83 @@ const NurseryForm = () => {
       setLoading(true);
       
       let imageUrl = formData.image;
-      if (imageFile) {
-        if (id && formData.image?.includes('firebasestorage.googleapis.com')) {
-          await deleteImageFromStorage(formData.image);
+      let finalNurseryId = id;
+
+      if (id) {
+        // Editing existing nursery
+        if (imageFile) {
+          if (formData.image && formData.image.includes('firebasestorage.googleapis.com')) {
+            await deleteImageFromStorage(formData.image);
+          }
+          imageUrl = await uploadToBackend(imageFile, 'nurs_images', id);
         }
-        imageUrl = await uploadImage();
+      } else {
+        // Creating new nursery
+        const fullLocation = `${formData.region} - ${formData.city} - ${formData.district}`;
+        const docRef = await addDoc(collection(db, 'nurseries'), {
+          name: formData.name.trim(),
+          description: formData.description.trim(),
+          image: null,
+          album: [],
+          categories: formData.categories,
+          region: formData.region,
+          city: formData.city,
+          district: formData.district,
+          location: fullLocation,
+          services: formData.services,
+          featured: formData.featured,
+          published: formData.published,
+          phones: validPhones,
+          socialMedia: Object.keys(formData.socialMedia).some(key => formData.socialMedia[key].trim() !== '')
+            ? Object.fromEntries(Object.entries(formData.socialMedia).filter(([_, v]) => v.trim() !== ''))
+            : null,
+          createdAt: serverTimestamp(),
+          createdBy: auth.currentUser.email,
+          updatedAt: serverTimestamp(),
+          updatedBy: auth.currentUser.email
+        });
+        finalNurseryId = docRef.id;
+
+        if (imageFile) {
+          imageUrl = await uploadToBackend(imageFile, 'nurs_images', docRef.id);
+        }
       }
 
-      const albumUrls = await uploadAlbumImages();
+      // Upload album images
+      let albumUrls = formData.album;
+      if (albumFiles.length > 0) {
+        const uploadPromises = albumFiles.map(file =>
+          uploadToBackend(file, 'nurs_album', finalNurseryId)
+        );
+        const newAlbumUrls = await Promise.all(uploadPromises);
+        albumUrls = [...formData.album, ...newAlbumUrls];
+      }
 
       const fullLocation = `${formData.region} - ${formData.city} - ${formData.district}`;
       const data = {
-        ...formData,
+        name: formData.name.trim(),
         description: formData.description.trim(),
-        location: fullLocation,
-        image: imageUrl,
+        image: imageUrl || null,
         album: albumUrls,
+        categories: formData.categories,
+        region: formData.region,
+        city: formData.city,
+        district: formData.district,
+        location: fullLocation,
+        services: formData.services,
+        featured: formData.featured,
+        published: formData.published,
         phones: validPhones,
         socialMedia: Object.keys(formData.socialMedia).some(key => formData.socialMedia[key].trim() !== '')
-          ? Object.fromEntries(
-              Object.entries(formData.socialMedia).filter(([_, v]) => v.trim() !== '')
-            )
+          ? Object.fromEntries(Object.entries(formData.socialMedia).filter(([_, v]) => v.trim() !== ''))
           : null,
         updatedAt: serverTimestamp(),
         updatedBy: auth.currentUser.email
       };
 
-      if (id) {
-        await updateDoc(doc(db, 'nurseries', id), data);
-        alert('تم التحديث!');
-      } else {
-        const docRef = await addDoc(collection(db, 'nurseries'), {
-          ...data,
-          createdAt: serverTimestamp(),
-          createdBy: auth.currentUser.email
-        });
-
-        if (imageFile) {
-          const newStorageRef = ref(storage, `nurs_images/${docRef.id}/${Date.now()}_${imageFile.name}`);
-          await uploadBytes(newStorageRef, imageFile);
-          const newUrl = await getDownloadURL(newStorageRef);
-          await updateDoc(doc(db, 'nurseries', docRef.id), { image: newUrl });
-        }
-
-        alert('تم الإضافة!');
-      }
-
+      await updateDoc(doc(db, 'nurseries', finalNurseryId), data);
+      
+      alert(id ? 'تم التحديث!' : 'تم الإضافة!');
       navigate('/nurseries');
     } catch (err) {
       alert('خطأ: ' + err.message);
@@ -316,7 +355,6 @@ const NurseryForm = () => {
           </h2>
 
           <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Name */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2"><span className="text-red-500">*</span>اسم المشتل</label>
               <input
@@ -330,7 +368,6 @@ const NurseryForm = () => {
               />
             </div>
 
-            {/* Description */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">وصف المشتل</label>
               <textarea
@@ -343,7 +380,6 @@ const NurseryForm = () => {
               />
             </div>
 
-            {/* Main Image Upload */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">صورة المشتل الرئيسية</label>
               <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-dashed border-gray-300 rounded-lg hover:border-green-400 transition">
@@ -378,20 +414,21 @@ const NurseryForm = () => {
                   <button
                     type="button"
                     onClick={async () => {
-                      await deleteImageFromStorage(formData.image);
+                      if (formData.image && formData.image.includes('firebasestorage.googleapis.com')) {
+                        await deleteImageFromStorage(formData.image);
+                      }
                       setImageFile(null);
                       setImagePreview(defaultImage);
-                      setFormData(prev => ({ ...prev, image: defaultImage }));
+                      setFormData(prev => ({ ...prev, image: null }));
                     }}
                     className="text-red-600 hover:text-red-800 text-sm font-medium flex items-center gap-1"
                   >
-                    🗑️ حذف الصورة
+                    حذف الصورة
                   </button>
                 </div>
               )}
             </div>
 
-            {/* Album Upload */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">ألبوم الصور (اختياري)</label>
               <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-dashed border-gray-300 rounded-lg hover:border-green-400 transition">
@@ -467,7 +504,6 @@ const NurseryForm = () => {
               )}
             </div>
 
-            {/* Location Dropdowns */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2"><span className="text-red-500">*</span>المنطقة</label>
@@ -506,7 +542,6 @@ const NurseryForm = () => {
               </div>
             </div>
 
-            {/* Phone Numbers */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2"><span className="text-red-500">*</span>
                 أرقام التواصل (واتس آب) - أدخل أرقام صحيحة بدون رموز (مثل: 966501234567)
@@ -541,7 +576,6 @@ const NurseryForm = () => {
               </button>
             </div>
 
-            {/* Social Media */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">وسائل التواصل الاجتماعي (اختياري)</label>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -570,7 +604,6 @@ const NurseryForm = () => {
               </div>
             </div>
 
-            {/* Categories */}
             <div>
               <div className="mb-4">
                 <h4 className="text-sm font-medium text-gray-800 mb-2"><span className="text-red-500">*</span>التصنيف الرئيسي (اختر واحدًا على الأقل)</h4>
@@ -606,7 +639,6 @@ const NurseryForm = () => {
               </div>
             </div>
 
-            {/* Services */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">الخدمات (اختياري)</label>
               <div className="flex flex-wrap gap-2">
@@ -632,7 +664,6 @@ const NurseryForm = () => {
               </div>
             </div>
 
-            {/* Options */}
             <div className="flex flex-wrap gap-6">
               <label className="flex items-center">
                 <input
@@ -656,7 +687,6 @@ const NurseryForm = () => {
               </label>
             </div>
 
-            {/* Submit */}
             <div className="flex gap-4 pt-4">
               <button
                 type="submit"
