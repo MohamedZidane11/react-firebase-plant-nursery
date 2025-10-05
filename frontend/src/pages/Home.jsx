@@ -402,24 +402,30 @@ const Home = () => {
         </section>
       )}
 
-      {/* Featured Nurseries (Responsive & Centered) */}
+      {/* Featured Nurseries (Fixed Layout) */}
       {viewMode === 'home' && featuredNurseries.length > 0 && (
         <section className="py-12">
-          <div className="container mx-auto px-4">
-            <h2 className="text-3xl font-bold text-center text-green-800 mb-8">أبرز المشاتل ✨</h2>
+          <div className="w-full">
+            <h2 className="text-3xl font-bold text-center text-green-800 mb-8 px-4">أبرز المشاتل ✨</h2>
 
-            {/* Outer centering wrapper */}
-            <div className="flex justify-center w-full">
+            {/* Fixed: Full width scroll with proper padding */}
+            <div className="w-full overflow-x-auto scroll-smooth pb-4" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+              <style>{`
+                .hide-scrollbar::-webkit-scrollbar {
+                  display: none;
+                }
+              `}</style>
               <div 
-                className="flex overflow-x-auto scroll-smooth snap-x snap-mandatory space-x-6 pt-4 pb-4 hide-scrollbar max-w-full"
-                dir="rtl"
-                style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+                className="flex gap-6 px-4 hide-scrollbar"
+                style={{ scrollSnapType: 'x mandatory' }}
               >
+                
                 {featuredNurseries.map((nursery) => (
                   <Link 
                     key={nursery.id} 
                     to={`/nurseries/${nursery.id}`}
-                    className="flex-shrink-0 snap-start w-full sm:w-80 md:w-64 lg:w-56 xl:w-64 hover:-translate-y-4 transition-transform duration-500 ease-in-out"
+                    className="flex-shrink-0 w-72 hover:-translate-y-4 transition-transform duration-500 ease-in-out"
+                    style={{ scrollSnapAlign: 'start' }}
                   >
                     <div className="bg-green-100 p-6 rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 border-2 border-yellow-500 h-full flex flex-col items-center">
                       <div className="w-20 h-20 mb-4 bg-green-200 rounded-full flex items-center justify-center overflow-hidden">
@@ -445,7 +451,7 @@ const Home = () => {
                         ))}
                       </div>
 
-                      {/* ✅ SERVICES ICONS — COPIED FROM NurseryCard.jsx */}
+                      {/* Services Icons */}
                       <div className="mt-4 flex justify-center flex-wrap gap-x-6 gap-y-2">
                         {nursery.services?.includes('consultation') && (
                           <div className="flex flex-col items-center">
@@ -491,7 +497,6 @@ const Home = () => {
                           </div>
                         )}
                       </div>
-                      {/* ✅ END SERVICES ICONS */}
                     </div>
                   </Link>
                 ))}
@@ -517,10 +522,12 @@ const Home = () => {
       {/* ==================== */}
       {viewMode === 'category-results' && selectedCategory && (
         <section className="py-12 bg-white">
-          <div className="container mx-auto px-4">
-            <h2 className="text-3xl font-bold text-center text-green-800 mb-8">
+          <div className="w-full">
+            <h2 className="text-3xl font-bold text-center text-green-800 mb-8 px-4">
               المشاتل في تصنيف: {selectedCategory}
             </h2>
+            <div className="w-full overflow-x-auto scroll-smooth pb-4" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+            <div className="flex gap-6 px-4 hide-scrollbar" style={{ scrollSnapType: 'x mandatory' }}>
 
             {/* Outer centering wrapper */}
             <div className="flex justify-center w-full">
@@ -604,6 +611,8 @@ const Home = () => {
                     </Link>
                   ))}
               </div>
+            </div>
+            </div>
             </div>
 
             {/* Back to Categories */}
