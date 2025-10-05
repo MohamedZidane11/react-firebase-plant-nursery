@@ -11,11 +11,10 @@ const OfferDetail = () => {
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
-  // Fetch offer + nursery
   useEffect(() => {
     const fetchOffer = async () => {
       try {
-        const API_BASE = 'https://react-firebase-plant-nursery-production.up.railway.app'; // ✅ no trailing spaces
+        const API_BASE = 'https://react-firebase-plant-nursery-production.up.railway.app';
         const response = await fetch(`${API_BASE}/api/offers/${id}`);
 
         if (!response.ok) throw new Error('Not found');
@@ -40,9 +39,19 @@ const OfferDetail = () => {
     if (id) fetchOffer();
   }, [id]);
 
-  // ✅ Lightbox keyboard navigation (must be unconditional)
+  const nextImage = () => {
+    if (!allImages.length) return;
+    setCurrentImageIndex((prev) => (prev + 1) % allImages.length);
+  };
+
+  const prevImage = () => {
+    if (!allImages.length) return;
+    setCurrentImageIndex((prev) => (prev - 1 + allImages.length) % allImages.length);
+  };
+
   useEffect(() => {
     const handleKeyDown = (e) => {
+      if (!lightboxOpen) return;
       if (e.key === 'Escape') setLightboxOpen(false);
       if (e.key === 'ArrowLeft') prevImage();
       if (e.key === 'ArrowRight') nextImage();
@@ -52,30 +61,25 @@ const OfferDetail = () => {
       window.addEventListener('keydown', handleKeyDown);
       return () => window.removeEventListener('keydown', handleKeyDown);
     }
-  }, [lightboxOpen]);
+  }, [lightboxOpen, currentImageIndex]);
 
   if (loading) return <p className="text-center py-8">جاري التحميل...</p>;
   if (!offer) return <p className="text-center py-8">العرض غير موجود.</p>;
 
-  // ✅ Only include non-empty, valid album URLs
+  // ✅ Filter valid album images
   const validAlbum = (offer.album || []).filter(
     (img) => img && typeof img === 'string' && img.trim() !== ''
   );
 
-  // ✅ All lightbox images: main (with fallback) + valid album
-  const allImages = [offer.image || defaultImage, ...validAlbum];
+  // ✅ Check if main image is a real upload (not default)
+  const hasMainImage = offer.image && offer.image !== defaultImage && offer.image.trim() !== '';
+
+  // ✅ Build lightbox images: only include main if it's a real image
+  const allImages = hasMainImage ? [offer.image, ...validAlbum] : validAlbum;
 
   const openLightbox = (index) => {
     setCurrentImageIndex(index);
     setLightboxOpen(true);
-  };
-
-  const nextImage = () => {
-    setCurrentImageIndex((prev) => (prev + 1) % allImages.length);
-  };
-
-  const prevImage = () => {
-    setCurrentImageIndex((prev) => (prev - 1 + allImages.length) % allImages.length);
   };
 
   return (
@@ -89,34 +93,38 @@ const OfferDetail = () => {
               alt={offer.title}
               className="w-full h-64 object-cover cursor-pointer"
               onError={(e) => (e.target.src = defaultImage)}
-              onClick={() => openLightbox(0)}
+              onClick={() => hasMainImage && openLightbox(0)}
             />
           </div>
 
-          {/* ✅ Album Mini Previews — NO default image */}
+          {/* ✅ Album Mini Previews - Only show if there are valid album images */}
           {validAlbum.length > 0 && (
             <div className="flex justify-center gap-2 px-8 py-4 bg-gray-50">
-              {validAlbum.slice(0, 4).map((img, index) => (
-                <div
-                  key={index}
-                  className="w-12 h-12 rounded-lg overflow-hidden border-2 border-white shadow-md cursor-pointer hover:scale-105 transition-transform"
-                  onClick={() => openLightbox(index + 1)}
-                >
-                  <img
-                    src={img}
-                    alt={`صورة ${index + 1}`}
-                    className="w-full h-full object-cover"
-                    onError={(e) => {
-                      // Hide broken album images instead of showing default
-                      e.target.style.display = 'none';
-                    }}
-                  />
-                </div>
-              ))}
+              {validAlbum.slice(0, 4).map((img, index) => {
+                // Calculate correct lightbox index
+                const lightboxIndex = hasMainImage ? index + 1 : index;
+                
+                return (
+                  <div
+                    key={index}
+                    className="w-12 h-12 rounded-lg overflow-hidden border-2 border-white shadow-md cursor-pointer hover:scale-105 transition-transform"
+                    onClick={() => openLightbox(lightboxIndex)}
+                  >
+                    <img
+                      src={img}
+                      alt={`صورة ${index + 1}`}
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        e.target.style.display = 'none';
+                      }}
+                    />
+                  </div>
+                );
+              })}
               {validAlbum.length > 4 && (
                 <div
                   className="w-12 h-12 rounded-lg bg-black bg-opacity-50 text-white flex items-center justify-center text-sm font-bold cursor-pointer hover:scale-105 transition-transform"
-                  onClick={() => openLightbox(5)}
+                  onClick={() => openLightbox(hasMainImage ? 5 : 4)}
                 >
                   +{validAlbum.length - 4}
                 </div>
@@ -223,36 +231,39 @@ const OfferDetail = () => {
       </div>
 
       {/* ✅ Lightbox Modal */}
-      {lightboxOpen && (
+      {lightboxOpen && allImages.length > 0 && (
         <div
           className="fixed inset-0 bg-black bg-opacity-90 z-50 flex items-center justify-center p-4"
           onClick={() => setLightboxOpen(false)}
         >
           <div className="relative max-w-4xl max-h-full" onClick={(e) => e.stopPropagation()}>
             <button
-              className="absolute top-4 right-4 text-white text-2xl z-10 bg-black bg-opacity-50 rounded-full w-8 h-8 flex items-center justify-center"
+              className="absolute top-4 right-4 text-white text-2xl z-10 bg-black bg-opacity-50 rounded-full w-8 h-8 flex items-center justify-center hover:bg-opacity-70"
               onClick={() => setLightboxOpen(false)}
             >
               &times;
             </button>
-            <button
-              className="absolute left-4 top-1/2 transform -translate-y-1/2 text-white text-2xl z-10 bg-black bg-opacity-50 rounded-full w-10 h-10 flex items-center justify-center"
-              onClick={prevImage}
-            >
-              ‹
-            </button>
-            <button
-              className="absolute right-4 top-1/2 transform -translate-y-1/2 text-white text-2xl z-10 bg-black bg-opacity-50 rounded-full w-10 h-10 flex items-center justify-center"
-              onClick={nextImage}
-            >
-              ›
-            </button>
+            {allImages.length > 1 && (
+              <>
+                <button
+                  className="absolute left-4 top-1/2 transform -translate-y-1/2 text-white text-2xl z-10 bg-black bg-opacity-50 rounded-full w-10 h-10 flex items-center justify-center hover:bg-opacity-70"
+                  onClick={prevImage}
+                >
+                  ‹
+                </button>
+                <button
+                  className="absolute right-4 top-1/2 transform -translate-y-1/2 text-white text-2xl z-10 bg-black bg-opacity-50 rounded-full w-10 h-10 flex items-center justify-center hover:bg-opacity-70"
+                  onClick={nextImage}
+                >
+                  ›
+                </button>
+              </>
+            )}
             <img
               src={allImages[currentImageIndex]}
               alt={`صورة ${currentImageIndex + 1}`}
               className="max-h-[80vh] max-w-full object-contain rounded-lg"
               onError={(e) => {
-                // Safe fallback in lightbox only
                 e.target.src = defaultImage;
               }}
             />
