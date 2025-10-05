@@ -1,8 +1,7 @@
 // server.js - Full working version with nurseries & offers
 import express from 'express';
 import cors from 'cors';
-import { db } from './firebase.js';
-import { adminStorage } from './firebaseAdmin.js';
+import { db, adminStorage } from './firebase.js';
 import multer from 'multer';
 import path from 'path';
 
