@@ -41,6 +41,7 @@ const NurseryForm = () => {
       instagram: '',
       twitter: '',
       facebook: '',
+      snapchat: '',
       tiktok: ''
     }
   });
@@ -77,6 +78,7 @@ const NurseryForm = () => {
                 instagram: data.socialMedia?.instagram || '',
                 twitter: data.socialMedia?.twitter || '',
                 facebook: data.socialMedia?.facebook || '',
+                snapchat: data.socialMedia?.snapchat || '',
                 tiktok: data.socialMedia?.tiktok || ''
               }
             });
@@ -556,6 +558,7 @@ const NurseryForm = () => {
                   { key: 'instagram', label: 'إنستغرام' },
                   { key: 'twitter', label: 'تويتر' },
                   { key: 'facebook', label: 'فيسبوك' },
+                  { key: 'snapchat', label: 'سناب شات' },
                   { key: 'tiktok', label: 'تيك توك' }
                 ].map((item) => (
                   <div key={item.key}>
@@ -565,7 +568,11 @@ const NurseryForm = () => {
                       value={formData.socialMedia[item.key]}
                       onChange={(e) => handleSocialMediaChange(item.key, e.target.value)}
                       className="w-full px-4 py-2 border rounded"
-                      placeholder={`https://${item.key}.com/...`}
+                      placeholder={
+                        item.key === 'snapchat'
+                          ? 'https://www.snapchat.com/add/...'
+                          : `https://${item.key}.com/...`
+                      }
                     />
                   </div>
                 ))}
