@@ -47,6 +47,7 @@ const Footer = () => {
 
           {/* تواصل معنا */}
           <div>
+            {/*
             <h3 className="text-lg font-semibold mb-4 text-yellow-300">تواصل معنا</h3>
             <ul className="space-y-2">
               <li>📧 {siteSettings.contacts.email}</li>
@@ -54,6 +55,7 @@ const Footer = () => {
               <li>📞 {siteSettings.contacts.whatsapp}</li>
               <li>📍 {siteSettings.contacts.address}</li>
             </ul>
+            */}
           </div>
 
           {/* روابط سريعة */}

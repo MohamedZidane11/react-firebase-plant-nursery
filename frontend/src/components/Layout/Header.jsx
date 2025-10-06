@@ -24,17 +24,17 @@ const Header = () => {
               <span className="text-xs md:text-base tracking-wide text-center md:text-left">
                 🌿 مرحباً بكم في منصة المشاتل السعودية الأولى
               </span>
-              <span className="text-xs md:text-base tracking-wide text-center md:text-left">
+              {/*<span className="text-xs md:text-base tracking-wide text-center md:text-left">
                 📞 الدعم: +4567 123 50 966
-              </span>
+              </span>*/}
             </div>
 
             {/* Right Section — Email */}
-            <div className="flex items-center space-x-3 rtl:space-x-reverse z-10 md:ml-8  md:mt-0">
+            {/*<div className="flex items-center space-x-3 rtl:space-x-reverse z-10 md:ml-8  md:mt-0">
               <span className="text-xs md:text-base tracking-wide">
                 📧 info@nurseries.sa
               </span>
-            </div>
+            </div>*/}
           </div>
         </div>
       </section>
