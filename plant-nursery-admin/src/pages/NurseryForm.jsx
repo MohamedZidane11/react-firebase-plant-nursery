@@ -239,11 +239,11 @@ const NurseryForm = () => {
       return;
     }
 
-    const validPhones = formData.phones.filter(p => p.trim() !== '');
-    if (validPhones.length === 0) {
-      alert('يجب إدخال رقم تواصل واحد على الأقل');
-      return;
-    }
+    //const validPhones = formData.phones.filter(p => p.trim() !== '');
+    //if (validPhones.length === 0) {
+      //alert('يجب إدخال رقم تواصل واحد على الأقل');
+      //return;
+    //}
 
     try {
       setLoading(true);
@@ -275,7 +275,7 @@ const NurseryForm = () => {
           services: formData.services,
           featured: formData.featured,
           published: formData.published,
-          phones: validPhones,
+          phones: formData.phones.filter(p => p.trim() !== ''),
           socialMedia: Object.keys(formData.socialMedia).some(key => formData.socialMedia[key].trim() !== '')
             ? Object.fromEntries(Object.entries(formData.socialMedia).filter(([_, v]) => v.trim() !== ''))
             : null,
@@ -315,7 +315,7 @@ const NurseryForm = () => {
         services: formData.services,
         featured: formData.featured,
         published: formData.published,
-        phones: validPhones,
+        phones: formData.phones.filter(p => p.trim() !== ''),
         socialMedia: Object.keys(formData.socialMedia).some(key => formData.socialMedia[key].trim() !== '')
           ? Object.fromEntries(Object.entries(formData.socialMedia).filter(([_, v]) => v.trim() !== ''))
           : null,
@@ -543,7 +543,7 @@ const NurseryForm = () => {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2"><span className="text-red-500">*</span>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
                 أرقام التواصل (واتس آب) - أدخل أرقام صحيحة بدون رموز (مثل: 966501234567)
               </label>
               {formData.phones.map((phone, index) => (
