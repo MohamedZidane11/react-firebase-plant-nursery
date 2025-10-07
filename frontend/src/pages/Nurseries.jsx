@@ -297,14 +297,17 @@ const Nurseries = () => {
 
             {/* Sort & Offers */}
             <div className="flex flex-col md:flex-row gap-4 mt-4">
-              <select
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value)}
-                className="px-4 py-2 border border-green-800 rounded-full"
-              >
-                <option value="newest">الترتيب حسب: الأحدث</option>
-                <option value="popular">الأكثر شهرة</option>
-              </select>
+              <div>
+                <label className="ml-2">الترتيب حسب:</label>
+                <select
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value)}
+                  className="px-4 py-2 border border-green-800 rounded-full"
+                >
+                  <option value="newest">الأحدث اولاً</option>
+                  <option value="popular">الأكثر شهرة</option>
+                </select>
+              </div>
 
               <div className="flex items-center">
                 <label className="mr-2 px-4 py-3 text-sm border bg-yellow-500/80 rounded-full ml-2 hover:bg-yellow-600/80 transition-all duration-500 ease-in-out">المشاتل ذات عروض فقط</label>
