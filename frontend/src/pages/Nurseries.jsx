@@ -108,6 +108,15 @@ const Nurseries = () => {
     return null;
   };
 
+  // Helper: Get the latest highlighted offer
+  const latestHighlightedOffer = offers
+  .filter(offer => offer.highlighted && !isExpired(offer.endDate))
+  .sort((a, b) => {
+    const dateA = a.createdAt ? new Date(a.createdAt) : new Date(0);
+    const dateB = b.createdAt ? new Date(b.createdAt) : new Date(0);
+    return dateB - dateA; // newest first
+  })[0];
+
   // 🌆 Build filter options (regions, cities, districts)
   const regions = [...new Set(nurseries.map(n => n.region).filter(Boolean))].sort();
   const cities = selectedRegion === 'all'
@@ -386,8 +395,10 @@ const Nurseries = () => {
               )}
             </div>
 
+            {/* Sidebars Container */}
+            <div className="flex flex-col gap-8 lg:w-[320px]">
             {/* Sidebar - Premium Nurseries */}
-            <aside className="lg:w-96">
+            <aside className="lg:w-full">
               <div className="bg-gray-200 rounded-xl shadow-md p-6 sticky top-4">
                 <div className="flex items-center justify-center gap-2 bg-gray-900 text-white rounded-full px-6 py-3 mb-6">
                   <span className="text-xl">✨</span>
@@ -451,6 +462,27 @@ const Nurseries = () => {
                 </div>
               </div>
             </aside>
+            
+            {/* Sidebar - Latest Highlighted Offer */}
+            {latestHighlightedOffer && (
+              <aside className="lg:w-full">
+                <div className="bg-gradient-to-br from-yellow-50 to-amber-50 border border-amber-200 rounded-xl shadow-md p-6 sticky top-4 hover:border-yellow-600/80 transition-all duration-300 ease-in-out hover:shadow-lg hover:scale-102">
+                  <a href="/offers">
+                    <div className="flex items-center justify-center gap-2 bg-yellow-600/80 text-white rounded-full px-4 py-2 mb-4">
+                      <span className="text-lg">🔥</span>
+                      <h3 className="font-bold text-sm">عرض مميز</h3>
+                    </div>
+                    <h4 className="font-bold text-lg text-amber-800 mb-2 line-clamp-2">
+                      {latestHighlightedOffer.title || 'عرض خاص'}
+                    </h4>
+                    <p className="text-sm text-gray-700 mb-4 line-clamp-3">
+                      {latestHighlightedOffer.description || 'لا يوجد وصف متاح.'}
+                    </p>
+                  </a>
+                </div>
+              </aside>
+            )}
+            </div>
           </div>
         </div>
       </section>
