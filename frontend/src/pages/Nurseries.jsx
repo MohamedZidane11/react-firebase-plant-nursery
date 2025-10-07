@@ -9,7 +9,7 @@ const Nurseries = () => {
   const [loading, setLoading] = useState(true);
   const [loadingCategories, setLoadingCategories] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 3;
+  const itemsPerPage = 9;
 
   // 🔍 Filters
   const [searchTerm, setSearchTerm] = useState('');
@@ -30,13 +30,13 @@ const Nurseries = () => {
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         
         const data = await response.json();
-        console.log('Fetched nurseries:', data); // Debug log
+        console.log('Fetched nurseries:', data);
         setNurseries(Array.isArray(data) ? data : []);
       } catch (err) {
         console.error('Error fetching nurseries:', err);
-        setNurseries([]); // Set empty array on error
+        setNurseries([]);
       } finally {
-        setLoading(false); // ✅ Always stop loading
+        setLoading(false);
       }
     };
 
@@ -167,7 +167,34 @@ const Nurseries = () => {
   const handlePageChange = (page) => {
     if (page >= 1 && page <= totalPages) {
       setCurrentPage(page);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
+  };
+
+  // Helper function to generate page numbers array
+  const getPageNumbers = () => {
+    const maxVisiblePages = 5;
+    const pages = [];
+    
+    if (totalPages <= maxVisiblePages) {
+      for (let i = 1; i <= totalPages; i++) {
+        pages.push(i);
+      }
+    } else {
+      let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
+      let endPage = startPage + maxVisiblePages - 1;
+      
+      if (endPage > totalPages) {
+        endPage = totalPages;
+        startPage = Math.max(1, endPage - maxVisiblePages + 1);
+      }
+      
+      for (let i = startPage; i <= endPage; i++) {
+        pages.push(i);
+      }
+    }
+    
+    return pages;
   };
 
   // Reset page on filter change
@@ -185,13 +212,14 @@ const Nurseries = () => {
       <section className="bg-gradient-to-l from-yellow-700/80 to-emerald-800 text-white py-16">
         <div className="container mx-auto px-4 text-center">
           <h1 className="text-4xl md:text-5xl font-bold mb-4">
-          دليل المشاتل الشامل 🌻
+            دليل المشاتل الشامل 🌻
           </h1>
           <p className="text-xl mb-6 pt-6">
-          اكتشف أكثر من 500 مشتل في جميع أنحاء المملكة
+            اكتشف أكثر من 500 مشتل في جميع أنحاء المملكة
           </p>
         </div>
       </section>
+
       {/* Filters */}
       <section className="py-8">
         <div className="container mx-auto px-4">
@@ -295,61 +323,132 @@ const Nurseries = () => {
       {/* Results */}
       <section className="py-12">
         <div className="container mx-auto px-4">
-          <div className="flex justify-between items-center mb-6">
-            <p className="font-bold text-green-800">عُثر على {sortedNurseries.length} مشتل</p>
-          </div>
+          <div className="flex flex-col lg:flex-row gap-8">
+            {/* Main Content - Nurseries Grid */}
+            <div className="flex-1">
+              <div className="flex justify-between items-center mb-6">
+                <p className="font-bold text-green-800">عُثر على {sortedNurseries.length} مشتل</p>
+              </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {currentNurseries.length > 0 ? (
-              currentNurseries.map((nursery) => (
-                <div key={nursery.id} className='hover:-translate-y-4 transition-transform duration-500 ease-in-out'>
-                  <NurseryCard 
-                    nursery={nursery} 
-                    offers={offers}
-                  />
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                {currentNurseries.length > 0 ? (
+                  currentNurseries.map((nursery) => (
+                    <div key={nursery.id} className='hover:-translate-y-4 transition-transform duration-500 ease-in-out'>
+                      <NurseryCard 
+                        nursery={nursery} 
+                        offers={offers}
+                      />
+                    </div>
+                  ))
+                ) : (
+                  <p className="col-span-full text-center text-gray-500 py-8">
+                    لا توجد مشاتل مطابقة للبحث.
+                  </p>
+                )}
+              </div>
+
+              {/* Pagination */}
+              {totalPages > 1 && (
+                <div className="flex justify-center items-center mt-8 gap-2">
+                  <button
+                    onClick={() => handlePageChange(currentPage - 1)}
+                    disabled={currentPage === 1}
+                    className="px-4 py-2 border border-gray-300 rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100"
+                  >
+                    السابق
+                  </button>
+
+                  {getPageNumbers().map((pageNum) => (
+                    <button
+                      key={pageNum}
+                      onClick={() => handlePageChange(pageNum)}
+                      className={`px-4 py-2 rounded-md ${
+                        currentPage === pageNum
+                          ? 'bg-green-500 text-white'
+                          : 'border border-gray-300 hover:bg-gray-100'
+                      }`}
+                    >
+                      {pageNum}
+                    </button>
+                  ))}
+
+                  <button
+                    onClick={() => handlePageChange(currentPage + 1)}
+                    disabled={currentPage === totalPages}
+                    className="px-4 py-2 border border-gray-300 rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100"
+                  >
+                    التالي
+                  </button>
                 </div>
-              ))
-            ) : (
-              <p className="col-span-full text-center text-gray-500 py-8">
-                لا توجد مشاتل مطابقة للبحث.
-              </p>
-            )}
-          </div>
-
-          {/* Pagination */}
-          {totalPages > 1 && (
-            <div className="flex justify-center mt-8 space-x-2">
-              <button
-                onClick={() => handlePageChange(currentPage - 1)}
-                disabled={currentPage === 1}
-                className="px-4 py-2 border border-gray-300 rounded-md disabled:opacity-50"
-              >
-                السابق
-              </button>
-
-              {Array.from({ length: totalPages }, (_, i) => (
-                <button
-                  key={i + 1}
-                  onClick={() => handlePageChange(i + 1)}
-                  className={`px-4 py-2 rounded-md ${
-                    currentPage === i + 1
-                      ? 'bg-green-500 text-white'
-                      : 'border border-gray-300 hover:bg-gray-100'
-                  }`}
-                >
-                  {i + 1}
-                </button>
-              ))}
-
-              <button
-                onClick={() => handlePageChange(currentPage + 1)}
-                disabled={currentPage === totalPages}
-                className="px-4 py-2 border border-gray-300 rounded-md disabled:opacity-50"
-              >
-                التالي
-              </button>
+              )}
             </div>
-          )}
+
+            {/* Sidebar - Premium Nurseries */}
+            <aside className="lg:w-96">
+              <div className="bg-gray-200 rounded-xl shadow-md p-6 sticky top-4">
+                <div className="flex items-center justify-center gap-2 bg-gray-900 text-white rounded-full px-6 py-3 mb-6">
+                  <span className="text-xl">✨</span>
+                  <h2 className="text-lg font-bold">شركاء النجاح</h2>
+                </div>
+
+                <hr className="mb-6 border-gray-200" />
+
+                <div className="space-y-4">
+                  {/* Premium Nursery Card 1 */}
+                  <div className="bg-gradient-to-br from-gray-50 to-white rounded-xl p-4 border-2 border-transparent hover:border-[#32a852] transition-all duration-300 ease-in-out hover:shadow-lg hover:-translate-x-2">
+                    <div className="flex items-start gap-3">
+                      <div className="bg-gray-200 rounded-full p-3 flex-shrink-0">
+                        <span className="text-2xl">🌿</span>
+                      </div>
+                      <div className="flex-1 text-right">
+                        <h3 className="font-bold text-green-800 mb-1">حدائق المملكة</h3>
+                        <p className="text-sm text-gray-600">نباتات داخلية وخارجية مميزة</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Premium Nursery Card 2 */}
+                  <div className="bg-gradient-to-br from-gray-50 to-white rounded-xl p-4 border-2 border-transparent hover:border-[#32a852] transition-all duration-300 ease-in-out hover:shadow-lg hover:-translate-x-2">
+                    <div className="flex items-start gap-3">
+                      <div className="bg-gray-200 rounded-full p-3 flex-shrink-0">
+                        <span className="text-2xl">🌸</span>
+                      </div>
+                      <div className="flex-1 text-right">
+                        <h3 className="font-bold text-green-800 mb-1">مشاتل الرياض الخضراء</h3>
+                        <p className="text-sm text-gray-600">تنسيق حدائق احترافي</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Premium Nursery Card 3 */}
+                  <div className="bg-gradient-to-br from-gray-50 to-white rounded-xl p-4 border-2 border-transparent hover:border-[#32a852] transition-all duration-300 ease-in-out hover:shadow-lg hover:-translate-x-2">
+                    <div className="flex items-start gap-3">
+                      <div className="bg-gray-200 rounded-full p-3 flex-shrink-0">
+                        <span className="text-2xl">🌴</span>
+                      </div>
+                      <div className="flex-1 text-right">
+                        <h3 className="font-bold text-green-800 mb-1">مؤسسة النخيل الذهبية</h3>
+                        <p className="text-sm text-gray-600">متخصصون في أشجار النخيل النادرة</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Premium Nursery Card 4 */}
+                  <div className="bg-gradient-to-br from-gray-50 to-white rounded-xl p-4 border-2 border-transparent hover:border-[#32a852] transition-all duration-300 ease-in-out hover:shadow-lg hover:-translate-x-2">
+                    <div className="flex items-start gap-3">
+                      <div className="bg-gray-200 rounded-full p-3 flex-shrink-0">
+                        <span className="text-2xl">☘️</span>
+                      </div>
+                      <div className="flex-1 text-right">
+                        <h3 className="font-bold text-green-800 mb-1">مشتل الخليج الأخضر</h3>
+                        <p className="text-sm text-gray-600">الرائد في النباتات المحلية والمستوردة</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </aside>
+          </div>
         </div>
       </section>
     </div>
