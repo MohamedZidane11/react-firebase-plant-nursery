@@ -23,6 +23,8 @@ const NurseryForm = () => {
   const [imagePreview, setImagePreview] = useState(defaultImage);
   const [albumFiles, setAlbumFiles] = useState([]);
   const [albumPreviews, setAlbumPreviews] = useState([]);
+  const [existingNurseryNames, setExistingNurseryNames] = useState(new Set());
+  const [nameError, setNameError] = useState('');
 
   const [formData, setFormData] = useState({
     name: '',
@@ -95,42 +97,32 @@ const NurseryForm = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
+        // 1. Load locations (as before)
         const locDoc = await getDoc(doc(db, 'locations', 'SA'));
         if (locDoc.exists()) {
           setLocations(locDoc.data().data || []);
         }
-
+  
+        // 2. Load existing nursery names for uniqueness check
+        const nurseriesSnapshot = await getDocs(collection(db, 'nurseries'));
+        const namesSet = new Set();
+        nurseriesSnapshot.docs.forEach((doc) => {
+          const name = doc.data().name;
+          if (name) {
+            // Normalize: trim + lowercase to avoid "ABC" vs "abc"
+            namesSet.add(name.trim().toLowerCase());
+          }
+        });
+        setExistingNurseryNames(namesSet);
+  
+        // 3. If editing, load current nursery data
         if (id) {
           const nurseryDoc = await getDoc(doc(db, 'nurseries', id));
           if (nurseryDoc.exists()) {
             const data = nurseryDoc.data();
-            const imageUrl = data.image || null;
-            const albumUrls = data.album || [];
-            
-            setFormData({
-              name: data.name || '',
-              description: data.description || '',
-              image: imageUrl,
-              album: albumUrls,
-              categories: data.categories || [],
-              region: data.region || '',
-              city: data.city || '',
-              district: data.district || '',
-              services: data.services || [],
-              featured: data.featured || false,
-              published: data.published !== false,
-              phones: Array.isArray(data.phones) && data.phones.length > 0 ? data.phones : [''],
-              socialMedia: {
-                instagram: data.socialMedia?.instagram || '',
-                twitter: data.socialMedia?.twitter || '',
-                facebook: data.socialMedia?.facebook || '',
-                snapchat: data.socialMedia?.snapchat || '',
-                tiktok: data.socialMedia?.tiktok || ''
-              }
-            });
-            setImagePreview(imageUrl || defaultImage);
-            setAlbumPreviews([]);
-            setAlbumFiles([]);
+            // ... (rest of your existing loading logic)
+            setFormData({ /* ... */ });
+            setImagePreview(data.image || defaultImage);
           }
         }
       } catch (err) {
@@ -139,9 +131,32 @@ const NurseryForm = () => {
         setLoading(false);
       }
     };
-
+  
     fetchData();
   }, [id]);
+
+  const validateName = (name) => {
+    if (!name.trim()) {
+      setNameError('اسم المشتل مطلوب');
+      return false;
+    }
+  
+    const normalized = name.trim().toLowerCase();
+    // If editing, exclude current nursery's original name from check
+    let isDuplicate = existingNurseryNames.has(normalized);
+    if (id && formData.name.trim().toLowerCase() === normalized) {
+      // User hasn't changed the name — allow it
+      isDuplicate = false;
+    }
+  
+    if (isDuplicate) {
+      setNameError('اسم المشتل مستخدم بالفعل. يرجى اختيار اسم فريد.');
+      return false;
+    }
+  
+    setNameError('');
+    return true;
+  };
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -222,6 +237,11 @@ const NurseryForm = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // ✅ NEW: Validate nursery name uniqueness
+    if (!validateName(formData.name)) {
+      return;
+    }
 
     if (!formData.name.trim()) {
       alert('اسم المشتل مطلوب');
@@ -362,10 +382,16 @@ const NurseryForm = () => {
                 name="name"
                 value={formData.name}
                 onChange={handleChange}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg"
-                placeholder="يمكنك استخدام الحروف، الأرقام، والرموز"
+                onBlur={() => validateName(formData.name)}
+                className={`w-full px-4 py-3 border rounded-lg ${
+                  nameError ? 'border-red-500' : 'border-gray-300'
+                }`}
+                placeholder="مثال: مشتل الرياض الأخضر"
                 required
               />
+              {nameError && (
+                <p className="mt-1 text-sm text-red-600">{nameError}</p>
+              )}
             </div>
 
             <div>

@@ -475,9 +475,13 @@ const Nurseries = () => {
                     <h4 className="font-bold text-lg text-amber-800 mb-2 line-clamp-2">
                       {latestHighlightedOffer.title || 'عرض خاص'}
                     </h4>
-                    <p className="text-sm text-gray-700 mb-4 line-clamp-3">
+                    <p className="text-sm text-gray-700 mb-4 line-clamp-3 pb-4">
                       {latestHighlightedOffer.description || 'لا يوجد وصف متاح.'}
                     </p>
+                    <div className="flex items-center justify-center gap-2 bg-yellow-600/40 text-amber-800 rounded-md px-4 py-2 mb-4">
+                      
+                      <h3 className="font-bold text-base">شاهد العروض</h3>
+                    </div>
                   </a>
                 </div>
               </aside>
