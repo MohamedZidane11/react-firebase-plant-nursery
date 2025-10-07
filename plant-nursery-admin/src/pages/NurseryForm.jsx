@@ -6,6 +6,7 @@ import {
   collection,
   doc,
   getDoc,
+  getDocs,  // ✅ Added this import
   addDoc,
   updateDoc,
   serverTimestamp
@@ -25,6 +26,7 @@ const NurseryForm = () => {
   const [albumPreviews, setAlbumPreviews] = useState([]);
   const [existingNurseryNames, setExistingNurseryNames] = useState(new Set());
   const [nameError, setNameError] = useState('');
+  const [originalName, setOriginalName] = useState(''); // ✅ Added to track original name when editing
 
   const [formData, setFormData] = useState({
     name: '',
@@ -97,7 +99,7 @@ const NurseryForm = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // 1. Load locations (as before)
+        // 1. Load locations
         const locDoc = await getDoc(doc(db, 'locations', 'SA'));
         if (locDoc.exists()) {
           setLocations(locDoc.data().data || []);
@@ -120,13 +122,37 @@ const NurseryForm = () => {
           const nurseryDoc = await getDoc(doc(db, 'nurseries', id));
           if (nurseryDoc.exists()) {
             const data = nurseryDoc.data();
-            // ... (rest of your existing loading logic)
-            setFormData({ /* ... */ });
+            
+            // ✅ Store the original name
+            setOriginalName(data.name || '');
+            
+            setFormData({
+              name: data.name || '',
+              description: data.description || '',
+              image: data.image || null,
+              album: data.album || [],
+              categories: data.categories || [],
+              region: data.region || '',
+              city: data.city || '',
+              district: data.district || '',
+              services: data.services || [],
+              featured: data.featured || false,
+              published: data.published !== undefined ? data.published : true,
+              phones: data.phones && data.phones.length > 0 ? data.phones : [''],
+              socialMedia: data.socialMedia || {
+                instagram: '',
+                twitter: '',
+                facebook: '',
+                snapchat: '',
+                tiktok: ''
+              }
+            });
             setImagePreview(data.image || defaultImage);
           }
         }
       } catch (err) {
         console.error('Error loading data:', err);
+        alert('حدث خطأ أثناء تحميل البيانات: ' + err.message);
       } finally {
         setLoading(false);
       }
@@ -135,6 +161,7 @@ const NurseryForm = () => {
     fetchData();
   }, [id]);
 
+  // ✅ Improved validation function
   const validateName = (name) => {
     if (!name.trim()) {
       setNameError('اسم المشتل مطلوب');
@@ -142,10 +169,10 @@ const NurseryForm = () => {
     }
   
     const normalized = name.trim().toLowerCase();
-    // If editing, exclude current nursery's original name from check
     let isDuplicate = existingNurseryNames.has(normalized);
-    if (id && formData.name.trim().toLowerCase() === normalized) {
-      // User hasn't changed the name — allow it
+    
+    // If editing and the name is the same as original, allow it
+    if (id && originalName.trim().toLowerCase() === normalized) {
       isDuplicate = false;
     }
   
@@ -158,12 +185,19 @@ const NurseryForm = () => {
     return true;
   };
 
+  // ✅ Updated handleChange with real-time validation for name field
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
+    
     setFormData((prev) => ({
       ...prev,
       [name]: type === 'checkbox' ? checked : value
     }));
+
+    // Validate name field in real-time
+    if (name === 'name') {
+      validateName(value);
+    }
   };
 
   const handleSocialMediaChange = (platform, value) => {
@@ -238,8 +272,9 @@ const NurseryForm = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // ✅ NEW: Validate nursery name uniqueness
+    // ✅ Validate nursery name uniqueness FIRST
     if (!validateName(formData.name)) {
+      alert('يرجى تصحيح اسم المشتل. ' + nameError);
       return;
     }
 
@@ -247,6 +282,7 @@ const NurseryForm = () => {
       alert('اسم المشتل مطلوب');
       return;
     }
+    
     if (!formData.region || !formData.city) {
       alert('المنطقة، المدينة مطلوبتان');
       return;
@@ -258,12 +294,6 @@ const NurseryForm = () => {
       alert('يجب اختيار تصنيف رئيسي واحد على الأقل');
       return;
     }
-
-    //const validPhones = formData.phones.filter(p => p.trim() !== '');
-    //if (validPhones.length === 0) {
-      //alert('يجب إدخال رقم تواصل واحد على الأقل');
-      //return;
-    //}
 
     try {
       setLoading(true);
@@ -345,7 +375,7 @@ const NurseryForm = () => {
 
       await updateDoc(doc(db, 'nurseries', finalNurseryId), data);
       
-      alert(id ? 'تم التحديث!' : 'تم الإضافة!');
+      alert(id ? 'تم التحديث بنجاح!' : 'تم إضافة المشتل بنجاح!');
       navigate('/nurseries');
     } catch (err) {
       alert('خطأ: ' + err.message);
@@ -376,21 +406,28 @@ const NurseryForm = () => {
 
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2"><span className="text-red-500">*</span>اسم المشتل</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                <span className="text-red-500">*</span>اسم المشتل
+              </label>
               <input
                 type="text"
                 name="name"
                 value={formData.name}
                 onChange={handleChange}
                 onBlur={() => validateName(formData.name)}
-                className={`w-full px-4 py-3 border rounded-lg ${
-                  nameError ? 'border-red-500' : 'border-gray-300'
+                className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent ${
+                  nameError ? 'border-red-500 bg-red-50' : 'border-gray-300'
                 }`}
                 placeholder="مثال: مشتل الرياض الأخضر"
                 required
               />
               {nameError && (
-                <p className="mt-1 text-sm text-red-600">{nameError}</p>
+                <p className="mt-1 text-sm text-red-600 flex items-center gap-1">
+                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                  </svg>
+                  {nameError}
+                </p>
               )}
             </div>
 
@@ -401,7 +438,7 @@ const NurseryForm = () => {
                 value={formData.description}
                 onChange={handleChange}
                 rows="4"
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                 placeholder="وصف مفصل عن المشتل، خدماته، تاريخه، إلخ..."
               />
             </div>
@@ -500,7 +537,7 @@ const NurseryForm = () => {
                             setAlbumPreviews(newPreviews);
                             setAlbumFiles(newFiles);
                           }}
-                          className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs"
+                          className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs hover:bg-red-600"
                         >
                           ×
                         </button>
@@ -519,7 +556,7 @@ const NurseryForm = () => {
                         <button
                           type="button"
                           onClick={() => deleteAlbumImage(index)}
-                          className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs"
+                          className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs hover:bg-red-600"
                         >
                           ×
                         </button>
@@ -532,8 +569,16 @@ const NurseryForm = () => {
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2"><span className="text-red-500">*</span>المنطقة</label>
-                <select name="region" value={formData.region} onChange={handleChange} className="w-full px-4 py-3 border border-gray-300 rounded-lg" required>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <span className="text-red-500">*</span>المنطقة
+                </label>
+                <select 
+                  name="region" 
+                  value={formData.region} 
+                  onChange={handleChange} 
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent" 
+                  required
+                >
                   <option value="">اختر المنطقة</option>
                   {locations.map((loc) => (
                     <option key={loc.region} value={loc.region}>
@@ -544,8 +589,17 @@ const NurseryForm = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2"><span className="text-red-500">*</span>المدينة</label>
-                <select name="city" value={formData.city} onChange={handleChange} className="w-full px-4 py-3 border border-gray-300 rounded-lg" disabled={!formData.region} required>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <span className="text-red-500">*</span>المدينة
+                </label>
+                <select 
+                  name="city" 
+                  value={formData.city} 
+                  onChange={handleChange} 
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent" 
+                  disabled={!formData.region} 
+                  required
+                >
                   <option value="">اختر المدينة</option>
                   {cities.map((city) => (
                     <option key={city.name} value={city.name}>
@@ -557,7 +611,13 @@ const NurseryForm = () => {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">الحي</label>
-                <select name="district" value={formData.district} onChange={handleChange} className="w-full px-4 py-3 border border-gray-300 rounded-lg" disabled={!formData.city}>
+                <select 
+                  name="district" 
+                  value={formData.district} 
+                  onChange={handleChange} 
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent" 
+                  disabled={!formData.city}
+                >
                   <option value="">اختر الحي</option>
                   {districts.map((dist) => (
                     <option key={dist} value={dist}>
@@ -578,7 +638,7 @@ const NurseryForm = () => {
                     type="tel"
                     value={phone}
                     onChange={(e) => handlePhoneChange(index, e.target.value)}
-                    className="flex-1 px-4 py-2 border border-gray-300 rounded"
+                    className="flex-1 px-4 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-green-500 focus:border-transparent"
                     placeholder="966501234567"
                     maxLength={15}
                   />
@@ -618,7 +678,7 @@ const NurseryForm = () => {
                       type="url"
                       value={formData.socialMedia[item.key]}
                       onChange={(e) => handleSocialMediaChange(item.key, e.target.value)}
-                      className="w-full px-4 py-2 border rounded"
+                      className="w-full px-4 py-2 border rounded focus:ring-2 focus:ring-green-500 focus:border-transparent"
                       placeholder={
                         item.key === 'snapchat'
                           ? 'https://www.snapchat.com/add/...'
@@ -632,7 +692,9 @@ const NurseryForm = () => {
 
             <div>
               <div className="mb-4">
-                <h4 className="text-sm font-medium text-gray-800 mb-2"><span className="text-red-500">*</span>التصنيف الرئيسي (اختر واحدًا على الأقل)</h4>
+                <h4 className="text-sm font-medium text-gray-800 mb-2">
+                  <span className="text-red-500">*</span>التصنيف الرئيسي (اختر واحدًا على الأقل)
+                </h4>
                 <div className="flex flex-wrap gap-2">
                   {['مشاتل', 'مشاتل مختلطة', 'أدوات الزراعة'].map((cat) => (
                     <label key={cat} className="flex items-center">
@@ -716,8 +778,8 @@ const NurseryForm = () => {
             <div className="flex gap-4 pt-4">
               <button
                 type="submit"
-                disabled={loading}
-                className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-medium transition"
+                disabled={loading || !!nameError}
+                className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-medium transition disabled:bg-gray-400 disabled:cursor-not-allowed"
               >
                 {loading ? 'جاري الحفظ...' : id ? 'تحديث' : 'إضافة'}
               </button>
