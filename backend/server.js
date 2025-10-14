@@ -298,50 +298,50 @@ app.get('/api/sponsors', async (req, res) => {
 });
 
 // ✅ POST new pending nursery
-  app.post('/api/pending-nurseries', async (req, res) => {
-    try {
-      const {
-        name,
-        image,
-        categories,
-        location,
-        services,
-        featured,
-        contactName,
-        whatsapp
-      } = req.body;
+app.post('/api/pending-nurseries', async (req, res) => {
+  try {
+    const {
+      name,
+      image,
+      categories,
+      location,
+      services,
+      featured,
+      contactName,
+      whatsapp
+    } = req.body;
 
-      // Validation
-      if (!name?.trim()) return res.status(400).json({ message: 'الاسم مطلوب' });
+    // Validation
+    if (!name?.trim()) return res.status(400).json({ message: 'الاسم مطلوب' });
+    // Remove image validation entirely, or log but don't block
+    //if (!image?.trim()) return res.status(400).json({ message: 'الصورة مطلوبة' });
+    if (!location?.trim()) return res.status(400).json({ message: 'الموقع مطلوب' });
+    if (!contactName?.trim()) return res.status(400).json({ message: 'اسم المسئول مطلوب' });
+    if (!whatsapp?.trim()) return res.status(400).json({ message: 'رقم الواتس آب مطلوب' });
+
+    // Save to Firestore
+    const newNursery = {
+      name: name.trim(),
       // Remove image validation entirely, or log but don't block
-      //if (!image?.trim()) return res.status(400).json({ message: 'الصورة مطلوبة' });
-      if (!location?.trim()) return res.status(400).json({ message: 'الموقع مطلوب' });
-      if (!contactName?.trim()) return res.status(400).json({ message: 'اسم المسئول مطلوب' });
-      if (!whatsapp?.trim()) return res.status(400).json({ message: 'رقم الواتس آب مطلوب' });
+      //image: image.trim(),
+      categories: Array.isArray(categories) ? categories : [],
+      location: location.trim(),
+      services: Array.isArray(services) ? services : [],
+      featured: !!featured,
+      contactName: contactName.trim(),
+      whatsapp: whatsapp.trim(),
+      submittedAt: new Date().toISOString(),
+      status: 'pending'
+    };
 
-      // Save to Firestore
-      const newNursery = {
-        name: name.trim(),
-        // Remove image validation entirely, or log but don't block
-        //image: image.trim(),
-        categories: Array.isArray(categories) ? categories : [],
-        location: location.trim(),
-        services: Array.isArray(services) ? services : [],
-        featured: !!featured,
-        contactName: contactName.trim(),
-        whatsapp: whatsapp.trim(),
-        submittedAt: new Date().toISOString(),
-        status: 'pending'
-      };
+    const docRef = await db.collection('pendingNurseries').add(newNursery);
 
-      const docRef = await db.collection('pendingNurseries').add(newNursery);
-
-      res.status(201).json({ id: docRef.id, ...newNursery });
-    } catch (err) {
-      console.error('Error saving pending nursery:', err);
-      res.status(500).json({ message: 'فشل في حفظ البيانات' });
-    }
-  });
+    res.status(201).json({ id: docRef.id, ...newNursery });
+  } catch (err) {
+    console.error('Error saving pending nursery:', err);
+    res.status(500).json({ message: 'فشل في حفظ البيانات' });
+  }
+});
 
 // ✅ Health check
 app.get('/', (req, res) => {
@@ -349,20 +349,176 @@ app.get('/', (req, res) => {
 });
 
 // ✅ GET all pending nurseries (for admin)
-  app.get('/api/pending-nurseries', async (req, res) => {
-    try {
-      const snapshot = await db.collection('pendingNurseries').get();
-      const list = [];
-      snapshot.forEach(doc => {
-        list.push({ id: doc.id, ...doc.data() });
-      });
-      res.json(list);
-    } catch (err) {
-      res.status(500).json({ message: 'فشل تحميل المشاتل المعلقة' });
+app.get('/api/pending-nurseries', async (req, res) => {
+  try {
+    const snapshot = await db.collection('pendingNurseries').get();
+    const list = [];
+    snapshot.forEach(doc => {
+      list.push({ id: doc.id, ...doc.data() });
+    });
+    res.json(list);
+  } catch (err) {
+    res.status(500).json({ message: 'فشل تحميل المشاتل المعلقة' });
+  }
+});
+
+// GET all banners (for admin & frontend)
+app.get('/api/banners', async (req, res) => {
+  try {
+    const snapshot = await db.collection('banners').get();
+    const banners = [];
+    snapshot.forEach(doc => {
+      const data = doc.data();
+      banners.push({ id: doc.id, ...data });
+    });
+    res.json(banners);
+  } catch (err) {
+    console.error('Error fetching banners:', err);
+    res.status(500).json({ message: 'فشل تحميل البانرات' });
+  }
+});
+
+// POST: Create new banner
+app.post('/api/banners', upload.single('image'), async (req, res) => {
+  try {
+    const { position, active } = req.body;
+    const isActive = active === 'true';
+
+    if (!req.file) {
+      return res.status(400).json({ error: 'الصورة مطلوبة' });
     }
-  });
+    if (!position || isNaN(Number(position)) || Number(position) <= 0) {
+      return res.status(400).json({ error: 'رقم الترتيب مطلوب ويجب أن يكون رقمًا موجبًا' });
+    }
+
+    const allowedTypes = ['image/png', 'image/jpeg', 'image/webp'];
+    if (!allowedTypes.includes(req.file.mimetype)) {
+      return res.status(400).json({ error: 'الامتدادات المسموحة: PNG, JPG, WEBP' });
+    }
+
+    const timestamp = Date.now();
+    const cleanName = req.file.originalname.replace(/\s+/g, '_').replace(/[^a-zA-Z0-9._-]/g, '');
+    const fileName = `${timestamp}_${cleanName}`;
+    const filePath = `banner_images/${fileName}`;
+
+    const bucket = adminStorage.bucket();
+    const file = bucket.file(filePath);
+    await file.save(req.file.buffer, {
+      metadata: { contentType: req.file.mimetype }
+    });
+    await file.makePublic();
+    const imageUrl = `https://firebasestorage.googleapis.com/v0/b/${bucket.name}/o/${encodeURIComponent(filePath)}?alt=media`;
+
+    const bannerData = {
+      imageUrl,
+      position: Number(position),
+      active: isActive,
+      createdAt: new Date().toISOString()
+    };
+
+    const docRef = await db.collection('banners').add(bannerData);
+    res.status(201).json({ id: docRef.id, ...bannerData });
+  } catch (error) {
+    console.error('Error saving banner:', error);
+    res.status(500).json({ error: 'فشل حفظ البانر' });
+  }
+});
+
+// PUT: Update existing banner
+app.put('/api/banners/:id', upload.single('image'), async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { position, active } = req.body;
+    const isActive = active === 'true';
+
+    const doc = await db.collection('banners').doc(id).get();
+    if (!doc.exists) {
+      return res.status(404).json({ error: 'البانر غير موجود' });
+    }
+
+    const oldData = doc.data();
+    let updateData = {};
+
+    if (position !== undefined) {
+      if (isNaN(Number(position)) || Number(position) <= 0) {
+        return res.status(400).json({ error: 'رقم الترتيب يجب أن يكون رقمًا موجبًا' });
+      }
+      updateData.position = Number(position);
+    }
+
+    if (active !== undefined) {
+      updateData.active = isActive;
+    }
+
+    if (req.file) {
+      const allowedTypes = ['image/png', 'image/jpeg', 'image/webp'];
+      if (!allowedTypes.includes(req.file.mimetype)) {
+        return res.status(400).json({ error: 'الامتدادات المسموحة: PNG, JPG, WEBP' });
+      }
+
+      // Delete old image
+      if (oldData.imageUrl) {
+        try {
+          const urlObj = new URL(oldData.imageUrl);
+          const oldPath = decodeURIComponent(urlObj.pathname.split('/o/')[1].split('?')[0]);
+          await adminStorage.bucket().file(oldPath).delete();
+        } catch (e) {
+          console.warn('Old image delete failed:', e.message);
+        }
+      }
+
+      // Upload new image
+      const timestamp = Date.now();
+      const cleanName = req.file.originalname.replace(/\s+/g, '_').replace(/[^a-zA-Z0-9._-]/g, '');
+      const fileName = `${timestamp}_${cleanName}`;
+      const filePath = `banner_images/${fileName}`;
+
+      const bucket = adminStorage.bucket();
+      const file = bucket.file(filePath);
+      await file.save(req.file.buffer, {
+        metadata: { contentType: req.file.mimetype }
+      });
+      await file.makePublic();
+      updateData.imageUrl = `https://firebasestorage.googleapis.com/v0/b/${bucket.name}/o/${encodeURIComponent(filePath)}?alt=media`;
+    }
+
+    await db.collection('banners').doc(id).update(updateData);
+    res.json({ id, ...oldData, ...updateData });
+  } catch (error) {
+    console.error('Error updating banner:', error);
+    res.status(500).json({ error: 'فشل تحديث البانر' });
+  }
+});
+
+// DELETE banner
+app.delete('/api/banners/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const doc = await db.collection('banners').doc(id).get();
+    if (!doc.exists) {
+      return res.status(404).json({ error: 'البانر غير موجود' });
+    }
+
+    const data = doc.data();
+    if (data.imageUrl) {
+      try {
+        const urlObj = new URL(data.imageUrl);
+        const filePath = decodeURIComponent(urlObj.pathname.split('/o/')[1].split('?')[0]);
+        await adminStorage.bucket().file(filePath).delete();
+      } catch (e) {
+        console.warn('Image delete failed:', e.message);
+      }
+    }
+
+    await db.collection('banners').doc(id).delete();
+    res.json({ message: 'تم حذف البانر بنجاح' });
+  } catch (error) {
+    console.error('Error deleting banner:', error);
+    res.status(500).json({ error: 'فشل حذف البانر' });
+  }
+});
   
-  // ✅ GET site settings
+// ✅ GET site settings
 app.get('/api/settings/site', async (req, res) => {
   try {
     const doc = await db.collection('settings').doc('site').get();
@@ -372,27 +528,26 @@ app.get('/api/settings/site', async (req, res) => {
       // Return defaults if not set
       res.json({
         title: 'أكبر منصة للمشاتل في المملكة',
-          subtitle: 'اكتشف أكثر من 500 مشتل ومتجر لأدوات الزراعة في مكان واحد',
-          heroImage: 'https://placehold.co/1200x600/10b981/ffffff?text=Hero+Image',
-          benefits: ['معلومات كاملة', 'تواصل مباشر', 'خدمات مجانية'],
-          seo: {
-            title: 'مشاتل النباتات في السعودية | Plant Nursery Finder',
-            description: 'أكبر منصة تجمع مشاتل النباتات وأدوات الزراعة في المملكة.',
-            ogImage: 'https://placehold.co/1200x630/10b981/ffffff?text=OG+Image'
-          },
-          contacts: {
-            email: 'info@nurseries.sa',
-            phone: '0551234567',
-            whatsapp: '+4567 123 50 966',
-            address: 'الرياض، المملكة العربية السعودية'
-          },
-          footerLinks: ['الرئيسية', 'المشاتل', 'العروض', 'سجل مشتلك'],
-          social: {
-            facebook: 'nursery.sa',
-            instagram: 'nursery.sa',
-            twitter: 'nursery_sa'
-          },
-          title: 'منصة المشاتل تجمع أفضل المشاتل ومحلات أدوات الزراعة في مكان واحد'
+        subtitle: 'اكتشف أكثر من 500 مشتل ومتجر لأدوات الزراعة في مكان واحد',
+        heroImage: 'https://placehold.co/1200x600/10b981/ffffff?text=Hero+Image',
+        benefits: ['معلومات كاملة', 'تواصل مباشر', 'خدمات مجانية'],
+        seo: {
+          title: 'مشاتل النباتات في السعودية | Plant Nursery Finder',
+          description: 'أكبر منصة تجمع مشاتل النباتات وأدوات الزراعة في المملكة.',
+          ogImage: 'https://placehold.co/1200x630/10b981/ffffff?text=OG+Image'
+        },
+        contacts: {
+          email: 'info@nurseries.sa',
+          phone: '0551234567',
+          whatsapp: '+4567 123 50 966',
+          address: 'الرياض، المملكة العربية السعودية'
+        },
+        footerLinks: ['الرئيسية', 'المشاتل', 'العروض', 'سجل مشتلك'],
+        social: {
+          facebook: 'nursery.sa',
+          instagram: 'nursery.sa',
+          twitter: 'nursery_sa'
+        }
       });
     }
   } catch (err) {

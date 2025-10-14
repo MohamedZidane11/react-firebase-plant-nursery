@@ -16,6 +16,8 @@ import FiltersManager from './pages/FiltersManager';
 import SponsorsManager from './pages/SponsorsManager';
 import SiteSettings from './pages/SiteSettings';
 import PendingNurseriesManager from './pages/PendingNurseriesManager';
+import BannerManager from './pages/BannerManager';
+import BannerForm from './pages/BannerForm';
 
 // Import Header
 import AdminHeader from './components/AdminHeader';
@@ -49,6 +51,9 @@ function App() {
               <Route path="/offers" element={<OffersManager />} />
               <Route path="/offers/add" element={<OfferForm />} />
               <Route path="/offers/edit/:id" element={<OfferForm />} />
+              <Route path="/banners" element={<BannerManager />} />
+              <Route path="/banners/add" element={<BannerForm />} />
+              <Route path="/banners/edit/:id" element={<BannerForm />} />
               <Route path="/categories" element={<CategoriesManager />} />
               <Route path="/filters" element={<FiltersManager />} />
               <Route path="/sponsors" element={<SponsorsManager />} />

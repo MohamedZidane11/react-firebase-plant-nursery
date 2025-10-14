@@ -15,6 +15,7 @@ const AdminHeader = () => {
     { path: '/', label: '🏠 الرئيسية' },
     { path: '/nurseries', label: '🌿 المشاتل' },
     { path: '/offers', label: '💰 العروض' },
+    { path: '/banners', label: '➿ البانر' },
     { path: '/categories', label: '🔖 التصنيفات' },
     // Filter Mngr { path: '/filters', label: '🔍 الفلاتر' },
     { path: '/sponsors', label: '✨ الرعاة' },

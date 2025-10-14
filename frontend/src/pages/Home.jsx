@@ -1,6 +1,9 @@
 // src/pages/Home.jsx
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import Slider from 'react-slick';
+import 'slick-carousel/slick/slick.css';
+import 'slick-carousel/slick/slick-theme.css';
 import defaultNurseryImage from '../assets/nurs_empty.png'; // ✅ Import default image
 
 const Home = () => {
@@ -16,6 +19,7 @@ const Home = () => {
   const [loading, setLoading] = useState(true);
   const [sponsorsLoading, setSponsorsLoading] = useState(true);
   const [results, setResults] = useState([]);
+  const [banners, setBanners] = useState([]);
   
   // ✅ MOVED siteSettings HOOK TO THE TOP
   const [siteSettings, setSiteSettings] = useState({
@@ -24,6 +28,38 @@ const Home = () => {
     heroImage: 'https://placehold.co/1600x600/059669/ffffff?text=Plant+Nursery',
     benefits: ['معلومات كاملة', 'تواصل مباشر', 'خدمات مجانية']
   });
+
+  // ✅ Fetch banner
+  const sliderSettings = {
+    dots: true,
+    infinite: banners.length > 1,
+    speed: 500,
+    slidesToShow: 1,
+    slidesToScroll: 1,
+    autoplay: true,
+    autoplaySpeed: 5000,
+    rtl: true,
+    arrows: false
+  };
+
+  useEffect(() => {
+    const fetchBanners = async () => {
+      try {
+        const API_BASE = 'https://nurseries.qvtest.com';
+        const response = await fetch(`${API_BASE}/api/banners`);
+        if (!response.ok) throw new Error('فشل تحميل البانرات');
+        const data = await response.json();
+        const activeBanners = data
+          .filter(b => b.active)
+          .sort((a, b) => a.position - b.position);
+        setBanners(activeBanners);
+      } catch (err) {
+        console.error('Error fetching banners:', err);
+        setBanners([]);
+      }
+    };
+    fetchBanners();
+  }, []);
 
   // ✅ Fetch nurseries
   useEffect(() => {
@@ -337,6 +373,24 @@ const Home = () => {
           )}
         </div>
       </section>
+
+      {/* Banner Slider */}
+{banners.length > 0 && (
+  <section className="py-4">
+    <Slider {...sliderSettings}>
+      {banners.map((banner) => (
+        <div key={banner.id} className="px-4">
+          <img
+            src={banner.imageUrl}
+            alt={`بانر ${banner.position}`}
+            className="w-full h-64 md:h-80 object-cover rounded-lg shadow-md"
+            loading="lazy"
+          />
+        </div>
+      ))}
+    </Slider>
+  </section>
+)}
 
       {/* Categories Grid */}
       {viewMode === 'home' && (
