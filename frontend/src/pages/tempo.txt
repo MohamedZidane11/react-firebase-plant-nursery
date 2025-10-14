@@ -14,7 +14,7 @@ const NurseryDetail = () => {
 
   // ✅ Fetch nursery and offers
   useEffect(() => {
-    const API_BASE = 'http://localhost:5000/'; // ← removed trailing spaces
+    const API_BASE = 'http://localhost:5000'; // ← removed trailing spaces
 
     const fetchNursery = async () => {
       try {

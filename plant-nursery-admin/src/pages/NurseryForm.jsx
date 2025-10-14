@@ -13,7 +13,7 @@ import {
 } from 'firebase/firestore';
 
 const defaultImage = '/images/nurs_empty.png';
-const API_BASE = 'http://localhost:5000/';
+const API_BASE = 'http://localhost:5000';
 
 const NurseryForm = () => {
   const { id } = useParams();

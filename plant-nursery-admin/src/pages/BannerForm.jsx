@@ -5,7 +5,7 @@ import { toast } from 'react-hot-toast';
 const BannerForm = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const API_BASE = 'http://localhost:5000/';
+  const API_BASE = 'http://localhost:5000';
 
   const [formData, setFormData] = useState({
     image: null,
