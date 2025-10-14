@@ -6,7 +6,7 @@ const Offers = () => {
   const [offers, setOffers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 3;
+  const itemsPerPage = 9; // ✅ Changed from 3 to 9
 
   // 🔍 Filters
   const [filterType, setFilterType] = useState('all');
@@ -18,10 +18,9 @@ const Offers = () => {
   useEffect(() => {
     const fetchOffers = async () => {
       try {
-        const response = await fetch('http://localhost:5000/api/offers'); //local => http://localhost:5000/api/offers || prod => https://nurseries.qvtest.com/api/offers
+        const response = await fetch('https://nurseries.qvtest.com/api/offers'); //local => http://localhost:5000/api/offers
         if (!response.ok) throw new Error('فشل تحميل العروض');
         const data = await response.json();
-        console.log('✅ Offers fetched:', data); // للتأكد من البيانات
         setOffers(data);
       } catch (err) {
         console.error('Error fetching offers:', err);
@@ -104,7 +103,7 @@ const Offers = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Hero Section */}
-      <section className="bg-yellow-600/80 text-white py-16">
+      <section className="bg-gradient-to-r from-[#34a0a4] to-[#fff3b0] text-white py-16">
         <div className="container mx-auto px-4 text-center">
           <h1 className="text-4xl md:text-5xl font-bold mb-4">
             العروض الخاصة 🎁
@@ -186,7 +185,7 @@ const Offers = () => {
               currentOffers.map((offer) => (
                 <div 
                   key={offer.id} 
-                  className='hover:-translate-y-4 transition-transform duration-500 ease-in-out'
+                  className='hover:-translate-y-4 transition-transform duration-500 ease-in-out flex'
                 >
                   <OfferCard offer={offer} />
                 </div>
@@ -200,22 +199,22 @@ const Offers = () => {
 
           {/* Pagination */}
           {totalPages > 1 && (
-            <div className="flex justify-center mt-8 space-x-2">
+            <div className="flex justify-center mt-8 gap-2">
               <button
-                onClick={() => handlePageChange(currentPage - 1)}
-                disabled={currentPage === 1}
-                className="px-4 py-2 border border-gray-300 rounded-md disabled:opacity-50"
+                onClick={() => handlePageChange(currentPage + 1)}
+                disabled={currentPage === totalPages}
+                className="px-4 py-2 border border-gray-300 rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100 transition"
               >
-                السابق
+                التالي
               </button>
 
               {Array.from({ length: totalPages }, (_, i) => (
                 <button
                   key={i + 1}
                   onClick={() => handlePageChange(i + 1)}
-                  className={`px-4 py-2 rounded-md ${
+                  className={`px-4 py-2 rounded-md transition ${
                     currentPage === i + 1
-                      ? 'bg-yellow-600/80 text-white'
+                      ? 'bg-yellow-600/80 text-white font-bold'
                       : 'border border-gray-300 hover:bg-gray-100'
                   }`}
                 >
@@ -224,11 +223,11 @@ const Offers = () => {
               ))}
 
               <button
-                onClick={() => handlePageChange(currentPage + 1)}
-                disabled={currentPage === totalPages}
-                className="px-4 py-2 border border-gray-300 rounded-md disabled:opacity-50"
+                onClick={() => handlePageChange(currentPage - 1)}
+                disabled={currentPage === 1}
+                className="px-4 py-2 border border-gray-300 rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100 transition"
               >
-                التالي
+                السابق
               </button>
             </div>
           )}

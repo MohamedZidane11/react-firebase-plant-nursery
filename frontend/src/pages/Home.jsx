@@ -463,7 +463,7 @@ const Home = () => {
             <h2 className="text-3xl font-bold text-center text-green-800 mb-8 px-4">أبرز المشاتل ✨</h2>
 
             {/* Fixed: Full width scroll with proper padding */}
-            <div className="w-full overflow-x-auto scroll-smooth pb-4" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+            <div className="w-full overflow-x-auto scroll-smooth pb-4 pt-4" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
               <style>{`
                 .hide-scrollbar::-webkit-scrollbar {
                   display: none;

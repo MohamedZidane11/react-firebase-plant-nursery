@@ -345,7 +345,7 @@ const Nurseries = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                 {currentNurseries.length > 0 ? (
                   currentNurseries.map((nursery) => (
-                    <div key={nursery.id} className='hover:-translate-y-4 transition-transform duration-500 ease-in-out'>
+                    <div key={nursery.id} className='hover:-translate-y-4 transition-transform duration-500 ease-in-out flex'>
                       <NurseryCard 
                         nursery={nursery} 
                         offers={offers}
@@ -365,7 +365,7 @@ const Nurseries = () => {
                   <button
                     onClick={() => handlePageChange(currentPage - 1)}
                     disabled={currentPage === 1}
-                    className="px-4 py-2 border border-gray-300 rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100"
+                    className="px-4 py-2 border border-gray-300 rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100 transition"
                   >
                     السابق
                   </button>
@@ -374,20 +374,19 @@ const Nurseries = () => {
                     <button
                       key={pageNum}
                       onClick={() => handlePageChange(pageNum)}
-                      className={`px-4 py-2 rounded-md ${
+                      className={`px-4 py-2 rounded-md transition ${
                         currentPage === pageNum
-                          ? 'bg-green-500 text-white'
+                          ? 'bg-green-500 text-white font-bold'
                           : 'border border-gray-300 hover:bg-gray-100'
                       }`}
                     >
                       {pageNum}
                     </button>
                   ))}
-
                   <button
                     onClick={() => handlePageChange(currentPage + 1)}
                     disabled={currentPage === totalPages}
-                    className="px-4 py-2 border border-gray-300 rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100"
+                    className="px-4 py-2 border border-gray-300 rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100 transition"
                   >
                     التالي
                   </button>
@@ -479,7 +478,6 @@ const Nurseries = () => {
                       {latestHighlightedOffer.description || 'لا يوجد وصف متاح.'}
                     </p>
                     <div className="flex items-center justify-center gap-2 bg-yellow-600/40 text-amber-800 rounded-md px-4 py-2 mb-4">
-                      
                       <h3 className="font-bold text-base">شاهد العروض</h3>
                     </div>
                   </a>
