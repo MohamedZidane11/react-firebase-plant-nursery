@@ -1,31 +1,26 @@
-// firebase.js - Unified Firebase Admin initialization
-import admin from 'firebase-admin';
+// backend/firebase.js
+import { initializeApp, cert } from 'firebase-admin/app';
+import { getFirestore } from 'firebase-admin/firestore';
+import { getStorage } from 'firebase-admin/storage';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
-// Get the service account JSON string from environment
-const serviceAccountJson = process.env.FIREBASE_SERVICE_ACCOUNT;
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
-if (!serviceAccountJson) {
-  throw new Error('❌ FIREBASE_SERVICE_ACCOUNT is not set in environment variables');
-}
+// Use local service account file (for local development)
+const serviceAccountPath = path.join(__dirname, 'FIREBASE_SERVICE_ACCOUNT.json');
 
-let serviceAccount;
 try {
-  // Parse the JSON string (Railway/Vercel passes it as a string)
-  serviceAccount = JSON.parse(serviceAccountJson);
-} catch (err) {
-  console.error('❌ Failed to parse FIREBASE_SERVICE_ACCOUNT:', err.message);
-  throw new Error('Invalid JSON in FIREBASE_SERVICE_ACCOUNT: ' + err.message);
-}
-
-// Initialize Firebase Admin (only once)
-if (!admin.apps.length) {
-  admin.initializeApp({
-    credential: admin.credential.cert(serviceAccount),
-    storageBucket: `${serviceAccount.project_id}.firebasestorage.app`,
+  initializeApp({
+    credential: cert(serviceAccountPath),
+    storageBucket: 'react-firebase-plant-nursery.appspot.com' // 🔴 REPLACE with your bucket name
   });
-  console.log('✅ Firebase Admin initialized successfully');
+  console.log('✅ Firebase Admin initialized with service account file');
+} catch (error) {
+  console.error('❌ Failed to initialize Firebase:', error.message);
+  process.exit(1);
 }
 
-// Export Firestore and Storage
-export const db = admin.firestore();
-export const adminStorage = admin.storage();
+export const db = getFirestore();
+export const adminStorage = getStorage();

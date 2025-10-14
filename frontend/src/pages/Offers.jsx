@@ -18,9 +18,10 @@ const Offers = () => {
   useEffect(() => {
     const fetchOffers = async () => {
       try {
-        const response = await fetch('https://nurseries.qvtest.com/api/offers'); //local => http://localhost:5000/api/offers
+        const response = await fetch('http://localhost:5000/api/offers'); //local => http://localhost:5000/api/offers || prod => https://nurseries.qvtest.com/api/offers
         if (!response.ok) throw new Error('فشل تحميل العروض');
         const data = await response.json();
+        console.log('✅ Offers fetched:', data); // للتأكد من البيانات
         setOffers(data);
       } catch (err) {
         console.error('Error fetching offers:', err);
@@ -183,8 +184,11 @@ const Offers = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {currentOffers.length > 0 ? (
               currentOffers.map((offer) => (
-                <div className='hover:-translate-y-4 transition-transform duration-500 ease-in-out'>
-                  <OfferCard key={offer.id} offer={offer} />
+                <div 
+                  key={offer.id} 
+                  className='hover:-translate-y-4 transition-transform duration-500 ease-in-out'
+                >
+                  <OfferCard offer={offer} />
                 </div>
               ))
             ) : (

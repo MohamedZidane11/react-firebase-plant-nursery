@@ -193,20 +193,22 @@ app.get('/api/nurseries/:id', async (req, res) => {
   }
 });
 
-// ✅ GET all offers
+// ✅ GET all offers with nursery location
 app.get('/api/offers', async (req, res) => {
   const today = new Date();
   try {
     const snapshot = await db.collection('offers').get();
     const list = [];
 
+    // Collect all offers first
+    const offersData = [];
     snapshot.forEach(doc => {
       const data = doc.data();
       if (data.published === false) return;
 
       // If no end date → active
       if (!data.endDate) {
-        list.push({ id: doc.id, ...data });
+        offersData.push({ id: doc.id, ...data });
         return;
       }
 
@@ -219,9 +221,29 @@ app.get('/api/offers', async (req, res) => {
 
       // Check if not expired
       if (endDate >= today) {
-        list.push({ id: doc.id, ...data });
+        offersData.push({ id: doc.id, ...data });
       }
     });
+
+    // Fetch nursery details for each offer
+    for (const offer of offersData) {
+      if (offer.nurseryId) {
+        try {
+          const nurseryDoc = await db.collection('nurseries').doc(offer.nurseryId).get();
+          if (nurseryDoc.exists) {
+            const nurseryData = nurseryDoc.data();
+            offer.nurseryLocation = nurseryData.location || null;
+            // Keep nurseryName if it doesn't exist
+            if (!offer.nurseryName) {
+              offer.nurseryName = nurseryData.name || null;
+            }
+          }
+        } catch (err) {
+          console.warn(`Failed to fetch nursery ${offer.nurseryId}:`, err.message);
+        }
+      }
+      list.push(offer);
+    }
 
     res.json(list);
   } catch (err) {
@@ -230,7 +252,7 @@ app.get('/api/offers', async (req, res) => {
   }
 });
 
-// ✅ GET single offer by ID
+// ✅ GET single offer by ID with nursery location
 app.get('/api/offers/:id', async (req, res) => {
   try {
     const { id } = req.params;
@@ -238,7 +260,26 @@ app.get('/api/offers/:id', async (req, res) => {
     if (!doc.exists) {
       return res.status(404).json({ message: 'العرض غير موجود' });
     }
-    res.json({ id: doc.id, ...doc.data() });
+
+    const offerData = { id: doc.id, ...doc.data() };
+
+    // Fetch nursery location if nurseryId exists
+    if (offerData.nurseryId) {
+      try {
+        const nurseryDoc = await db.collection('nurseries').doc(offerData.nurseryId).get();
+        if (nurseryDoc.exists) {
+          const nurseryData = nurseryDoc.data();
+          offerData.nurseryLocation = nurseryData.location || null;
+          if (!offerData.nurseryName) {
+            offerData.nurseryName = nurseryData.name || null;
+          }
+        }
+      } catch (err) {
+        console.warn(`Failed to fetch nursery ${offerData.nurseryId}:`, err.message);
+      }
+    }
+
+    res.json(offerData);
   } catch (err) {
     console.error('Error fetching offer:', err);
     res.status(500).json({ message: 'فشل تحميل العرض' });
