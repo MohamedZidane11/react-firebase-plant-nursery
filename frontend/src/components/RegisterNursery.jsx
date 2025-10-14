@@ -81,7 +81,7 @@ const RegisterNursery = () => {
       };
 
       await axios.post(
-        'https://react-firebase-plant-nursery-production.up.railway.app/api/pending-nurseries',
+        'https://nurseries.qvtest.com//api/pending-nurseries',
         payload
       );
 

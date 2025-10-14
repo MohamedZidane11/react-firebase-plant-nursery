@@ -14,7 +14,7 @@ const NurseryDetail = () => {
 
   // ✅ Fetch nursery and offers
   useEffect(() => {
-    const API_BASE = 'https://react-firebase-plant-nursery-production.up.railway.app'; // ← removed trailing spaces
+    const API_BASE = 'https://nurseries.qvtest.com/'; // ← removed trailing spaces
 
     const fetchNursery = async () => {
       try {
