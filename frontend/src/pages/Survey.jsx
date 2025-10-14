@@ -89,7 +89,7 @@ const Survey = () => {
         platform: 'مشاتل'
       };
 
-      const response = await fetch('https://nurseries.qvtest.com/api/survey', {
+      const response = await fetch('http://localhost:5000//api/survey', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

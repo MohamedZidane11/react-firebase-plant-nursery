@@ -5,7 +5,7 @@ import { toast } from 'react-hot-toast';
 const BannerManager = () => {
   const [banners, setBanners] = useState([]);
   const [loading, setLoading] = useState(true);
-  const API_BASE = 'https://nurseries.qvtest.com';
+  const API_BASE = 'http://localhost:5000/';
 
   const fetchBanners = async () => {
     try {

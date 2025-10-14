@@ -13,7 +13,7 @@ import {
 } from 'firebase/firestore';
 
 const defaultImage = '/images/offer_default.png';
-const API_BASE = 'https://nurseries.qvtest.com';
+const API_BASE = 'http://localhost:5000/';
 
 const OfferForm = () => {
   const { id } = useParams();
