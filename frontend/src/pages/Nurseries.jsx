@@ -24,7 +24,7 @@ const Nurseries = () => {
   useEffect(() => {
     const fetchNurseries = async () => {
       try {
-        const API_BASE = 'https://nurseries.qvtest.com/';
+        const API_BASE = 'https://nurseries.qvtest.com';
         const response = await fetch(`${API_BASE}/api/nurseries`);
         
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
@@ -47,7 +47,7 @@ const Nurseries = () => {
   useEffect(() => {
     const fetchOffers = async () => {
       try {
-        const API_BASE = 'https://nurseries.qvtest.com/';
+        const API_BASE = 'https://nurseries.qvtest.com';
         const response = await fetch(`${API_BASE}/api/offers`);
         
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
@@ -68,7 +68,7 @@ const Nurseries = () => {
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const API_BASE = 'https://nurseries.qvtest.com/';
+        const API_BASE = 'https://nurseries.qvtest.com';
         const response = await fetch(`${API_BASE}/api/categories`);
         
         if (!response.ok) throw new Error(`HTTP ${response.status}`);

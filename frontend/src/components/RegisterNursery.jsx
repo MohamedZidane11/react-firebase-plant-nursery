@@ -81,7 +81,7 @@ const RegisterNursery = () => {
       };
 
       await axios.post(
-        'https://nurseries.qvtest.com//api/pending-nurseries',
+        'https://nurseries.qvtest.com/api/pending-nurseries',
         payload
       );
 

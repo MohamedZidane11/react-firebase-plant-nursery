@@ -14,7 +14,7 @@ const OfferDetail = () => {
   useEffect(() => {
     const fetchOffer = async () => {
       try {
-        const API_BASE = 'https://nurseries.qvtest.com/';
+        const API_BASE = 'https://nurseries.qvtest.com';
         const response = await fetch(`${API_BASE}/api/offers/${id}`);
 
         if (!response.ok) throw new Error('Not found');
