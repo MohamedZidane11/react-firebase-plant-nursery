@@ -45,7 +45,7 @@ const Home = () => {
   useEffect(() => {
     const fetchBanners = async () => {
       try {
-        const API_BASE = 'https://nurseries.qvtest.com';
+        const API_BASE = 'https://nurseries.qvtest.com'; //prod => https://nurseries.qvtest.com
         const response = await fetch(`${API_BASE}/api/banners`);
         if (!response.ok) throw new Error('فشل تحميل البانرات');
         const data = await response.json();
@@ -141,7 +141,7 @@ const Home = () => {
   useEffect(() => {
     const fetchSettings = async () => {
       try {
-        const API_BASE = 'https://nurseries.qvtest.com';
+        const API_BASE = 'https://nurseries.qvtest.com'; 
         const response = await fetch(`${API_BASE}/api/settings/site`);
         if (response.ok) {
           const data = await response.json();

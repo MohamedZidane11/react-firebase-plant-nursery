@@ -66,6 +66,7 @@ const Footer = () => {
               <li><Link to="/nurseries" className="hover:text-yellow-300">المشاتل</Link></li>
               <li><Link to="/offers" className="hover:text-yellow-300">العروض</Link></li>
               <li><Link to="/register" className="hover:text-yellow-300">سجل مشتلك</Link></li>
+              <li><Link to="/survey" className="hover:text-yellow-300">الاستبيان</Link></li>
             </ul>
           </div>
 

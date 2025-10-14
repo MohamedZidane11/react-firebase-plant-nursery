@@ -558,6 +558,139 @@ app.delete('/api/banners/:id', async (req, res) => {
     res.status(500).json({ error: 'فشل حذف البانر' });
   }
 });
+
+// ✅ POST: Save survey response
+app.post('/api/survey', async (req, res) => {
+  try {
+    const {
+      name,
+      email,
+      interest_level,
+      expected_features,
+      service_suggestions,
+      communication_method,
+      directory_interest,
+      preferred_offers,
+      region,
+      additional_comments,
+      timestamp,
+      platform
+    } = req.body;
+
+    // Validation for required fields
+    if (!interest_level?.trim()) {
+      return res.status(400).json({ message: 'مستوى الاهتمام مطلوب' });
+    }
+    if (!expected_features?.trim()) {
+      return res.status(400).json({ message: 'الميزات المتوقعة مطلوبة' });
+    }
+    if (!communication_method?.trim()) {
+      return res.status(400).json({ message: 'وسيلة التواصل مطلوبة' });
+    }
+    if (!directory_interest?.trim()) {
+      return res.status(400).json({ message: 'الاهتمام بالدليل مطلوب' });
+    }
+    if (!Array.isArray(preferred_offers) || preferred_offers.length === 0) {
+      return res.status(400).json({ message: 'يجب اختيار عرض واحد على الأقل' });
+    }
+    if (!region?.trim()) {
+      return res.status(400).json({ message: 'المنطقة مطلوبة' });
+    }
+
+    // Save to Firestore
+    const surveyData = {
+      name: name?.trim() || null,
+      email: email?.trim() || null,
+      interest_level: interest_level.trim(),
+      expected_features: expected_features.trim(),
+      service_suggestions: service_suggestions?.trim() || null,
+      communication_method: communication_method.trim(),
+      directory_interest: directory_interest.trim(),
+      preferred_offers: preferred_offers,
+      region: region.trim(),
+      additional_comments: additional_comments?.trim() || null,
+      timestamp: timestamp || new Date().toISOString(),
+      platform: platform || 'مشاتل'
+    };
+
+    const docRef = await db.collection('surveys').add(surveyData);
+
+    res.status(201).json({ 
+      id: docRef.id, 
+      message: 'تم حفظ الاستبيان بنجاح',
+      ...surveyData 
+    });
+  } catch (err) {
+    console.error('Error saving survey:', err);
+    res.status(500).json({ message: 'فشل في حفظ الاستبيان' });
+  }
+});
+
+// ✅ GET: Retrieve all surveys (for admin)
+app.get('/api/surveys', async (req, res) => {
+  try {
+    const snapshot = await db.collection('surveys').orderBy('timestamp', 'desc').get();
+    const surveys = [];
+    
+    snapshot.forEach(doc => {
+      surveys.push({ id: doc.id, ...doc.data() });
+    });
+    
+    res.json(surveys);
+  } catch (err) {
+    console.error('Error fetching surveys:', err);
+    res.status(500).json({ message: 'فشل تحميل الاستبيانات' });
+  }
+});
+
+// ✅ GET: Get survey statistics
+app.get('/api/survey/stats', async (req, res) => {
+  try {
+    const snapshot = await db.collection('surveys').get();
+    
+    const stats = {
+      total: snapshot.size,
+      byInterestLevel: {},
+      byCommunicationMethod: {},
+      byRegion: {},
+      byDirectoryInterest: {},
+      preferredOffers: {}
+    };
+
+    snapshot.forEach(doc => {
+      const data = doc.data();
+      
+      // Count by interest level
+      stats.byInterestLevel[data.interest_level] = 
+        (stats.byInterestLevel[data.interest_level] || 0) + 1;
+      
+      // Count by communication method
+      stats.byCommunicationMethod[data.communication_method] = 
+        (stats.byCommunicationMethod[data.communication_method] || 0) + 1;
+      
+      // Count by region
+      stats.byRegion[data.region] = 
+        (stats.byRegion[data.region] || 0) + 1;
+      
+      // Count by directory interest
+      stats.byDirectoryInterest[data.directory_interest] = 
+        (stats.byDirectoryInterest[data.directory_interest] || 0) + 1;
+      
+      // Count preferred offers
+      if (Array.isArray(data.preferred_offers)) {
+        data.preferred_offers.forEach(offer => {
+          stats.preferredOffers[offer] = 
+            (stats.preferredOffers[offer] || 0) + 1;
+        });
+      }
+    });
+
+    res.json(stats);
+  } catch (err) {
+    console.error('Error fetching survey stats:', err);
+    res.status(500).json({ message: 'فشل تحميل الإحصائيات' });
+  }
+});
   
 // ✅ GET site settings
 app.get('/api/settings/site', async (req, res) => {

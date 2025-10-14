@@ -9,6 +9,7 @@ import Offers from './pages/Offers';
 import Contact from './pages/Contact';
 import RegisterNursery from './components/RegisterNursery';
 import OfferDetail from './pages/OfferDetail';
+import Survey from './pages/Survey';
 
 // ✅ Scroll To Top Wrapper
 const ScrollToTop = () => {
@@ -42,6 +43,7 @@ function App() {
             <Route path="/offers/:id" element={<OfferDetail />} />
             <Route path="/contact" element={<Contact />} />
             <Route path="/register" element={<RegisterNursery />} />
+            <Route path="/survey" element={<Survey />} />
           </Routes>
 
         </main>

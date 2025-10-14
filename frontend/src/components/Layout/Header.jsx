@@ -3,6 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { useState } from 'react';
 import logo from '../../assets/logo.png'; // ✅ Your SVG logo
 
+
 const Header = () => {
   const [isOpen, setIsOpen] = useState(false);
   const location = useLocation();
