@@ -409,8 +409,7 @@ app.get('/api/banners', async (req, res) => {
     const snapshot = await db.collection('banners').get();
     const banners = [];
     snapshot.forEach(doc => {
-      const data = doc.data();
-      banners.push({ id: doc.id, ...data });
+      banners.push({ id: doc.id, ...doc.data() });
     });
     res.json(banners);
   } catch (err) {
@@ -419,15 +418,13 @@ app.get('/api/banners', async (req, res) => {
   }
 });
 
-// POST: Create new banner
+// POST new banner
 app.post('/api/banners', upload.single('image'), async (req, res) => {
   try {
     const { position, active } = req.body;
     const isActive = active === 'true';
 
-    if (!req.file) {
-      return res.status(400).json({ error: 'الصورة مطلوبة' });
-    }
+    if (!req.file) return res.status(400).json({ error: 'الصورة مطلوبة' });
     if (!position || isNaN(Number(position)) || Number(position) <= 0) {
       return res.status(400).json({ error: 'رقم الترتيب مطلوب ويجب أن يكون رقمًا موجبًا' });
     }
@@ -444,6 +441,7 @@ app.post('/api/banners', upload.single('image'), async (req, res) => {
 
     const bucket = adminStorage.bucket();
     const file = bucket.file(filePath);
+    // ✅ FIXED: metadata (not "meta")
     await file.save(req.file.buffer, {
       metadata: { contentType: req.file.mimetype }
     });
@@ -465,7 +463,7 @@ app.post('/api/banners', upload.single('image'), async (req, res) => {
   }
 });
 
-// PUT: Update existing banner
+// PUT update banner
 app.put('/api/banners/:id', upload.single('image'), async (req, res) => {
   try {
     const { id } = req.params;
@@ -473,9 +471,7 @@ app.put('/api/banners/:id', upload.single('image'), async (req, res) => {
     const isActive = active === 'true';
 
     const doc = await db.collection('banners').doc(id).get();
-    if (!doc.exists) {
-      return res.status(404).json({ error: 'البانر غير موجود' });
-    }
+    if (!doc.exists) return res.status(404).json({ error: 'البانر غير موجود' });
 
     const oldData = doc.data();
     let updateData = {};
@@ -486,10 +482,7 @@ app.put('/api/banners/:id', upload.single('image'), async (req, res) => {
       }
       updateData.position = Number(position);
     }
-
-    if (active !== undefined) {
-      updateData.active = isActive;
-    }
+    if (active !== undefined) updateData.active = isActive;
 
     if (req.file) {
       const allowedTypes = ['image/png', 'image/jpeg', 'image/webp'];
@@ -508,14 +501,14 @@ app.put('/api/banners/:id', upload.single('image'), async (req, res) => {
         }
       }
 
-      // Upload new image
+      // Upload new
       const timestamp = Date.now();
       const cleanName = req.file.originalname.replace(/\s+/g, '_').replace(/[^a-zA-Z0-9._-]/g, '');
       const fileName = `${timestamp}_${cleanName}`;
       const filePath = `banner_images/${fileName}`;
-
       const bucket = adminStorage.bucket();
       const file = bucket.file(filePath);
+      // ✅ FIXED: metadata (not "meta")
       await file.save(req.file.buffer, {
         metadata: { contentType: req.file.mimetype }
       });
@@ -536,9 +529,7 @@ app.delete('/api/banners/:id', async (req, res) => {
   try {
     const { id } = req.params;
     const doc = await db.collection('banners').doc(id).get();
-    if (!doc.exists) {
-      return res.status(404).json({ error: 'البانر غير موجود' });
-    }
+    if (!doc.exists) return res.status(404).json({ error: 'البانر غير موجود' });
 
     const data = doc.data();
     if (data.imageUrl) {
