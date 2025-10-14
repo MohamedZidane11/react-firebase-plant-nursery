@@ -403,7 +403,7 @@ app.get('/api/pending-nurseries', async (req, res) => {
   }
 });
 
-// GET all banners (for admin & frontend)
+// ✅ GET all banners (for admin & frontend)
 app.get('/api/banners', async (req, res) => {
   try {
     const snapshot = await db.collection('banners').get();
@@ -415,6 +415,23 @@ app.get('/api/banners', async (req, res) => {
   } catch (err) {
     console.error('Error fetching banners:', err);
     res.status(500).json({ message: 'فشل تحميل البانرات' });
+  }
+});
+
+// GET single banner by ID (for admin form)
+app.get('/api/banners/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const doc = await db.collection('banners').doc(id).get();
+
+    if (!doc.exists) {
+      return res.status(404).json({ error: 'البانر غير موجود' });
+    }
+
+    res.json({ id: doc.id, ...doc.data() });
+  } catch (err) {
+    console.error('Error fetching banner:', err);
+    res.status(500).json({ error: 'فشل تحميل البانر' });
   }
 });
 
