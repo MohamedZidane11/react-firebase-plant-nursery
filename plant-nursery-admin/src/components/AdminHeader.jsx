@@ -15,11 +15,12 @@ const AdminHeader = () => {
     { path: '/', label: '🏠 الرئيسية' },
     { path: '/nurseries', label: '🌿 المشاتل' },
     { path: '/offers', label: '💰 العروض' },
-    { path: '/banners', label: '➿ البانر' },
+    { path: '/banners', label: '🖼️ البانر' },
     { path: '/categories', label: '🔖 التصنيفات' },
     // Filter Mngr { path: '/filters', label: '🔍 الفلاتر' },
     { path: '/sponsors', label: '✨ الرعاة' },
     { path: '/pending-nurseries', label: '📋 المراجعة' },
+    { path: '/surveys', label: '📊 الاستبيانات' },
     { path: '/settings', label: '⚙️ الإعدادات' },
   ];
 

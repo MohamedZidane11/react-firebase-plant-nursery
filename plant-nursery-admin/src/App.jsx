@@ -18,6 +18,7 @@ import SiteSettings from './pages/SiteSettings';
 import PendingNurseriesManager from './pages/PendingNurseriesManager';
 import BannerManager from './pages/BannerManager';
 import BannerForm from './pages/BannerForm';
+import SurveyManager from './pages/SurveyManager';
 
 // Import Header
 import AdminHeader from './components/AdminHeader';
@@ -58,6 +59,7 @@ function App() {
               <Route path="/filters" element={<FiltersManager />} />
               <Route path="/sponsors" element={<SponsorsManager />} />
               <Route path="/pending-nurseries" element={<PendingNurseriesManager />} />
+              <Route path="/surveys" element={<SurveyManager />} />
               <Route path="/settings" element={<SiteSettings />} />
             </Routes>
           </div>
