@@ -1,7 +1,10 @@
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import { useEffect } from 'react';
+
 import Header from './components/Layout/Header';
 import Footer from './components/Layout/Footer';
+import FloatingButtons from './components/FloatingButtons';
+
 import Home from './pages/Home';
 import Nurseries from './pages/Nurseries'
 import NurseryDetail from './pages/NurseryDetail';
@@ -49,6 +52,7 @@ function App() {
         </main>
         
         <Footer />
+        <FloatingButtons />
       </div>
     </Router>
   );

@@ -33,10 +33,22 @@ const Contact = () => {
                       </div>
                       <div className="ml-4">
                         <p className="text-gray-600">رقم الهاتف</p>
-                        <p className="font-medium text-green-800">+4567 123 50 966</p>
+                        <p className="font-medium text-green-800">552020272</p>
                       </div>
                     </div>
                     
+                    <div className="flex items-start">
+                      <div className="flex-shrink-0">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-green-500 mt-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.54 1.06l-1.519.76a11.042 11.042 0 006.105 6.105l.76-1.519a1 1 0 011.06-.54l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                        </svg>
+                      </div>
+                      <div className="ml-4">
+                        <p className="text-gray-600">رقم الواتساب</p>
+                        <p className="font-medium text-green-800">552020272</p>
+                      </div>
+                    </div>
+
                     <div className="flex items-start">
                       <div className="flex-shrink-0">
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-green-500 mt-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
