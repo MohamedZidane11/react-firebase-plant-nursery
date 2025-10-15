@@ -375,22 +375,22 @@ const Home = () => {
       </section>
 
       {/* Banner Slider */}
-{banners.length > 0 && (
-  <section className="py-4">
-    <Slider {...sliderSettings}>
-      {banners.map((banner) => (
-        <div key={banner.id} className="px-4">
-          <img
-            src={banner.imageUrl}
-            alt={`بانر ${banner.position}`}
-            className="w-full h-64 md:h-80 object-cover rounded-lg shadow-md"
-            loading="lazy"
-          />
-        </div>
-      ))}
-    </Slider>
-  </section>
-)}
+      {banners.length > 0 && (
+        <section className="py-4">
+          <Slider {...sliderSettings}>
+            {banners.map((banner) => (
+              <div key={banner.id} className="px-4 items-center justify-items-center">
+                <img
+                  src={banner.imageUrl}
+                  alt={`بانر ${banner.position}`}
+                  className="w-360 h-64 md:h-96 object-cover rounded-lg shadow-md"
+                  loading="lazy"
+                />
+              </div>
+            ))}
+          </Slider>
+        </section>
+      )}
 
       {/* Categories Grid */}
       {viewMode === 'home' && (
@@ -456,117 +456,83 @@ const Home = () => {
         </section>
       )}
 
-      {/* Featured Nurseries (Fixed Layout) */}
+      {/* Featured Nurseries — Responsive Grid */}
       {viewMode === 'home' && featuredNurseries.length > 0 && (
         <section className="py-12">
-          <div className="w-full">
-            <h2 className="text-3xl font-bold text-center text-green-800 mb-8 px-4">أبرز المشاتل ✨</h2>
+          <div className="container mx-auto px-4">
+            <h2 className="text-3xl font-bold text-center text-green-800 mb-8">أبرز المشاتل ✨</h2>
 
-            {/* Fixed: Full width scroll with proper padding */}
-            <div className="w-full overflow-x-auto scroll-smooth pb-4 pt-4" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
-              <style>{`
-                .hide-scrollbar::-webkit-scrollbar {
-                  display: none;
-                }
-              `}</style>
-              <div 
-                className="flex gap-6 px-4 hide-scrollbar"
-                style={{ scrollSnapType: 'x mandatory' }}
-              >
-                
-                {featuredNurseries.map((nursery) => (
-                  <Link 
-                    key={nursery.id} 
-                    to={`/nurseries/${nursery.id}`}
-                    className="flex-shrink-0 w-72 hover:-translate-y-4 transition-transform duration-500 ease-in-out"
-                    style={{ scrollSnapAlign: 'start' }}
-                  >
-                    <div className="bg-green-100 p-6 rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 border-2 border-yellow-500 h-full flex flex-col items-center">
-                      <div className="w-20 h-20 mb-4 bg-green-200 rounded-full flex items-center justify-center overflow-hidden">
-                        <img
-                          src={nursery.image || defaultNurseryImage}
-                          alt={nursery.name}
-                          className="w-full h-full object-cover"
-                          onError={(e) => {
-                            e.target.src = defaultNurseryImage;
-                          }}
-                        />
-                      </div>
-                      <h3 className="text-lg font-bold text-green-800 text-center line-clamp-1">{nursery.name}</h3>
-                      <p className="text-sm text-gray-600 text-center mt-1 line-clamp-1">{nursery.location}</p>
-                      <div className="flex justify-center mt-2 flex-wrap gap-1">
-                        {nursery.categories.slice(0, 2).map((cat, i) => (
-                          <span
-                            key={i}
-                            className="text-xs bg-green-200 text-green-800 px-2 py-1 rounded-full whitespace-nowrap"
-                          >
-                            {cat}
-                          </span>
-                        ))}
-                      </div>
-
-                      {/* Services Icons */}
-                      <div className="mt-4 flex justify-center flex-wrap gap-x-6 gap-y-2">
-                        {nursery.services?.includes('consultation') && (
-                          <div className="flex flex-col items-center">
-                            <div className="p-2 bg-gray-100 rounded-full">
-                              <img src="https://img.icons8.com/stickers/26/consultation.png" alt="استشارة" className="w-6 h-6" />
-                            </div>
-                            <span className="inline-flex items-center rounded-full bg-blue-400/10 px-2 py-1 text-xs font-medium text-blue-400 mt-1">
-                              استشارة
-                            </span>
-                          </div>
-                        )}
-
-                        {nursery.services?.includes('delivery') && (
-                          <div className="flex flex-col items-center">
-                            <div className="p-2 bg-gray-100 rounded-full">
-                              <img src="https://img.icons8.com/color/26/truck--v1.png" alt="توصيل" className="w-6 h-6" />
-                            </div>
-                            <span className="inline-flex items-center rounded-full bg-yellow-400/10 px-2 py-1 text-xs font-medium text-yellow-500 mt-1">
-                              توصيل
-                            </span>
-                          </div>
-                        )}
-
-                        {nursery.services?.includes('installation') && (
-                          <div className="flex flex-col items-center">
-                            <div className="p-2 bg-gray-100 rounded-full">
-                              <img src="https://img.icons8.com/offices/26/hand-planting.png" alt="تركيب" className="w-6 h-6" />
-                            </div>
-                            <span className="inline-flex items-center rounded-full bg-green-400/10 px-2 py-1 text-xs font-medium text-green-500 mt-1">
-                              تركيب
-                            </span>
-                          </div>
-                        )}
-
-                        {nursery.services?.includes('maintenance') && (
-                          <div className="flex flex-col items-center">
-                            <div className="p-2 bg-gray-100 rounded-full">
-                              <img src="https://img.icons8.com/office/26/maintenance.png" alt="صيانة" className="w-6 h-6" />
-                            </div>
-                            <span className="inline-flex items-center rounded-full bg-red-400/10 px-2 py-1 text-xs font-medium text-red-400 mt-1">
-                              صيانة
-                            </span>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </Link>
-                ))}
-              </div>
-            </div>
-
-            {selectedCategory && (
-              <div className="text-center mt-6">
-                {/* <button
-                  onClick={() => setViewMode('category-results')}
-                  className="text-green-600 hover:underline"
+            {/* Responsive Grid: 1 col (mobile), 2 (tablet), 3 (desktop), 4 (large) */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {featuredNurseries.map((nursery) => (
+                <Link 
+                  key={nursery.id} 
+                  to={`/nurseries/${nursery.id}`}
+                  className="block h-full"
                 >
-                  ← عرض المشاتل في تصنيف: {selectedCategory}
-                </button> */}
-              </div>
-            )}
+                  <div className="bg-green-100 p-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 border-2 border-yellow-500 flex flex-col items-center hover:-translate-y-1">
+                    <div className="w-20 h-20 mb-4 bg-green-200 rounded-full flex items-center justify-center overflow-hidden">
+                      <img
+                        src={nursery.image || defaultNurseryImage}
+                        alt={nursery.name}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          e.target.src = defaultNurseryImage;
+                        }}
+                      />
+                    </div>
+                    <h3 className="text-lg font-bold text-green-800 text-center line-clamp-1">{nursery.name}</h3>
+                    <p className="text-sm text-gray-600 text-center mt-1 line-clamp-1">{nursery.location}</p>
+                    <div className="flex justify-center mt-2 flex-wrap gap-1">
+                      {nursery.categories.slice(0, 2).map((cat, i) => (
+                        <span
+                          key={i}
+                          className="text-xs bg-green-200 text-green-800 px-2 py-1 rounded-full whitespace-nowrap"
+                        >
+                          {cat}
+                        </span>
+                      ))}
+                    </div>
+
+                    {/* Services Icons */}
+                    <div className="mt-4 flex justify-center flex-wrap gap-3">
+                      {nursery.services?.includes('consultation') && (
+                        <div className="flex flex-col items-center">
+                          <div className="p-2 bg-gray-100 rounded-full">
+                            <img src="https://img.icons8.com/stickers/26/consultation.png" alt="استشارة" className="w-6 h-6" />
+                          </div>
+                          <span className="text-[10px] text-blue-600 font-medium mt-0.5">استشارة</span>
+                        </div>
+                      )}
+                      {nursery.services?.includes('delivery') && (
+                        <div className="flex flex-col items-center">
+                          <div className="p-2 bg-gray-100 rounded-full">
+                            <img src="https://img.icons8.com/color/26/truck--v1.png" alt="توصيل" className="w-6 h-6" />
+                          </div>
+                          <span className="text-[10px] text-yellow-600 font-medium mt-0.5">توصيل</span>
+                        </div>
+                      )}
+                      {nursery.services?.includes('installation') && (
+                        <div className="flex flex-col items-center">
+                          <div className="p-2 bg-gray-100 rounded-full">
+                            <img src="https://img.icons8.com/offices/26/hand-planting.png" alt="تركيب" className="w-6 h-6" />
+                          </div>
+                          <span className="text-[10px] text-green-600 font-medium mt-0.5">تركيب</span>
+                        </div>
+                      )}
+                      {nursery.services?.includes('maintenance') && (
+                        <div className="flex flex-col items-center">
+                          <div className="p-2 bg-gray-100 rounded-full">
+                            <img src="https://img.icons8.com/office/26/maintenance.png" alt="صيانة" className="w-6 h-6" />
+                          </div>
+                          <span className="text-[10px] text-red-600 font-medium mt-0.5">صيانة</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
           </div>
         </section>
       )}
