@@ -6,7 +6,7 @@ import {
   collection,
   doc,
   getDoc,
-  getDocs,  // ✅ Added this import
+  getDocs,
   addDoc,
   updateDoc,
   serverTimestamp
@@ -26,7 +26,7 @@ const NurseryForm = () => {
   const [albumPreviews, setAlbumPreviews] = useState([]);
   const [existingNurseryNames, setExistingNurseryNames] = useState(new Set());
   const [nameError, setNameError] = useState('');
-  const [originalName, setOriginalName] = useState(''); // ✅ Added to track original name when editing
+  const [originalName, setOriginalName] = useState('');
 
   const [formData, setFormData] = useState({
     name: '',
@@ -47,6 +47,10 @@ const NurseryForm = () => {
       facebook: '',
       snapchat: '',
       tiktok: ''
+    },
+    workingHours: {
+      weekdays: { open: '09:00', close: '21:00' },
+      friday: { open: '16:00', close: '22:00' }
     }
   });
 
@@ -111,7 +115,6 @@ const NurseryForm = () => {
         nurseriesSnapshot.docs.forEach((doc) => {
           const name = doc.data().name;
           if (name) {
-            // Normalize: trim + lowercase to avoid "ABC" vs "abc"
             namesSet.add(name.trim().toLowerCase());
           }
         });
@@ -123,7 +126,6 @@ const NurseryForm = () => {
           if (nurseryDoc.exists()) {
             const data = nurseryDoc.data();
             
-            // ✅ Store the original name
             setOriginalName(data.name || '');
             
             setFormData({
@@ -145,6 +147,10 @@ const NurseryForm = () => {
                 facebook: '',
                 snapchat: '',
                 tiktok: ''
+              },
+              workingHours: data.workingHours || {
+                weekdays: { open: '09:00', close: '21:00' },
+                friday: { open: '16:00', close: '22:00' }
               }
             });
             setImagePreview(data.image || defaultImage);
@@ -161,7 +167,6 @@ const NurseryForm = () => {
     fetchData();
   }, [id]);
 
-  // ✅ Improved validation function
   const validateName = (name) => {
     if (!name.trim()) {
       setNameError('اسم المشتل مطلوب');
@@ -171,7 +176,6 @@ const NurseryForm = () => {
     const normalized = name.trim().toLowerCase();
     let isDuplicate = existingNurseryNames.has(normalized);
     
-    // If editing and the name is the same as original, allow it
     if (id && originalName.trim().toLowerCase() === normalized) {
       isDuplicate = false;
     }
@@ -185,7 +189,6 @@ const NurseryForm = () => {
     return true;
   };
 
-  // ✅ Updated handleChange with real-time validation for name field
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
     
@@ -194,10 +197,22 @@ const NurseryForm = () => {
       [name]: type === 'checkbox' ? checked : value
     }));
 
-    // Validate name field in real-time
     if (name === 'name') {
       validateName(value);
     }
+  };
+
+  const handleWorkingHoursChange = (period, field, value) => {
+    setFormData((prev) => ({
+      ...prev,
+      workingHours: {
+        ...prev.workingHours,
+        [period]: {
+          ...prev.workingHours[period],
+          [field]: value
+        }
+      }
+    }));
   };
 
   const handleSocialMediaChange = (platform, value) => {
@@ -272,7 +287,6 @@ const NurseryForm = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // ✅ Validate nursery name uniqueness FIRST
     if (!validateName(formData.name)) {
       alert('يرجى تصحيح اسم المشتل. ' + nameError);
       return;
@@ -302,7 +316,6 @@ const NurseryForm = () => {
       let finalNurseryId = id;
 
       if (id) {
-        // Editing existing nursery
         if (imageFile) {
           if (formData.image && formData.image.includes('firebasestorage.googleapis.com')) {
             await deleteImageFromStorage(formData.image);
@@ -310,7 +323,6 @@ const NurseryForm = () => {
           imageUrl = await uploadToBackend(imageFile, 'nurs_images', id);
         }
       } else {
-        // Creating new nursery
         const fullLocation = `${formData.region} - ${formData.city} - ${formData.district}`;
         const docRef = await addDoc(collection(db, 'nurseries'), {
           name: formData.name.trim(),
@@ -329,6 +341,7 @@ const NurseryForm = () => {
           socialMedia: Object.keys(formData.socialMedia).some(key => formData.socialMedia[key].trim() !== '')
             ? Object.fromEntries(Object.entries(formData.socialMedia).filter(([_, v]) => v.trim() !== ''))
             : null,
+          workingHours: formData.workingHours,
           createdAt: serverTimestamp(),
           createdBy: auth.currentUser.email,
           updatedAt: serverTimestamp(),
@@ -341,7 +354,6 @@ const NurseryForm = () => {
         }
       }
 
-      // Upload album images
       let albumUrls = formData.album;
       if (albumFiles.length > 0) {
         const uploadPromises = albumFiles.map(file =>
@@ -369,6 +381,7 @@ const NurseryForm = () => {
         socialMedia: Object.keys(formData.socialMedia).some(key => formData.socialMedia[key].trim() !== '')
           ? Object.fromEntries(Object.entries(formData.socialMedia).filter(([_, v]) => v.trim() !== ''))
           : null,
+        workingHours: formData.workingHours,
         updatedAt: serverTimestamp(),
         updatedBy: auth.currentUser.email
       };
@@ -625,6 +638,61 @@ const NurseryForm = () => {
                     </option>
                   ))}
                 </select>
+              </div>
+            </div>
+
+            {/* Working Hours Section */}
+            <div className="bg-green-50 p-4 rounded-lg">
+              <label className="block text-sm font-medium text-gray-700 mb-3">ساعات العمل</label>
+              
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-xs text-gray-600 mb-2">السبت - الخميس</label>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs text-gray-500 mb-1">من</label>
+                      <input
+                        type="time"
+                        value={formData.workingHours.weekdays.open}
+                        onChange={(e) => handleWorkingHoursChange('weekdays', 'open', e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-green-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs text-gray-500 mb-1">إلى</label>
+                      <input
+                        type="time"
+                        value={formData.workingHours.weekdays.close}
+                        onChange={(e) => handleWorkingHoursChange('weekdays', 'close', e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-green-500"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs text-gray-600 mb-2">الجمعة</label>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs text-gray-500 mb-1">من</label>
+                      <input
+                        type="time"
+                        value={formData.workingHours.friday.open}
+                        onChange={(e) => handleWorkingHoursChange('friday', 'open', e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-green-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs text-gray-500 mb-1">إلى</label>
+                      <input
+                        type="time"
+                        value={formData.workingHours.friday.close}
+                        onChange={(e) => handleWorkingHoursChange('friday', 'close', e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-green-500"
+                      />
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
 

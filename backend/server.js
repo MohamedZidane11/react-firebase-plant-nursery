@@ -1,18 +1,20 @@
-// server.js - Full working version with nurseries & offers
+// server.js - COMPLETE Final Version with ALL endpoints
 import express from 'express';
 import cors from 'cors';
 import { db, adminStorage } from './firebase.js';
 import multer from 'multer';
-import path from 'path';
 
 const app = express();
 
-// ✅ CORS: Fix trailing spaces in allowedOrigins
+// ═══════════════════════════════════════════════════════════════
+// CORS Configuration
+// ═══════════════════════════════════════════════════════════════
 const allowedOrigins = [
-  'https://react-firebase-plant-nursery.vercel.app', // ✅ No trailing spaces
+  'https://react-firebase-plant-nursery.vercel.app',
   'https://plant-nursery-admin.vercel.app',
   'http://localhost:5173',
-  'http://localhost:5174'
+  'http://localhost:5174',
+  'http://localhost:3000'
 ];
 
 app.use(cors({
@@ -24,42 +26,59 @@ app.use(cors({
       console.log('Blocked by CORS:', origin);
       callback(new Error('Not allowed by CORS'));
     }
-  }
+  },
+  credentials: true
 }));
 
 app.use(express.json({ limit: '10mb' }));
 
-// Configure multer: store in memory
-const upload = multer({
+// ═══════════════════════════════════════════════════════════════
+// Multer Configuration
+// ═══════════════════════════════════════════════════════════════
+
+// Image upload configuration
+const imageUpload = multer({
   storage: multer.memoryStorage(),
-  limits: {
-    fileSize: 10 * 1024 * 1024, // 10 MB max
-  },
+  limits: { fileSize: 10 * 1024 * 1024 }, // 10 MB
   fileFilter: (req, file, cb) => {
     if (file.mimetype.startsWith('image/')) {
       cb(null, true);
     } else {
-      cb(new Error('Only image files (JPEG, PNG, GIF, etc.) are allowed!'), false);
+      cb(new Error('Only image files allowed!'), false);
     }
   }
 });
 
-// ✅ POST /api/upload — secure image upload
-app.post('/api/upload', upload.single('image'), async (req, res) => {
+// Video upload configuration
+const videoUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 100 * 1024 * 1024 }, // 100 MB
+  fileFilter: (req, file, cb) => {
+    if (file.mimetype.startsWith('video/')) {
+      cb(null, true);
+    } else {
+      cb(new Error('Only video files allowed!'), false);
+    }
+  }
+});
+
+// ═══════════════════════════════════════════════════════════════
+// IMAGE UPLOAD ENDPOINT
+// ═══════════════════════════════════════════════════════════════
+app.post('/api/upload', imageUpload.single('image'), async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ error: 'No image file provided' });
     }
 
     const { folder, nurseryId, offerId } = req.body;
-
-    // Validate folder
-    const allowedFolders = ['nurs_images', 'nurs_album', 'offers_images', 'offers_album'];
+    const allowedFolders = ['nurs_images', 'nurs_album', 'offers_images', 'offers_album', 'banner_images'];
+    
     if (!folder || !allowedFolders.includes(folder)) {
       return res.status(400).json({ error: `Invalid folder. Allowed: ${allowedFolders.join(', ')}` });
     }
 
-    // Build path with ID if applicable
+    // Build path with ID if provided
     let basePath = folder;
     if (folder.startsWith('nurs_') && nurseryId) {
       basePath = `${folder}/${nurseryId}`;
@@ -76,94 +95,114 @@ app.post('/api/upload', upload.single('image'), async (req, res) => {
     const file = bucket.file(filePath);
 
     await file.save(req.file.buffer, {
-      metadata: {
-        contentType: req.file.mimetype,
-      },
+      metadata: { contentType: req.file.mimetype }
     });
 
     await file.makePublic();
-
     const publicUrl = `https://firebasestorage.googleapis.com/v0/b/${bucket.name}/o/${encodeURIComponent(filePath)}?alt=media`;
 
-    res.status(200).json({
-      url: publicUrl,
-      path: filePath
-    });
+    res.status(200).json({ url: publicUrl, path: filePath });
   } catch (error) {
     console.error('Upload error:', error);
     res.status(500).json({ error: 'Failed to upload image.' });
   }
 });
 
-// DELETE /api/delete-image
-app.delete('/api/delete-image', async (req, res) => {
+// ═══════════════════════════════════════════════════════════════
+// VIDEO UPLOAD ENDPOINT (NEW!)
+// ═══════════════════════════════════════════════════════════════
+app.post('/api/upload-video', videoUpload.single('video'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: 'No video file provided' });
+    }
+
+    const { offerId } = req.body;
+    if (!offerId) {
+      return res.status(400).json({ error: 'Offer ID is required' });
+    }
+
+    const basePath = `offers_videos/${offerId}`;
+    const timestamp = Date.now();
+    const cleanName = req.file.originalname.replace(/\s+/g, '_').replace(/[^a-zA-Z0-9._-]/g, '');
+    const fileName = `${timestamp}_${cleanName}`;
+    const filePath = `${basePath}/${fileName}`;
+
+    const bucket = adminStorage.bucket();
+    const file = bucket.file(filePath);
+
+    await file.save(req.file.buffer, {
+      metadata: { contentType: req.file.mimetype }
+    });
+
+    await file.makePublic();
+    const publicUrl = `https://firebasestorage.googleapis.com/v0/b/${bucket.name}/o/${encodeURIComponent(filePath)}?alt=media`;
+
+    res.status(200).json({ url: publicUrl, path: filePath });
+  } catch (error) {
+    console.error('Video upload error:', error);
+    res.status(500).json({ error: 'Failed to upload video.' });
+  }
+});
+
+// ═══════════════════════════════════════════════════════════════
+// DELETE FILE ENDPOINT (Images & Videos)
+// ═══════════════════════════════════════════════════════════════
+app.delete('/api/delete-file', async (req, res) => {
   try {
     const { url } = req.body;
     if (!url) {
-      return res.status(400).json({ error: 'Image URL is required' });
+      return res.status(400).json({ error: 'File URL is required' });
     }
 
-    // Validate it's your bucket
     const bucketName = adminStorage.bucket().name;
     if (!url.includes(bucketName)) {
-      return res.status(400).json({ error: 'Invalid image URL' });
+      return res.status(400).json({ error: 'Invalid file URL' });
     }
 
-    // Extract file path from URL
     const urlObj = new URL(url);
     let filePath = urlObj.pathname.split('/o/')[1];
     if (filePath) {
       filePath = decodeURIComponent(filePath.split('?')[0]);
       const file = adminStorage.bucket().file(filePath);
       await file.delete();
-      res.status(200).json({ message: 'Image deleted successfully' });
+      res.status(200).json({ message: 'File deleted successfully' });
     } else {
       res.status(400).json({ error: 'Invalid URL format' });
     }
   } catch (error) {
     console.error('Delete error:', error);
-    res.status(500).json({ error: 'Failed to delete image' });
+    res.status(500).json({ error: 'Failed to delete file' });
   }
 });
 
-// ✅ GET all nurseries - with proper timestamp handling
+// ═══════════════════════════════════════════════════════════════
+// NURSERIES ENDPOINTS
+// ═══════════════════════════════════════════════════════════════
+
+// GET all published nurseries
 app.get('/api/nurseries', async (req, res) => {
   try {
     const snapshot = await db.collection('nurseries').get();
     const list = [];
+    
     snapshot.forEach(doc => {
       const data = doc.data();
       if (data.published !== false) {
-        // Convert Firestore Timestamps to ISO strings
         const cleanData = { ...data };
         
-        // Handle createdAt
-        if (cleanData.createdAt) {
-          if (typeof cleanData.createdAt.toDate === 'function') {
-            cleanData.createdAt = cleanData.createdAt.toDate().toISOString();
-          } else if (cleanData.createdAt._seconds) {
-            // Handle pending serverTimestamp
-            cleanData.createdAt = new Date(cleanData.createdAt._seconds * 1000).toISOString();
-          } else if (typeof cleanData.createdAt === 'string') {
-            // Already a string, keep it
-            cleanData.createdAt = cleanData.createdAt;
-          }
+        // Convert Firestore Timestamps to ISO strings
+        if (cleanData.createdAt && typeof cleanData.createdAt.toDate === 'function') {
+          cleanData.createdAt = cleanData.createdAt.toDate().toISOString();
         }
-        
-        // Handle updatedAt
-        if (cleanData.updatedAt) {
-          if (typeof cleanData.updatedAt.toDate === 'function') {
-            cleanData.updatedAt = cleanData.updatedAt.toDate().toISOString();
-          } else if (cleanData.updatedAt._seconds) {
-            cleanData.updatedAt = new Date(cleanData.updatedAt._seconds * 1000).toISOString();
-          } else if (typeof cleanData.updatedAt === 'string') {
-            cleanData.updatedAt = cleanData.updatedAt;
-          }
+        if (cleanData.updatedAt && typeof cleanData.updatedAt.toDate === 'function') {
+          cleanData.updatedAt = cleanData.updatedAt.toDate().toISOString();
         }
         
         list.push({ id: doc.id, ...cleanData });
       }
     });
+    
     res.json(list);
   } catch (err) {
     console.error('Error fetching nurseries:', err);
@@ -171,7 +210,7 @@ app.get('/api/nurseries', async (req, res) => {
   }
 });
 
-// ✅ GET single nursery by ID
+// GET single nursery by ID
 app.get('/api/nurseries/:id', async (req, res) => {
   try {
     const { id } = req.params;
@@ -193,19 +232,22 @@ app.get('/api/nurseries/:id', async (req, res) => {
   }
 });
 
-// ✅ GET all offers with nursery location
+// ═══════════════════════════════════════════════════════════════
+// OFFERS ENDPOINTS (WITH ENHANCED NURSERY INFO)
+// ═══════════════════════════════════════════════════════════════
+
+// GET all active offers with nursery details
 app.get('/api/offers', async (req, res) => {
   const today = new Date();
   try {
     const snapshot = await db.collection('offers').get();
     const list = [];
-
-    // Collect all offers first
     const offersData = [];
+    
     snapshot.forEach(doc => {
       const data = doc.data();
       if (data.published === false) return;
-
+      
       // If no end date → active
       if (!data.endDate) {
         offersData.push({ id: doc.id, ...data });
@@ -232,8 +274,10 @@ app.get('/api/offers', async (req, res) => {
           const nurseryDoc = await db.collection('nurseries').doc(offer.nurseryId).get();
           if (nurseryDoc.exists) {
             const nurseryData = nurseryDoc.data();
+            // Add enhanced nursery info
             offer.nurseryLocation = nurseryData.location || null;
-            // Keep nurseryName if it doesn't exist
+            offer.nurseryWhatsapp = nurseryData.whatsapp || null;
+            offer.nurseryPhone = nurseryData.phone || null;
             if (!offer.nurseryName) {
               offer.nurseryName = nurseryData.name || null;
             }
@@ -252,24 +296,27 @@ app.get('/api/offers', async (req, res) => {
   }
 });
 
-// ✅ GET single offer by ID with nursery location
+// GET single offer by ID with nursery details
 app.get('/api/offers/:id', async (req, res) => {
   try {
     const { id } = req.params;
     const doc = await db.collection('offers').doc(id).get();
+    
     if (!doc.exists) {
       return res.status(404).json({ message: 'العرض غير موجود' });
     }
 
     const offerData = { id: doc.id, ...doc.data() };
 
-    // Fetch nursery location if nurseryId exists
+    // Fetch nursery details if nurseryId exists
     if (offerData.nurseryId) {
       try {
         const nurseryDoc = await db.collection('nurseries').doc(offerData.nurseryId).get();
         if (nurseryDoc.exists) {
           const nurseryData = nurseryDoc.data();
           offerData.nurseryLocation = nurseryData.location || null;
+          offerData.nurseryWhatsapp = nurseryData.whatsapp || null;
+          offerData.nurseryPhone = nurseryData.phone || null;
           if (!offerData.nurseryName) {
             offerData.nurseryName = nurseryData.name || null;
           }
@@ -286,7 +333,9 @@ app.get('/api/offers/:id', async (req, res) => {
   }
 });
 
-// ✅ GET all published categories
+// ═══════════════════════════════════════════════════════════════
+// CATEGORIES ENDPOINTS
+// ═══════════════════════════════════════════════════════════════
 app.get('/api/categories', async (req, res) => {
   try {
     const snapshot = await db.collection('categories').get();
@@ -295,15 +344,12 @@ app.get('/api/categories', async (req, res) => {
     snapshot.forEach(doc => {
       const data = doc.data();
       if (data.published !== false) {
-        list.push({
-          id: doc.id,
-          ...data
-        });
+        list.push({ id: doc.id, ...data });
       }
     });
 
     // Sort by order
-    list.sort((a, b) => a.order - b.order);
+    list.sort((a, b) => (a.order || 0) - (b.order || 0));
 
     res.json(list);
   } catch (err) {
@@ -312,7 +358,9 @@ app.get('/api/categories', async (req, res) => {
   }
 });
 
-// ✅ GET all published sponsors
+// ═══════════════════════════════════════════════════════════════
+// SPONSORS ENDPOINTS
+// ═══════════════════════════════════════════════════════════════
 app.get('/api/sponsors', async (req, res) => {
   try {
     const snapshot = await db.collection('sponsors').get();
@@ -321,15 +369,12 @@ app.get('/api/sponsors', async (req, res) => {
     snapshot.forEach(doc => {
       const data = doc.data();
       if (data.published !== false) {
-        list.push({
-          id: doc.id,
-          ...data
-        });
+        list.push({ id: doc.id, ...data });
       }
     });
 
     // Sort by order
-    list.sort((a, b) => a.order - b.order);
+    list.sort((a, b) => (a.order || 0) - (b.order || 0));
 
     res.json(list);
   } catch (err) {
@@ -338,33 +383,23 @@ app.get('/api/sponsors', async (req, res) => {
   }
 });
 
-// ✅ POST new pending nursery
+// ═══════════════════════════════════════════════════════════════
+// PENDING NURSERIES ENDPOINTS
+// ═══════════════════════════════════════════════════════════════
+
+// POST new pending nursery
 app.post('/api/pending-nurseries', async (req, res) => {
   try {
-    const {
-      name,
-      image,
-      categories,
-      location,
-      services,
-      featured,
-      contactName,
-      whatsapp
-    } = req.body;
+    const { name, categories, location, services, featured, contactName, whatsapp } = req.body;
 
     // Validation
     if (!name?.trim()) return res.status(400).json({ message: 'الاسم مطلوب' });
-    // Remove image validation entirely, or log but don't block
-    //if (!image?.trim()) return res.status(400).json({ message: 'الصورة مطلوبة' });
     if (!location?.trim()) return res.status(400).json({ message: 'الموقع مطلوب' });
     if (!contactName?.trim()) return res.status(400).json({ message: 'اسم المسئول مطلوب' });
     if (!whatsapp?.trim()) return res.status(400).json({ message: 'رقم الواتس آب مطلوب' });
 
-    // Save to Firestore
     const newNursery = {
       name: name.trim(),
-      // Remove image validation entirely, or log but don't block
-      //image: image.trim(),
       categories: Array.isArray(categories) ? categories : [],
       location: location.trim(),
       services: Array.isArray(services) ? services : [],
@@ -376,7 +411,6 @@ app.post('/api/pending-nurseries', async (req, res) => {
     };
 
     const docRef = await db.collection('pendingNurseries').add(newNursery);
-
     res.status(201).json({ id: docRef.id, ...newNursery });
   } catch (err) {
     console.error('Error saving pending nursery:', err);
@@ -384,12 +418,7 @@ app.post('/api/pending-nurseries', async (req, res) => {
   }
 });
 
-// ✅ Health check
-app.get('/', (req, res) => {
-  res.json({ message: 'Nursery API is running 🌿' });
-});
-
-// ✅ GET all pending nurseries (for admin)
+// GET all pending nurseries (for admin)
 app.get('/api/pending-nurseries', async (req, res) => {
   try {
     const snapshot = await db.collection('pendingNurseries').get();
@@ -399,11 +428,16 @@ app.get('/api/pending-nurseries', async (req, res) => {
     });
     res.json(list);
   } catch (err) {
+    console.error('Error fetching pending nurseries:', err);
     res.status(500).json({ message: 'فشل تحميل المشاتل المعلقة' });
   }
 });
 
-// ✅ GET all banners (for admin & frontend)
+// ═══════════════════════════════════════════════════════════════
+// BANNERS ENDPOINTS
+// ═══════════════════════════════════════════════════════════════
+
+// GET all banners
 app.get('/api/banners', async (req, res) => {
   try {
     const snapshot = await db.collection('banners').get();
@@ -418,7 +452,7 @@ app.get('/api/banners', async (req, res) => {
   }
 });
 
-// GET single banner by ID (for admin form)
+// GET single banner by ID
 app.get('/api/banners/:id', async (req, res) => {
   try {
     const { id } = req.params;
@@ -436,7 +470,7 @@ app.get('/api/banners/:id', async (req, res) => {
 });
 
 // POST new banner
-app.post('/api/banners', upload.single('image'), async (req, res) => {
+app.post('/api/banners', imageUpload.single('image'), async (req, res) => {
   try {
     const { position, active } = req.body;
     const isActive = active === 'true';
@@ -458,7 +492,6 @@ app.post('/api/banners', upload.single('image'), async (req, res) => {
 
     const bucket = adminStorage.bucket();
     const file = bucket.file(filePath);
-    // ✅ FIXED: metadata (not "meta")
     await file.save(req.file.buffer, {
       metadata: { contentType: req.file.mimetype }
     });
@@ -481,7 +514,7 @@ app.post('/api/banners', upload.single('image'), async (req, res) => {
 });
 
 // PUT update banner
-app.put('/api/banners/:id', upload.single('image'), async (req, res) => {
+app.put('/api/banners/:id', imageUpload.single('image'), async (req, res) => {
   try {
     const { id } = req.params;
     const { position, active } = req.body;
@@ -525,7 +558,6 @@ app.put('/api/banners/:id', upload.single('image'), async (req, res) => {
       const filePath = `banner_images/${fileName}`;
       const bucket = adminStorage.bucket();
       const file = bucket.file(filePath);
-      // ✅ FIXED: metadata (not "meta")
       await file.save(req.file.buffer, {
         metadata: { contentType: req.file.mimetype }
       });
@@ -567,45 +599,29 @@ app.delete('/api/banners/:id', async (req, res) => {
   }
 });
 
-// ✅ POST: Save survey response
+// ═══════════════════════════════════════════════════════════════
+// SURVEYS ENDPOINTS
+// ═══════════════════════════════════════════════════════════════
+
+// POST save survey response
 app.post('/api/survey', async (req, res) => {
   try {
     const {
-      name,
-      email,
-      interest_level,
-      expected_features,
-      service_suggestions,
-      communication_method,
-      directory_interest,
-      preferred_offers,
-      region,
-      additional_comments,
-      timestamp,
-      platform
+      name, email, interest_level, expected_features, service_suggestions,
+      communication_method, directory_interest, preferred_offers, region,
+      additional_comments, timestamp, platform
     } = req.body;
 
-    // Validation for required fields
-    if (!interest_level?.trim()) {
-      return res.status(400).json({ message: 'مستوى الاهتمام مطلوب' });
-    }
-    if (!expected_features?.trim()) {
-      return res.status(400).json({ message: 'الميزات المتوقعة مطلوبة' });
-    }
-    if (!communication_method?.trim()) {
-      return res.status(400).json({ message: 'وسيلة التواصل مطلوبة' });
-    }
-    if (!directory_interest?.trim()) {
-      return res.status(400).json({ message: 'الاهتمام بالدليل مطلوب' });
-    }
+    // Validation
+    if (!interest_level?.trim()) return res.status(400).json({ message: 'مستوى الاهتمام مطلوب' });
+    if (!expected_features?.trim()) return res.status(400).json({ message: 'الميزات المتوقعة مطلوبة' });
+    if (!communication_method?.trim()) return res.status(400).json({ message: 'وسيلة التواصل مطلوبة' });
+    if (!directory_interest?.trim()) return res.status(400).json({ message: 'الاهتمام بالدليل مطلوب' });
     if (!Array.isArray(preferred_offers) || preferred_offers.length === 0) {
       return res.status(400).json({ message: 'يجب اختيار عرض واحد على الأقل' });
     }
-    if (!region?.trim()) {
-      return res.status(400).json({ message: 'المنطقة مطلوبة' });
-    }
+    if (!region?.trim()) return res.status(400).json({ message: 'المنطقة مطلوبة' });
 
-    // Save to Firestore
     const surveyData = {
       name: name?.trim() || null,
       email: email?.trim() || null,
@@ -622,28 +638,21 @@ app.post('/api/survey', async (req, res) => {
     };
 
     const docRef = await db.collection('surveys').add(surveyData);
-
-    res.status(201).json({ 
-      id: docRef.id, 
-      message: 'تم حفظ الاستبيان بنجاح',
-      ...surveyData 
-    });
+    res.status(201).json({ id: docRef.id, message: 'تم حفظ الاستبيان بنجاح', ...surveyData });
   } catch (err) {
     console.error('Error saving survey:', err);
     res.status(500).json({ message: 'فشل في حفظ الاستبيان' });
   }
 });
 
-// ✅ GET: Retrieve all surveys (for admin)
+// GET all surveys (for admin)
 app.get('/api/surveys', async (req, res) => {
   try {
     const snapshot = await db.collection('surveys').orderBy('timestamp', 'desc').get();
     const surveys = [];
-    
     snapshot.forEach(doc => {
       surveys.push({ id: doc.id, ...doc.data() });
     });
-    
     res.json(surveys);
   } catch (err) {
     console.error('Error fetching surveys:', err);
@@ -651,11 +660,10 @@ app.get('/api/surveys', async (req, res) => {
   }
 });
 
-// ✅ GET: Get survey statistics
+// GET survey statistics
 app.get('/api/survey/stats', async (req, res) => {
   try {
     const snapshot = await db.collection('surveys').get();
-    
     const stats = {
       total: snapshot.size,
       byInterestLevel: {},
@@ -668,27 +676,14 @@ app.get('/api/survey/stats', async (req, res) => {
     snapshot.forEach(doc => {
       const data = doc.data();
       
-      // Count by interest level
-      stats.byInterestLevel[data.interest_level] = 
-        (stats.byInterestLevel[data.interest_level] || 0) + 1;
+      stats.byInterestLevel[data.interest_level] = (stats.byInterestLevel[data.interest_level] || 0) + 1;
+      stats.byCommunicationMethod[data.communication_method] = (stats.byCommunicationMethod[data.communication_method] || 0) + 1;
+      stats.byRegion[data.region] = (stats.byRegion[data.region] || 0) + 1;
+      stats.byDirectoryInterest[data.directory_interest] = (stats.byDirectoryInterest[data.directory_interest] || 0) + 1;
       
-      // Count by communication method
-      stats.byCommunicationMethod[data.communication_method] = 
-        (stats.byCommunicationMethod[data.communication_method] || 0) + 1;
-      
-      // Count by region
-      stats.byRegion[data.region] = 
-        (stats.byRegion[data.region] || 0) + 1;
-      
-      // Count by directory interest
-      stats.byDirectoryInterest[data.directory_interest] = 
-        (stats.byDirectoryInterest[data.directory_interest] || 0) + 1;
-      
-      // Count preferred offers
       if (Array.isArray(data.preferred_offers)) {
         data.preferred_offers.forEach(offer => {
-          stats.preferredOffers[offer] = 
-            (stats.preferredOffers[offer] || 0) + 1;
+          stats.preferredOffers[offer] = (stats.preferredOffers[offer] || 0) + 1;
         });
       }
     });
@@ -699,15 +694,17 @@ app.get('/api/survey/stats', async (req, res) => {
     res.status(500).json({ message: 'فشل تحميل الإحصائيات' });
   }
 });
-  
-// ✅ GET site settings
+
+// ═══════════════════════════════════════════════════════════════
+// SITE SETTINGS ENDPOINT
+// ═══════════════════════════════════════════════════════════════
 app.get('/api/settings/site', async (req, res) => {
   try {
     const doc = await db.collection('settings').doc('site').get();
     if (doc.exists) {
       res.json(doc.data());
     } else {
-      // Return defaults if not set
+      // Return defaults
       res.json({
         title: 'أكبر منصة للمشاتل في المملكة',
         subtitle: 'اكتشف أكثر من 500 مشتل ومتجر لأدوات الزراعة في مكان واحد',
@@ -721,7 +718,7 @@ app.get('/api/settings/site', async (req, res) => {
         contacts: {
           email: 'info@nurseries.sa',
           phone: '0551234567',
-          whatsapp: '+4567 123 50 966',
+          whatsapp: '+966 50 123 4567',
           address: 'الرياض، المملكة العربية السعودية'
         },
         footerLinks: ['الرئيسية', 'المشاتل', 'العروض', 'سجل مشتلك'],
@@ -738,8 +735,35 @@ app.get('/api/settings/site', async (req, res) => {
   }
 });
 
-// ✅ Start server
+// ═══════════════════════════════════════════════════════════════
+// HEALTH CHECK
+// ═══════════════════════════════════════════════════════════════
+app.get('/', (req, res) => {
+  res.json({ 
+    message: 'Nursery API is running 🌿',
+    version: '2.0.0',
+    endpoints: {
+      nurseries: '/api/nurseries',
+      offers: '/api/offers',
+      upload: '/api/upload',
+      uploadVideo: '/api/upload-video',
+      deleteFile: '/api/delete-file',
+      categories: '/api/categories',
+      sponsors: '/api/sponsors',
+      banners: '/api/banners',
+      surveys: '/api/surveys',
+      settings: '/api/settings/site'
+    }
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════
+// START SERVER
+// ═══════════════════════════════════════════════════════════════
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
+  console.log(`📍 Health check: http://localhost:${PORT}/`);
+  console.log(`🌿 Nurseries API: http://localhost:${PORT}/api/nurseries`);
+  console.log(`🎯 Offers API: http://localhost:${PORT}/api/offers`);
 });

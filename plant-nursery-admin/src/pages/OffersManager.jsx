@@ -1,8 +1,10 @@
-// src/pages/OffersManager.jsx
+// src/pages/OffersManager.jsx - Updated to show new fields
 import { useState, useEffect, useMemo } from 'react';
 import { db } from '../firebase/firebase';
 import { collection, getDocs, deleteDoc, doc } from 'firebase/firestore';
 import { useNavigate } from 'react-router-dom';
+
+const API_BASE = 'http://localhost:5000';
 
 const OffersManager = () => {
   const [offers, setOffers] = useState([]);
@@ -13,7 +15,7 @@ const OffersManager = () => {
   const [filters, setFilters] = useState({
     displayName: '',
     nurseryId: '',
-    activity: '' // 'active' or 'inactive'
+    activity: ''
   });
 
   const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' });
@@ -26,11 +28,10 @@ const OffersManager = () => {
         ...doc.data()
       }));
   
-      // Sort by createdAt: newest first
       list.sort((a, b) => {
         const aTime = a.createdAt?.toDate?.() || new Date(0);
         const bTime = b.createdAt?.toDate?.() || new Date(0);
-        return bTime - aTime; // descending = newest first
+        return bTime - aTime;
       });
   
       setOffers(list);
@@ -60,9 +61,31 @@ const OffersManager = () => {
     loadData();
   }, []);
 
-  const handleDelete = async (id) => {
+  const handleDelete = async (id, offer) => {
     if (!confirm('هل أنت متأكد من حذف هذا العرض؟')) return;
+    
     try {
+      // Delete all associated files
+      const filesToDelete = [];
+      
+      if (offer.image) filesToDelete.push(offer.image);
+      if (offer.album) filesToDelete.push(...offer.album);
+      if (offer.videos) filesToDelete.push(...offer.videos);
+
+      // Delete files from storage
+      for (const fileUrl of filesToDelete) {
+        try {
+          await fetch(`${API_BASE}/api/delete-file`, {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ url: fileUrl })
+          });
+        } catch (err) {
+          console.warn('Failed to delete file:', fileUrl);
+        }
+      }
+
+      // Delete from Firestore
       await deleteDoc(doc(db, 'offers', id));
       alert('تم الحذف!');
       fetchOffers();
@@ -100,7 +123,6 @@ const OffersManager = () => {
       });
     }
 
-    // Apply sorting
     if (sortConfig.key) {
       result.sort((a, b) => {
         if (sortConfig.key === 'title') {
@@ -199,9 +221,9 @@ const OffersManager = () => {
           </div>
         </div>
 
-        {/* Conditional Rendering */}
+        {/* Results */}
         {isSearching ? (
-          /* 📊 TABLE VIEW */
+          /* TABLE VIEW */
           <div className="bg-white rounded-xl shadow-lg overflow-hidden border border-orange-100">
             <div className="p-4 border-b border-gray-200">
               <h2 className="text-xl font-bold">نتائج البحث ({filteredOffers.length})</h2>
@@ -224,6 +246,7 @@ const OffersManager = () => {
                         )}
                       </th>
                       <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">المشتل</th>
+                      <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">السعر</th>
                       <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">الحالة</th>
                       <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">الإجراءات</th>
                     </tr>
@@ -233,9 +256,52 @@ const OffersManager = () => {
                       const isActive = !isExpired(offer.endDate) && offer.published !== false;
                       return (
                         <tr key={offer.id} className="hover:bg-gray-50">
-                          <td className="px-6 py-4 whitespace-nowrap font-medium text-gray-900">{offer.title}</td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="flex items-center gap-3">
+                              <img
+                                src={offer.image || '/images/offer_default.png'}
+                                alt={offer.title}
+                                className="w-12 h-12 object-cover rounded"
+                                onError={(e) => e.target.src = '/images/offer_default.png'}
+                              />
+                              <div>
+                                <p className="font-medium text-gray-900">{offer.title}</p>
+                                <div className="flex gap-1 mt-1">
+                                  {offer.discount && (
+                                    <span className="text-xs bg-red-100 text-red-800 px-2 py-0.5 rounded">
+                                      {offer.discount}% خصم
+                                    </span>
+                                  )}
+                                  {offer.features && offer.features.length > 0 && (
+                                    <span className="text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded">
+                                      {offer.features.length} ميزة
+                                    </span>
+                                  )}
+                                  {offer.videos && offer.videos.length > 0 && (
+                                    <span className="text-xs bg-purple-100 text-purple-800 px-2 py-0.5 rounded">
+                                      {offer.videos.length} فيديو
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                             {offer.nurseryName || '-'}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm">
+                            {offer.finalPrice ? (
+                              <div>
+                                <p className="font-semibold text-green-600">{offer.finalPrice} ر.س</p>
+                                {offer.originalPrice && (
+                                  <p className="text-xs text-gray-400 line-through">{offer.originalPrice} ر.س</p>
+                                )}
+                              </div>
+                            ) : offer.originalPrice ? (
+                              <p className="font-semibold text-gray-700">{offer.originalPrice} ر.س</p>
+                            ) : offer.discount ? (
+                              <p className="font-semibold text-red-600">{offer.discount}% خصم</p>
+                            ) : '-'}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
@@ -252,8 +318,8 @@ const OffersManager = () => {
                               تعديل
                             </button>
                             <button
-                              onClick={() => handleDelete(offer.id)}
-                              className="text-red-600 hover:text-red-900 mr-3"
+                              onClick={() => handleDelete(offer.id, offer)}
+                              className="text-red-600 hover:text-red-900"
                             >
                               حذف
                             </button>
@@ -267,7 +333,7 @@ const OffersManager = () => {
             )}
           </div>
         ) : (
-          /* 🗂️ CARD VIEW */
+          /* CARD VIEW */
           <div className="bg-white rounded-2xl shadow-lg overflow-hidden border border-orange-100">
             <div className="p-6 border-b border-gray-200">
               <h2 className="text-xl font-bold">العروض ({offers.length})</h2>
@@ -276,68 +342,111 @@ const OffersManager = () => {
               {offers.length === 0 ? (
                 <p className="p-8 text-center text-gray-500">لا توجد عروض.</p>
               ) : (
-                offers.map((offer) => (
-                  <div key={offer.id} className="p-6 hover:bg-gray-50 flex flex-col md:flex-row md:items-center justify-between gap-4">
-                    <div>
-                      <div className="flex items-center gap-4">
+                offers.map((offer) => {
+                  const isActive = !isExpired(offer.endDate) && offer.published !== false;
+                  return (
+                    <div key={offer.id} className="p-6 hover:bg-gray-50">
+                      <div className="flex flex-col md:flex-row gap-4">
+                        {/* Image */}
                         <img
                           src={offer.image || '/images/offer_default.png'}
                           alt={offer.title}
-                          className="w-16 h-16 object-cover rounded-lg border"
+                          className="w-full md:w-32 h-32 object-cover rounded-lg border"
                           onError={(e) => {
                             e.target.src = '/images/offer_default.png';
                           }}
                         />
-                        <div>
-                          <h3 className="font-bold text-gray-800">{offer.title}</h3>
-                          <p className="text-sm text-gray-600 line-clamp-2">{offer.description}</p>
+
+                        {/* Info */}
+                        <div className="flex-1">
+                          <h3 className="font-bold text-gray-800 text-lg mb-2">{offer.title}</h3>
+                          <p className="text-sm text-gray-600 line-clamp-2 mb-3">{offer.description}</p>
+                          
+                          {offer.nurseryName && (
+                            <p className="text-sm text-green-600 mb-2">من: {offer.nurseryName}</p>
+                          )}
+
+                          {/* Price Info */}
+                          <div className="flex flex-wrap items-center gap-3 mb-3">
+                            {offer.finalPrice && (
+                              <span className="text-lg font-bold text-green-600">
+                                {offer.finalPrice} ر.س
+                              </span>
+                            )}
+                            {offer.originalPrice && (
+                              <span className="text-sm text-gray-400 line-through">
+                                {offer.originalPrice} ر.س
+                              </span>
+                            )}
+                            {offer.discount && (
+                              <span className="bg-red-100 text-red-800 text-sm px-3 py-1 rounded-full font-bold">
+                                {offer.discount}% خصم
+                              </span>
+                            )}
+                          </div>
+
+                          {/* Badges */}
+                          <div className="flex flex-wrap gap-2">
+                            {offer.highlighted && (
+                              <span className="bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded-full">
+                                مميز
+                              </span>
+                            )}
+                            {offer.published !== false ? (
+                              <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">
+                                منشور
+                              </span>
+                            ) : (
+                              <span className="bg-red-100 text-red-800 text-xs px-2 py-1 rounded-full">
+                                غير منشور
+                              </span>
+                            )}
+                            {isExpired(offer.endDate) ? (
+                              <span className="bg-gray-100 text-gray-800 text-xs px-2 py-1 rounded-full">
+                                منتهي
+                              </span>
+                            ) : (
+                              <span className="bg-orange-100 text-orange-800 text-xs px-2 py-1 rounded-full">
+                                نشط
+                              </span>
+                            )}
+                            {offer.features && offer.features.length > 0 && (
+                              <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">
+                                {offer.features.length} ميزة
+                              </span>
+                            )}
+                            {offer.album && offer.album.length > 0 && (
+                              <span className="bg-purple-100 text-purple-800 text-xs px-2 py-1 rounded-full">
+                                {offer.album.length} صورة
+                              </span>
+                            )}
+                            {offer.videos && offer.videos.length > 0 && (
+                              <span className="bg-indigo-100 text-indigo-800 text-xs px-2 py-1 rounded-full">
+                                {offer.videos.length} فيديو
+                              </span>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Actions */}
+                        <div className="flex md:flex-col gap-2">
+                          <button
+                            onClick={() => navigate(`/offers/edit/${offer.id}`)}
+                            className="bg-blue-100 hover:bg-blue-200 text-blue-800 text-sm px-4 py-2 rounded transition flex-1 md:flex-initial"
+                          >
+                            تعديل
+                          </button>
+                          <button
+                            onClick={() => handleDelete(offer.id, offer)}
+                            className="bg-red-100 hover:bg-red-200 text-red-800 text-sm px-4 py-2 rounded transition flex-1 md:flex-initial"
+                          >
+                            حذف
+                          </button>
                         </div>
                       </div>
-                      {offer.nurseryName && (
-                        <p className="text-sm text-green-600 mt-1">من: {offer.nurseryName}</p>
-                      )}
-                      <div className="flex flex-wrap gap-1 mt-2">
-                        {offer.highlighted && (
-                          <span className="bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded-full">
-                            مميز
-                          </span>
-                        )}
-                        {offer.published !== false ? (
-                          <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">
-                            منشور
-                          </span>
-                        ) : (
-                          <span className="bg-red-100 text-red-800 text-xs px-2 py-1 rounded-full">
-                            غير منشور
-                          </span>
-                        )}
-                        {isExpired(offer.endDate) ? (
-                          <span className="bg-gray-100 text-gray-800 text-xs px-2 py-1 rounded-full">
-                            منتهي
-                          </span>
-                        ) : (
-                          <span className="bg-orange-100 text-orange-800 text-xs px-2 py-1 rounded-full">
-                            نشط
-                          </span>
-                        )}
-                      </div>
                     </div>
-                    <div className="flex flex-wrap gap-2 mt-4 md:mt-0">
-                      <button
-                        onClick={() => navigate(`/offers/edit/${offer.id}`)}
-                        className="bg-blue-100 hover:bg-blue-200 text-blue-800 text-sm px-3 py-1 rounded transition"
-                      >
-                        تعديل
-                      </button>
-                      <button
-                        onClick={() => handleDelete(offer.id)}
-                        className="bg-red-100 hover:bg-red-200 text-red-800 text-sm px-3 py-1 rounded transition"
-                      >
-                        حذف
-                      </button>
-                    </div>
-                  </div>
-                ))
+                  );
+                })
               )}
             </div>
           </div>

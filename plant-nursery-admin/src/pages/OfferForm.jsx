@@ -1,4 +1,4 @@
-// src/pages/OfferForm.jsx
+// src/pages/OfferForm.jsx - Updated with all new fields
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { db, auth } from '../firebase/firebase';
@@ -24,41 +24,43 @@ const OfferForm = () => {
   const [imagePreview, setImagePreview] = useState(defaultImage);
   const [albumFiles, setAlbumFiles] = useState([]);
   const [albumPreviews, setAlbumPreviews] = useState([]);
+  const [videoFiles, setVideoFiles] = useState([]);
+  const [videoPreviews, setVideoPreviews] = useState([]);
 
   const [formData, setFormData] = useState({
     title: '',
     description: '',
     tags: [],
+    startDate: '',
     endDate: '',
     discount: null,
+    originalPrice: null,
+    finalPrice: null,
+    features: [''],
     highlighted: false,
     published: true,
     nurseryId: '',
     image: null,
-    album: []
+    album: [],
+    videos: []
   });
 
-  // Delete image via backend API
-  const deleteImageFromStorage = async (imageUrl) => {
+  const deleteFileFromStorage = async (fileUrl) => {
     try {
-      if (!imageUrl || !imageUrl.includes('firebasestorage.googleapis.com')) {
+      if (!fileUrl || !fileUrl.includes('firebasestorage.googleapis.com')) {
         return;
       }
-
-      const response = await fetch(`${API_BASE}/api/delete-image`, {
+      const response = await fetch(`${API_BASE}/api/delete-file`, {
         method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ url: imageUrl }),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: fileUrl }),
       });
-
       if (!response.ok) {
         const error = await response.json().catch(() => ({}));
-        console.warn('Failed to delete image:', error.error || 'Unknown error');
+        console.warn('Failed to delete file:', error.error || 'Unknown error');
       }
     } catch (err) {
-      console.warn('Could not delete image:', err);
+      console.warn('Could not delete file:', err);
     }
   };
 
@@ -69,15 +71,29 @@ const OfferForm = () => {
     if (offerId) {
       formData.append('offerId', offerId);
     }
-
     const res = await fetch(`${API_BASE}/api/upload`, {
       method: 'POST',
       body: formData,
     });
-
     if (!res.ok) {
       const error = await res.json().catch(() => ({}));
       throw new Error(error.error || 'فشل رفع الصورة');
+    }
+    const data = await res.json();
+    return data.url;
+  };
+
+  const uploadVideoToBackend = async (file, offerId) => {
+    const formData = new FormData();
+    formData.append('video', file);
+    formData.append('offerId', offerId);
+    const res = await fetch(`${API_BASE}/api/upload-video`, {
+      method: 'POST',
+      body: formData,
+    });
+    if (!res.ok) {
+      const error = await res.json().catch(() => ({}));
+      throw new Error(error.error || 'فشل رفع الفيديو');
     }
     const data = await res.json();
     return data.url;
@@ -104,23 +120,28 @@ const OfferForm = () => {
           const offerDoc = await getDoc(doc(db, 'offers', id));
           if (offerDoc.exists()) {
             const data = offerDoc.data();
-            const imageUrl = data.image || null;
-            const albumUrls = data.album || [];
             setFormData({
               title: data.title || '',
               description: data.description || '',
               tags: data.tags || [],
+              startDate: data.startDate || '',
               endDate: data.endDate || '',
-              discount: data.discount,
+              discount: data.discount || null,
+              originalPrice: data.originalPrice || null,
+              finalPrice: data.finalPrice || null,
+              features: data.features && data.features.length > 0 ? data.features : [''],
               highlighted: data.highlighted || false,
               published: data.published !== false,
               nurseryId: data.nurseryId || '',
-              image: imageUrl,
-              album: albumUrls
+              image: data.image || null,
+              album: data.album || [],
+              videos: data.videos || []
             });
-            setImagePreview(imageUrl || defaultImage);
+            setImagePreview(data.image || defaultImage);
             setAlbumPreviews([]);
             setAlbumFiles([]);
+            setVideoPreviews([]);
+            setVideoFiles([]);
           }
         } catch (err) {
           console.error('Error loading offer:', err);
@@ -166,11 +187,50 @@ const OfferForm = () => {
     }
   };
 
+  const handleVideoChange = (e) => {
+    const files = Array.from(e.target.files);
+    if (files.length > 0) {
+      const newPreviews = files.map(file => ({
+        name: file.name,
+        size: (file.size / (1024 * 1024)).toFixed(2) + ' MB'
+      }));
+      setVideoFiles(prev => [...prev, ...files]);
+      setVideoPreviews(prev => [...prev, ...newPreviews]);
+    }
+  };
+
   const deleteAlbumImage = async (index) => {
     const imageUrl = formData.album[index];
-    await deleteImageFromStorage(imageUrl);
+    await deleteFileFromStorage(imageUrl);
     const newAlbum = formData.album.filter((_, i) => i !== index);
     setFormData(prev => ({ ...prev, album: newAlbum }));
+  };
+
+  const deleteVideo = async (index) => {
+    const videoUrl = formData.videos[index];
+    await deleteFileFromStorage(videoUrl);
+    const newVideos = formData.videos.filter((_, i) => i !== index);
+    setFormData(prev => ({ ...prev, videos: newVideos }));
+  };
+
+  const handleFeatureChange = (index, value) => {
+    const newFeatures = [...formData.features];
+    newFeatures[index] = value;
+    setFormData(prev => ({ ...prev, features: newFeatures }));
+  };
+
+  const addFeature = () => {
+    setFormData(prev => ({
+      ...prev,
+      features: [...prev.features, '']
+    }));
+  };
+
+  const removeFeature = (index) => {
+    if (formData.features.length > 1) {
+      const newFeatures = formData.features.filter((_, i) => i !== index);
+      setFormData(prev => ({ ...prev, features: newFeatures }));
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -179,6 +239,14 @@ const OfferForm = () => {
       alert('العنوان، الوصف، وتاريخ الانتهاء مطلوبون');
       return;
     }
+
+    // Validate features
+    const validFeatures = formData.features.filter(f => f.trim() !== '');
+    if (validFeatures.length === 0) {
+      alert('يجب إضافة ميزة واحدة على الأقل');
+      return;
+    }
+
     try {
       setLoading(true);
 
@@ -189,7 +257,7 @@ const OfferForm = () => {
         // Editing
         if (imageFile) {
           if (formData.image && formData.image.includes('firebasestorage.googleapis.com')) {
-            await deleteImageFromStorage(formData.image);
+            await deleteFileFromStorage(formData.image);
           }
           imageUrl = await uploadToBackend(imageFile, 'offers_images', id);
         }
@@ -197,8 +265,10 @@ const OfferForm = () => {
         // Creating: first create with null image
         const docRef = await addDoc(collection(db, 'offers'), {
           ...formData,
+          features: validFeatures,
           image: null,
           album: [],
+          videos: [],
           createdAt: serverTimestamp(),
           createdBy: auth.currentUser.email,
           updatedAt: serverTimestamp(),
@@ -221,16 +291,30 @@ const OfferForm = () => {
         albumUrls = [...formData.album, ...newAlbumUrls];
       }
 
+      // Upload videos
+      let videoUrls = formData.videos;
+      if (videoFiles.length > 0) {
+        const uploadPromises = videoFiles.map(file =>
+          uploadVideoToBackend(file, finalOfferId)
+        );
+        const newVideoUrls = await Promise.all(uploadPromises);
+        videoUrls = [...formData.videos, ...newVideoUrls];
+      }
+
       const selectedNursery = nurseries.find(n => n.id === formData.nurseryId);
       const nurseryName = selectedNursery ? selectedNursery.name : '';
 
       const finalData = {
         ...formData,
+        features: validFeatures,
         image: imageUrl || null,
         album: albumUrls,
+        videos: videoUrls,
         nurseryId: formData.nurseryId || null,
         nurseryName,
         discount: formData.discount ? Number(formData.discount) : null,
+        originalPrice: formData.originalPrice ? Number(formData.originalPrice) : null,
+        finalPrice: formData.finalPrice ? Number(formData.finalPrice) : null,
         updatedAt: serverTimestamp(),
         updatedBy: auth.currentUser.email
       };
@@ -304,7 +388,7 @@ const OfferForm = () => {
                     type="button"
                     onClick={async () => {
                       if (formData.image && formData.image.includes('firebasestorage.googleapis.com')) {
-                        await deleteImageFromStorage(formData.image);
+                        await deleteFileFromStorage(formData.image);
                       }
                       setImageFile(null);
                       setImagePreview(defaultImage);
@@ -393,10 +477,90 @@ const OfferForm = () => {
               )}
             </div>
 
-            {/* Rest of the form fields */}
+            {/* Video Upload */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">الفيديوهات (اختياري)</label>
+              <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-dashed border-gray-300 rounded-lg hover:border-orange-400 transition">
+                <div className="space-y-1 text-center">
+                  <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                  </svg>
+                  <div className="flex text-sm text-gray-600">
+                    <label htmlFor="video-upload" className="relative cursor-pointer bg-white rounded-md font-medium text-orange-600 hover:text-orange-500">
+                      <span>رفع فيديو</span>
+                      <input
+                        id="video-upload"
+                        name="video-upload"
+                        type="file"
+                        accept="video/*"
+                        multiple
+                        className="sr-only"
+                        onChange={handleVideoChange}
+                      />
+                    </label>
+                    <p className="pl-1">أو اسحب الملفات هنا</p>
+                  </div>
+                  <p className="text-xs text-gray-500">MP4, MOV, AVI حتى 100MB لكل فيديو</p>
+                </div>
+              </div>
+              {(videoPreviews.length > 0 || formData.videos.length > 0) && (
+                <div className="mt-4">
+                  <h4 className="text-sm font-medium text-gray-700 mb-2">الفيديوهات المضافة:</h4>
+                  <div className="space-y-2">
+                    {videoPreviews.map((preview, index) => (
+                      <div key={`new-vid-${index}`} className="flex items-center justify-between p-3 bg-gray-50 rounded border">
+                        <div className="flex items-center gap-2">
+                          <svg className="w-5 h-5 text-orange-500" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M2 6a2 2 0 012-2h6a2 2 0 012 2v8a2 2 0 01-2 2H4a2 2 0 01-2-2V6zM14.553 7.106A1 1 0 0014 8v4a1 1 0 00.553.894l2 1A1 1 0 0018 13V7a1 1 0 00-1.447-.894l-2 1z" />
+                          </svg>
+                          <div>
+                            <p className="text-sm font-medium">{preview.name}</p>
+                            <p className="text-xs text-gray-500">{preview.size}</p>
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const newPreviews = videoPreviews.filter((_, i) => i !== index);
+                            const newFiles = videoFiles.filter((_, i) => i !== index);
+                            setVideoPreviews(newPreviews);
+                            setVideoFiles(newFiles);
+                          }}
+                          className="text-red-600 hover:text-red-800"
+                        >
+                          حذف
+                        </button>
+                      </div>
+                    ))}
+                    {formData.videos.map((url, index) => (
+                      <div key={`saved-vid-${index}`} className="flex items-center justify-between p-3 bg-gray-50 rounded border">
+                        <div className="flex items-center gap-2">
+                          <svg className="w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M2 6a2 2 0 012-2h6a2 2 0 012 2v8a2 2 0 01-2 2H4a2 2 0 01-2-2V6zM14.553 7.106A1 1 0 0014 8v4a1 1 0 00.553.894l2 1A1 1 0 0018 13V7a1 1 0 00-1.447-.894l-2 1z" />
+                          </svg>
+                          <div>
+                            <p className="text-sm font-medium">فيديو {index + 1}</p>
+                            <p className="text-xs text-gray-500">محفوظ</p>
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => deleteVideo(index)}
+                          className="text-red-600 hover:text-red-800"
+                        >
+                          حذف
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Basic Info */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">عنوان العرض</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">عنوان العرض *</label>
                 <input
                   type="text"
                   name="title"
@@ -404,6 +568,7 @@ const OfferForm = () => {
                   onChange={handleChange}
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
                   placeholder="خصم 30% على النباتات الداخلية"
+                  required
                 />
               </div>
               <div>
@@ -422,14 +587,59 @@ const OfferForm = () => {
                   ))}
                 </select>
               </div>
+            </div>
+
+            {/* Dates */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">تاريخ الانتهاء</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">تاريخ البداية</label>
+                <input
+                  type="date"
+                  name="startDate"
+                  value={formData.startDate}
+                  onChange={handleChange}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">تاريخ الانتهاء *</label>
                 <input
                   type="date"
                   name="endDate"
                   value={formData.endDate}
                   onChange={handleChange}
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg"
+                  required
+                />
+              </div>
+            </div>
+
+            {/* Pricing */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">السعر الأصلي (ريال)</label>
+                <input
+                  type="number"
+                  name="originalPrice"
+                  value={formData.originalPrice || ''}
+                  onChange={handleChange}
+                  min="0"
+                  step="0.01"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
+                  placeholder="200"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">السعر النهائي (ريال)</label>
+                <input
+                  type="number"
+                  name="finalPrice"
+                  value={formData.finalPrice || ''}
+                  onChange={handleChange}
+                  min="0"
+                  step="0.01"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
+                  placeholder="100"
                 />
               </div>
               <div>
@@ -442,21 +652,60 @@ const OfferForm = () => {
                   min="0"
                   max="100"
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
-                  placeholder="مثل: 30"
+                  placeholder="30"
                 />
               </div>
             </div>
+
+            {/* Description */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">الوصف</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">الوصف *</label>
               <textarea
                 name="description"
                 value={formData.description}
                 onChange={handleChange}
-                rows="3"
+                rows="4"
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
                 placeholder="احصل على خصم مميز..."
+                required
               />
             </div>
+
+            {/* Features */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">ميزات العرض *</label>
+              <div className="space-y-2">
+                {formData.features.map((feature, index) => (
+                  <div key={index} className="flex gap-2">
+                    <input
+                      type="text"
+                      value={feature}
+                      onChange={(e) => handleFeatureChange(index, e.target.value)}
+                      className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
+                      placeholder={`الميزة ${index + 1}`}
+                    />
+                    {formData.features.length > 1 && (
+                      <button
+                        type="button"
+                        onClick={() => removeFeature(index)}
+                        className="px-4 py-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200"
+                      >
+                        حذف
+                      </button>
+                    )}
+                  </div>
+                ))}
+              </div>
+              <button
+                type="button"
+                onClick={addFeature}
+                className="mt-2 px-4 py-2 bg-green-100 text-green-700 rounded-lg hover:bg-green-200"
+              >
+                + إضافة ميزة
+              </button>
+            </div>
+
+            {/* Tags */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">التصنيفات</label>
               <div className="flex flex-wrap gap-2">
@@ -473,6 +722,8 @@ const OfferForm = () => {
                 ))}
               </div>
             </div>
+
+            {/* Checkboxes */}
             <div className="flex flex-wrap gap-6">
               <label className="flex items-center">
                 <input
@@ -495,11 +746,13 @@ const OfferForm = () => {
                 <span className="text-sm">منشور</span>
               </label>
             </div>
+
+            {/* Buttons */}
             <div className="flex gap-4 pt-4">
               <button
                 type="submit"
                 disabled={loading}
-                className="bg-orange-500 hover:bg-orange-600 text-white px-6 py-3 rounded-lg font-medium transition"
+                className="bg-orange-500 hover:bg-orange-600 text-white px-6 py-3 rounded-lg font-medium transition disabled:opacity-50"
               >
                 {loading ? 'جاري الحفظ...' : id ? 'تحديث' : 'إضافة'}
               </button>
