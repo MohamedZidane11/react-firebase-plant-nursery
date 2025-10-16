@@ -607,9 +607,9 @@ app.delete('/api/banners/:id', async (req, res) => {
 app.post('/api/survey', async (req, res) => {
   try {
     const {
-      name, email, interest_level, expected_features, service_suggestions,
+      name, phone, email, interest_level, expected_features, service_suggestions,
       communication_method, directory_interest, preferred_offers, region,
-      additional_comments, timestamp, platform
+      additional_comments, timestamp, platform, whatsapp, status
     } = req.body;
 
     // Validation
@@ -622,8 +622,16 @@ app.post('/api/survey', async (req, res) => {
     }
     if (!region?.trim()) return res.status(400).json({ message: 'المنطقة مطلوبة' });
 
+    const cleanPhone = (str) => {
+      if (typeof str !== 'string') return null;
+      const trimmed = str.trim();
+      return trimmed === '' ? null : trimmed;
+    };
+
     const surveyData = {
       name: name?.trim() || null,
+      phone: cleanPhone(phone),
+      whatsapp: cleanPhone(whatsapp) || cleanPhone(phone),
       email: email?.trim() || null,
       interest_level: interest_level.trim(),
       expected_features: expected_features.trim(),
@@ -634,7 +642,8 @@ app.post('/api/survey', async (req, res) => {
       region: region.trim(),
       additional_comments: additional_comments?.trim() || null,
       timestamp: timestamp || new Date().toISOString(),
-      platform: platform || 'مشاتل'
+      platform: platform || 'مشاتل',
+      status: status || 'active'
     };
 
     const docRef = await db.collection('surveys').add(surveyData);
@@ -657,6 +666,27 @@ app.get('/api/surveys', async (req, res) => {
   } catch (err) {
     console.error('Error fetching surveys:', err);
     res.status(500).json({ message: 'فشل تحميل الاستبيانات' });
+  }
+});
+
+// DELETE survey by ID
+app.delete('/api/surveys/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    // Check if survey exists
+    const doc = await db.collection('surveys').doc(id).get();
+    if (!doc.exists) {
+      return res.status(404).json({ error: 'الاستبيان غير موجود' });
+    }
+
+    // Delete the survey
+    await db.collection('surveys').doc(id).delete();
+    
+    res.json({ message: 'تم حذف الاستبيان بنجاح' });
+  } catch (error) {
+    console.error('Error deleting survey:', error);
+    res.status(500).json({ error: 'فشل حذف الاستبيان' });
   }
 });
 

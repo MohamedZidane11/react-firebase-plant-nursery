@@ -1,10 +1,10 @@
-// src/pages/Survey.jsx
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 
 const Survey = () => {
   const [formData, setFormData] = useState({
     name: '',
+    phone: '',
     email: '',
     interest_level: '',
     expected_features: '',
@@ -41,10 +41,14 @@ const Survey = () => {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+    let newValue = value;
+  
+    // Clean phone input: keep only digits, limit to 15
+    if (name === 'phone') {
+      newValue = value.replace(/\D/g, '').slice(0, 15);
+    }
+  
+    setFormData(prev => ({ ...prev, [name]: newValue }));
   };
 
   const handleCheckboxChange = (value) => {
@@ -84,8 +88,10 @@ const Survey = () => {
     try {
       const dataToSubmit = {
         ...formData,
+        whatsapp: formData.phone, // Copy phone to whatsapp field for backend compatibility
         timestamp: new Date().toISOString(),
-        platform: 'مشاتل'
+        platform: 'مشاتل',
+        status: 'active'
       };
 
       const response = await fetch('http://localhost:5000/api/survey', {
@@ -114,12 +120,10 @@ const Survey = () => {
     }
   };
 
-  // Handle share button - Show modal
   const handleShare = () => {
     setShowShareModal(true);
   };
 
-  // Handle copy link
   const handleCopyLink = async () => {
     const shareUrl = `${window.location.origin}/survey`;
     try {
@@ -144,7 +148,6 @@ const Survey = () => {
     }
   };
 
-  // Handle social share
   const handleSocialShare = (platform) => {
     const shareUrl = `${window.location.origin}/survey`;
     const shareText = '🌱 شارك في استبيان منصة مشاتل!\n\nساهم في تطوير أول منصة للمشاتل والخدمات الزراعية في السعودية.';
@@ -218,7 +221,6 @@ const Survey = () => {
           </div>
         </div>
 
-        {/* Share Modal - Same as OfferCard */}
         {showShareModal && (
           <div 
             className="fixed inset-0 bg-black/40 z-[9999] flex items-center justify-center p-4"
@@ -239,7 +241,6 @@ const Survey = () => {
               </div>
               
               <div className="grid grid-cols-2 gap-2 mb-3">
-                {/* WhatsApp */}
                 <button
                   onClick={() => handleSocialShare('whatsapp')}
                   className="flex flex-col items-center p-3 bg-green-500 hover:bg-green-600 text-white rounded-lg text-xs"
@@ -248,7 +249,6 @@ const Survey = () => {
                   WhatsApp
                 </button>
 
-                {/* Twitter */}
                 <button
                   onClick={() => handleSocialShare('twitter')}
                   className="flex flex-col items-center p-3 bg-blue-400 hover:bg-blue-500 text-white rounded-lg text-xs"
@@ -257,7 +257,6 @@ const Survey = () => {
                   Twitter
                 </button>
 
-                {/* Facebook */}
                 <button
                   onClick={() => handleSocialShare('facebook')}
                   className="flex flex-col items-center p-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs"
@@ -266,7 +265,6 @@ const Survey = () => {
                   Facebook
                 </button>
 
-                {/* Copy Link */}
                 <button
                   onClick={handleCopyLink}
                   className="flex flex-col items-center p-3 bg-gray-500 hover:bg-gray-600 text-white rounded-lg text-xs"
@@ -324,7 +322,7 @@ const Survey = () => {
 
           {/* Form */}
           <form onSubmit={handleSubmit} className="bg-white rounded-b-2xl shadow-2xl p-8">
-            {/* Question 1 */}
+            {/* Question 1 - Name */}
             <div className="mb-8 p-6 bg-gray-50 rounded-xl border-r-4 border-[#386641]">
               <label className="block text-lg font-semibold text-gray-800 mb-3">
                 <span className="inline-flex items-center justify-center w-8 h-8 bg-[#386641] text-white rounded-full text-sm mr-2 ml-2">1</span>
@@ -340,10 +338,29 @@ const Survey = () => {
               />
             </div>
 
-            {/* Question 2 */}
+            {/* Question 2 - Phone Number (NEW) */}
             <div className="mb-8 p-6 bg-gray-50 rounded-xl border-r-4 border-[#386641]">
               <label className="block text-lg font-semibold text-gray-800 mb-3">
                 <span className="inline-flex items-center justify-center w-8 h-8 bg-[#386641] text-white rounded-full text-sm mr-2 ml-2">2</span>
+                رقم الجوال (اختياري) 📱
+              </label>
+              <input
+                type="tel"
+                name="phone"
+                value={formData.phone}
+                onChange={handleInputChange}
+                placeholder="05xxxxxxxx"
+                maxLength={15}
+                className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-[#386641] focus:outline-none transition-colors"
+                dir="ltr"
+              />
+              <p className="text-xs text-gray-500 mt-2">مثال: 0501234567 (حد أقصى 15 رقم)</p>
+            </div>
+
+            {/* Question 3 - Email */}
+            <div className="mb-8 p-6 bg-gray-50 rounded-xl border-r-4 border-[#386641]">
+              <label className="block text-lg font-semibold text-gray-800 mb-3">
+                <span className="inline-flex items-center justify-center w-8 h-8 bg-[#386641] text-white rounded-full text-sm mr-2 ml-2">3</span>
                 البريد الإلكتروني (اختياري) 📧
               </label>
               <input
@@ -353,13 +370,14 @@ const Survey = () => {
                 onChange={handleInputChange}
                 placeholder="example@email.com"
                 className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-[#386641] focus:outline-none transition-colors"
+                dir="ltr"
               />
             </div>
 
-            {/* Question 3 */}
+            {/* Question 4 - Interest Level */}
             <div className="mb-8 p-6 bg-gray-50 rounded-xl border-r-4 border-[#386641]">
               <label className="block text-lg font-semibold text-gray-800 mb-4">
-                <span className="inline-flex items-center justify-center w-8 h-8 bg-[#386641] text-white rounded-full text-sm mr-2 ml-2">3</span>
+                <span className="inline-flex items-center justify-center w-8 h-8 bg-[#386641] text-white rounded-full text-sm mr-2 ml-2">4</span>
                 ما هو مستوى اهتمامك بالزراعة؟ <span className="text-red-500">*</span> 🌿
               </label>
               <div className="space-y-3">
@@ -391,10 +409,10 @@ const Survey = () => {
               </div>
             </div>
 
-            {/* Question 4 */}
+            {/* Question 5 - Expected Features */}
             <div className="mb-8 p-6 bg-gray-50 rounded-xl border-r-4 border-[#386641]">
               <label className="block text-lg font-semibold text-gray-800 mb-3">
-                <span className="inline-flex items-center justify-center w-8 h-8 bg-[#386641] text-white rounded-full text-sm mr-2 ml-2">4</span>
+                <span className="inline-flex items-center justify-center w-8 h-8 bg-[#386641] text-white rounded-full text-sm mr-2 ml-2">5</span>
                 ما الميزات التي تتوقع وجودها في منصة "مشاتل"؟ <span className="text-red-500">*</span> ⭐
               </label>
               <textarea
@@ -408,10 +426,10 @@ const Survey = () => {
               />
             </div>
 
-            {/* Question 5 */}
+            {/* Question 6 - Service Suggestions */}
             <div className="mb-8 p-6 bg-gray-50 rounded-xl border-r-4 border-[#386641]">
               <label className="block text-lg font-semibold text-gray-800 mb-3">
-                <span className="inline-flex items-center justify-center w-8 h-8 bg-[#386641] text-white rounded-full text-sm mr-2 ml-2">5</span>
+                <span className="inline-flex items-center justify-center w-8 h-8 bg-[#386641] text-white rounded-full text-sm mr-2 ml-2">6</span>
                 هل لديك اقتراحات لإضافة خدمات جديدة داخل المنصة؟ 💡
               </label>
               <textarea
@@ -424,10 +442,10 @@ const Survey = () => {
               />
             </div>
 
-            {/* Question 6 */}
+            {/* Question 7 - Communication Method */}
             <div className="mb-8 p-6 bg-gray-50 rounded-xl border-r-4 border-[#386641]">
               <label className="block text-lg font-semibold text-gray-800 mb-4">
-                <span className="inline-flex items-center justify-center w-8 h-8 bg-[#386641] text-white rounded-full text-sm mr-2 ml-2">6</span>
+                <span className="inline-flex items-center justify-center w-8 h-8 bg-[#386641] text-white rounded-full text-sm mr-2 ml-2">7</span>
                 ما الوسيلة التي تفضلها للتفاعل مع منصة مشاتل؟ <span className="text-red-500">*</span> 📱
               </label>
               <div className="space-y-3">
@@ -459,10 +477,10 @@ const Survey = () => {
               </div>
             </div>
 
-            {/* Question 7 */}
+            {/* Question 8 - Directory Interest */}
             <div className="mb-8 p-6 bg-gray-50 rounded-xl border-r-4 border-[#386641]">
               <label className="block text-lg font-semibold text-gray-800 mb-4">
-                <span className="inline-flex items-center justify-center w-8 h-8 bg-[#386641] text-white rounded-full text-sm mr-2 ml-2">7</span>
+                <span className="inline-flex items-center justify-center w-8 h-8 bg-[#386641] text-white rounded-full text-sm mr-2 ml-2">8</span>
                 هل تهتم بالاشتراك في دليل خاص بالمشاتل أو أصحاب النشاط الزراعي؟ <span className="text-red-500">*</span> 📋
               </label>
               <div className="space-y-3">
@@ -493,10 +511,10 @@ const Survey = () => {
               </div>
             </div>
 
-            {/* Question 8 */}
+            {/* Question 9 - Preferred Offers */}
             <div className="mb-8 p-6 bg-gray-50 rounded-xl border-r-4 border-[#386641]">
               <label className="block text-lg font-semibold text-gray-800 mb-4">
-                <span className="inline-flex items-center justify-center w-8 h-8 bg-[#386641] text-white rounded-full text-sm mr-2 ml-2">8</span>
+                <span className="inline-flex items-center justify-center w-8 h-8 bg-[#386641] text-white rounded-full text-sm mr-2 ml-2">9</span>
                 ما نوع العروض أو الحملات التي تجذبك أكثر؟ (يمكن اختيار أكثر من خيار) <span className="text-red-500">*</span> 🎁
               </label>
               <div className="space-y-3">
@@ -527,10 +545,10 @@ const Survey = () => {
               </div>
             </div>
 
-            {/* Question 9 */}
+            {/* Question 10 - Region */}
             <div className="mb-8 p-6 bg-gray-50 rounded-xl border-r-4 border-[#386641]">
               <label className="block text-lg font-semibold text-gray-800 mb-3">
-                <span className="inline-flex items-center justify-center w-8 h-8 bg-[#386641] text-white rounded-full text-sm mr-2 ml-2">9</span>
+                <span className="inline-flex items-center justify-center w-8 h-8 bg-[#386641] text-white rounded-full text-sm mr-2 ml-2">10</span>
                 ما المنطقة التي تقيم فيها في المملكة؟ <span className="text-red-500">*</span> 📍
               </label>
               <select
@@ -541,26 +559,26 @@ const Survey = () => {
                 className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-[#386641] focus:outline-none transition-colors"
               >
                 <option value="">اختر المنطقة...</option>
-                <option value="الرياض">منطقة الرياض</option>
-                <option value="مكة">منطقة مكة المكرمة</option>
-                <option value="المدينة">منطقة المدينة المنورة</option>
-                <option value="القصيم">منطقة القصيم</option>
-                <option value="الشرقية">المنطقة الشرقية</option>
-                <option value="عسير">منطقة عسير</option>
-                <option value="تبوك">منطقة تبوك</option>
-                <option value="حائل">منطقة حائل</option>
-                <option value="الحدود الشمالية">منطقة الحدود الشمالية</option>
-                <option value="جازان">منطقة جازان</option>
-                <option value="نجران">منطقة نجران</option>
-                <option value="الباحة">منطقة الباحة</option>
-                <option value="الجوف">منطقة الجوف</option>
+                <option value="منطقة الرياض">منطقة الرياض</option>
+                <option value="منطقة مكة المكرمة">منطقة مكة المكرمة</option>
+                <option value="منطقة المدينة المنورة">منطقة المدينة المنورة</option>
+                <option value="منطقة القصيم">منطقة القصيم</option>
+                <option value="منطقة الشرقية">المنطقة الشرقية</option>
+                <option value="منطقة عسير">منطقة عسير</option>
+                <option value="منطقة تبوك">منطقة تبوك</option>
+                <option value="منطقة حائل">منطقة حائل</option>
+                <option value="منطقة الحدود الشمالية">منطقة الحدود الشمالية</option>
+                <option value="منطقة جازان">منطقة جازان</option>
+                <option value="منطقة نجران">منطقة نجران</option>
+                <option value="منطقة الباحة">منطقة الباحة</option>
+                <option value="منطقة الجوف">منطقة الجوف</option>
               </select>
             </div>
 
-            {/* Question 10 */}
+            {/* Question 11 - Additional Comments */}
             <div className="mb-8 p-6 bg-gray-50 rounded-xl border-r-4 border-[#386641]">
               <label className="block text-lg font-semibold text-gray-800 mb-3">
-                <span className="inline-flex items-center justify-center w-8 h-8 bg-[#386641] text-white rounded-full text-sm mr-2">10</span>
+                <span className="inline-flex items-center justify-center w-8 h-8 bg-[#386641] text-white rounded-full text-sm mr-2 ml-2">11</span>
                 أي تعليقات أو ملاحظات إضافية تود مشاركتها معنا؟ 💬
               </label>
               <textarea
@@ -601,7 +619,7 @@ const Survey = () => {
         </div>
       </div>
 
-      {/* Share Modal - Same as OfferCard */}
+      {/* Share Modal */}
       {showShareModal && (
         <div 
           className="fixed inset-0 bg-black/40 z-[9999] flex items-center justify-center p-4"
@@ -622,7 +640,6 @@ const Survey = () => {
             </div>
             
             <div className="grid grid-cols-2 gap-2 mb-3">
-              {/* WhatsApp */}
               <button
                 onClick={() => handleSocialShare('whatsapp')}
                 className="flex flex-col items-center p-3 bg-green-500 hover:bg-green-600 text-white rounded-lg text-xs"
@@ -631,7 +648,6 @@ const Survey = () => {
                 WhatsApp
               </button>
 
-              {/* Twitter */}
               <button
                 onClick={() => handleSocialShare('twitter')}
                 className="flex flex-col items-center p-3 bg-blue-400 hover:bg-blue-500 text-white rounded-lg text-xs"
@@ -640,7 +656,6 @@ const Survey = () => {
                 Twitter
               </button>
 
-              {/* Facebook */}
               <button
                 onClick={() => handleSocialShare('facebook')}
                 className="flex flex-col items-center p-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs"
@@ -649,7 +664,6 @@ const Survey = () => {
                 Facebook
               </button>
 
-              {/* Copy Link */}
               <button
                 onClick={handleCopyLink}
                 className="flex flex-col items-center p-3 bg-gray-500 hover:bg-gray-600 text-white rounded-lg text-xs"
