@@ -388,20 +388,37 @@ app.get('/api/sponsors', async (req, res) => {
 // ═══════════════════════════════════════════════════════════════
 
 // POST new pending nursery
+// In server.js — inside app.post('/api/pending-nurseries', ...)
 app.post('/api/pending-nurseries', async (req, res) => {
   try {
-    const { name, categories, location, services, featured, contactName, whatsapp } = req.body;
+    const {
+      name,
+      categories,
+      region,        // ✅ new
+      city,          // ✅ new
+      district,      // ✅ new
+      googleMapsLink, // ✅ new
+      services,
+      featured,
+      contactName,
+      whatsapp
+    } = req.body;
 
-    // Validation
+    // Validation (same as before)
     if (!name?.trim()) return res.status(400).json({ message: 'الاسم مطلوب' });
-    if (!location?.trim()) return res.status(400).json({ message: 'الموقع مطلوب' });
+    if (!region?.trim()) return res.status(400).json({ message: 'المنطقة مطلوبة' });
+    if (!city?.trim()) return res.status(400).json({ message: 'المدينة مطلوبة' });
     if (!contactName?.trim()) return res.status(400).json({ message: 'اسم المسئول مطلوب' });
     if (!whatsapp?.trim()) return res.status(400).json({ message: 'رقم الواتس آب مطلوب' });
 
     const newNursery = {
       name: name.trim(),
       categories: Array.isArray(categories) ? categories : [],
-      location: location.trim(),
+      region: region.trim(),           // ✅ stored separately
+      city: city.trim(),               // ✅
+      district: district?.trim() || '', // ✅
+      googleMapsLink: googleMapsLink?.trim() || '', // ✅
+      location: `${region.trim()} - ${city.trim()}${district?.trim() ? ` - ${district.trim()}` : ''}`,
       services: Array.isArray(services) ? services : [],
       featured: !!featured,
       contactName: contactName.trim(),
