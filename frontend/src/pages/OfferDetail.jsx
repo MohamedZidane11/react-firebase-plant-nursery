@@ -195,7 +195,7 @@ const OfferDetail = () => {
                   onClick={() => hasMainImage && openLightbox(0)}
                 />
                 {discountBadge && (
-                  <div className="absolute top-5 right-5 bg-red-600 text-white px-8 py-4 rounded-full font-black text-2xl shadow-lg flex items-center gap-2">
+                  <div className="absolute top-5 right-5 bg-red-500/90 text-white px-8 py-4 rounded-full font-black text-2xl shadow-lg flex items-center gap-2">
                     <span>{discountBadge}%</span>
                     <span>خصم</span>
                   </div>
@@ -354,7 +354,7 @@ const OfferDetail = () => {
             {/* Price Section */}
             <div className="bg-white rounded-xl shadow-lg p-6 text-center">
               {discountBadge && (
-                <div className="bg-gradient-to-r from-yellow-400 to-orange-500 text-white p-6 rounded-xl mb-6">
+                <div className="bg-gradient-to-r from-[#eeebd0] to-[#f3c677] text-gray-700 p-6 rounded-xl mb-6">
                   <div className="text-5xl font-black mb-2">{discountBadge}%</div>
                   <div className="text-lg font-semibold">{offer.title}</div>
                 </div>
