@@ -464,13 +464,13 @@ const OfferDetail = () => {
                   className="absolute left-4 top-1/2 transform -translate-y-1/2 text-white text-3xl z-10 bg-black bg-opacity-50 rounded-full w-12 h-12 flex items-center justify-center hover:bg-opacity-70"
                   onClick={prevImage}
                 >
-                  ‹
+                   ›
                 </button>
                 <button
                   className="absolute right-4 top-1/2 transform -translate-y-1/2 text-white text-3xl z-10 bg-black bg-opacity-50 rounded-full w-12 h-12 flex items-center justify-center hover:bg-opacity-70"
                   onClick={nextImage}
                 >
-                  ›
+                  ‹
                 </button>
               </>
             )}

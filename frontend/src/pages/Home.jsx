@@ -4,14 +4,14 @@ import { Link } from 'react-router-dom';
 import Slider from 'react-slick';
 import 'slick-carousel/slick/slick.css';
 import 'slick-carousel/slick/slick-theme.css';
-import defaultNurseryImage from '../assets/nurs_empty.png'; // ✅ Import default image
+import defaultNurseryImage from '../assets/nurs_empty.png';
 
 const Home = () => {
-  // ✅ ALL HOOKS AT THE TOP - BEFORE ANY CONDITIONAL LOGIC
+  // ✅ ALL HOOKS AT THE TOP
   const [searchTerm, setSearchTerm] = useState('');
-  const [activeFilter, setActiveFilter] = useState('all');
+  const [activeServiceFilter, setActiveServiceFilter] = useState('all'); // Updated filter key
   const [selectedCategory, setSelectedCategory] = useState('');
-  const [viewMode, setViewMode] = useState('home'); // 'home' or 'category-results'
+  const [viewMode, setViewMode] = useState('home');
   const [sponsors, setSponsors] = useState([]);
   const [categories, setCategories] = useState([]);
   const [nurseries, setNurseries] = useState([]);
@@ -20,8 +20,7 @@ const Home = () => {
   const [sponsorsLoading, setSponsorsLoading] = useState(true);
   const [results, setResults] = useState([]);
   const [banners, setBanners] = useState([]);
-  
-  // ✅ MOVED siteSettings HOOK TO THE TOP
+
   const [siteSettings, setSiteSettings] = useState({
     title: 'أكبر منصة للمشاتل في المملكة 🌿',
     subtitle: 'اكتشف أكثر من 500 مشتل ومتجر لأدوات الزراعة في مكان واحد',
@@ -29,7 +28,6 @@ const Home = () => {
     benefits: ['معلومات كاملة', 'تواصل مباشر', 'خدمات مجانية']
   });
 
-  // ✅ Fetch banner
   const sliderSettings = {
     dots: true,
     infinite: banners.length > 1,
@@ -42,10 +40,11 @@ const Home = () => {
     arrows: false
   };
 
+  // Fetch banners
   useEffect(() => {
     const fetchBanners = async () => {
       try {
-        const API_BASE = 'http://localhost:5000'; //prod => http://nurseries.qvtest.com
+        const API_BASE = 'http://localhost:5000';
         const response = await fetch(`${API_BASE}/api/banners`);
         if (!response.ok) throw new Error('فشل تحميل البانرات');
         const data = await response.json();
@@ -61,7 +60,7 @@ const Home = () => {
     fetchBanners();
   }, []);
 
-  // ✅ Fetch nurseries
+  // Fetch nurseries
   useEffect(() => {
     const fetchNurseries = async () => {
       try {
@@ -75,11 +74,10 @@ const Home = () => {
         setNurseries([]);
       }
     };
-
     fetchNurseries();
   }, []);
 
-  // ✅ Fetch offers
+  // Fetch offers
   useEffect(() => {
     const fetchOffers = async () => {
       try {
@@ -93,11 +91,10 @@ const Home = () => {
         setOffers([]);
       }
     };
-
     fetchOffers();
   }, []);
 
-  // ✅ Fetch categories
+  // Fetch categories
   useEffect(() => {
     const fetchCategories = async () => {
       try {
@@ -113,11 +110,10 @@ const Home = () => {
         setLoading(false);
       }
     };
-
     fetchCategories();
   }, []);
 
-  // ✅ Fetch sponsors
+  // Fetch sponsors
   useEffect(() => {
     const fetchSponsors = async () => {
       try {
@@ -133,15 +129,14 @@ const Home = () => {
         setSponsorsLoading(false);
       }
     };
-
     fetchSponsors();
   }, []);
 
-  // ✅ MOVED siteSettings useEffect TO THE TOP
+  // Fetch site settings
   useEffect(() => {
     const fetchSettings = async () => {
       try {
-        const API_BASE = 'http://localhost:5000'; 
+        const API_BASE = 'http://localhost:5000';
         const response = await fetch(`${API_BASE}/api/settings/site`);
         if (response.ok) {
           const data = await response.json();
@@ -154,10 +149,9 @@ const Home = () => {
     fetchSettings();
   }, []);
 
-  // ✅ Combine and filter results
+  // ✅ FIXED: Search + Service Filter Logic
   useEffect(() => {
     const term = searchTerm.toLowerCase().trim();
-
     if (!term) {
       setResults([]);
       return;
@@ -167,41 +161,54 @@ const Home = () => {
 
     // 🔍 Search nurseries
     nurseries.forEach(n => {
-      if (
+      const matchesSearch =
         n.name.toLowerCase().includes(term) ||
-        n.location.toLowerCase().includes(term) ||
-        n.region?.toLowerCase().includes(term) ||
-        n.city?.toLowerCase().includes(term) ||
-        n.district?.toLowerCase().includes(term) ||
-        n.categories.some(cat => cat.toLowerCase().includes(term)) ||
-        n.services.some(svc => svc.toLowerCase().includes(term))
-      ) {
+        (n.location && n.location.toLowerCase().includes(term)) ||
+        (n.region && n.region.toLowerCase().includes(term)) ||
+        (n.city && n.city.toLowerCase().includes(term)) ||
+        (n.district && n.district.toLowerCase().includes(term)) ||
+        (n.categories || []).some(cat => cat.toLowerCase().includes(term)) ||
+        (n.services || []).some(svc => svc.toLowerCase().includes(term));
+
+      const matchesService =
+        activeServiceFilter === 'all' ||
+        (n.services || []).includes(activeServiceFilter);
+
+      if (matchesSearch && matchesService) {
         results.push({
           type: 'nursery',
           id: n.id,
           title: n.name,
-          subtitle: n.location,
+          subtitle: n.location || `${n.region || ''} - ${n.city || ''}`,
           link: `/nurseries/${n.id}`,
-          tags: n.categories.slice(0, 2)
+          tags: (n.categories || []).slice(0, 2),
+          services: n.services || []
         });
       }
     });
 
     // 🔍 Search offers
     offers.forEach(o => {
-      if (
+      const matchesSearch =
         o.title.toLowerCase().includes(term) ||
-        o.description.toLowerCase().includes(term) ||
-        o.tags.some(tag => tag.toLowerCase().includes(term)) ||
-        o.nurseryName?.toLowerCase().includes(term)
-      ) {
+        (o.description && o.description.toLowerCase().includes(term)) ||
+        (o.tags || []).some(tag => tag.toLowerCase().includes(term)) ||
+        (o.nurseryName && o.nurseryName.toLowerCase().includes(term));
+
+      const matchesService =
+        activeServiceFilter === 'all' ||
+        (o.services || []).includes(activeServiceFilter) ||
+        (o.nurseryId && nurseries.find(n => n.id === o.nurseryId)?.services?.includes(activeServiceFilter));
+
+      if (matchesSearch && matchesService) {
         results.push({
           type: 'offer',
           id: o.id,
           title: o.title,
           subtitle: `من: ${o.nurseryName || 'عرض عام'}`,
           link: `/offers/${o.id}`,
-          tags: o.tags.slice(0, 2)
+          tags: (o.tags || []).slice(0, 2),
+          services: o.services || []
         });
       }
     });
@@ -210,7 +217,7 @@ const Home = () => {
     categories.forEach(c => {
       if (
         c.title.toLowerCase().includes(term) ||
-        c.description?.toLowerCase().includes(term)
+        (c.description && c.description.toLowerCase().includes(term))
       ) {
         results.push({
           type: 'category',
@@ -218,37 +225,32 @@ const Home = () => {
           title: c.title,
           subtitle: 'تصنيف متاح',
           link: '/nurseries',
-          tags: ['تصنيف']
+          tags: ['تصنيف'],
+          services: []
         });
       }
     });
 
     setResults(results);
-  }, [searchTerm, nurseries, offers, categories]);
+  }, [searchTerm, nurseries, offers, categories, activeServiceFilter]); // ✅ Critical: include activeServiceFilter
 
-  // ✅ CONDITIONAL RETURN MOVED AFTER ALL HOOKS
   if (loading || sponsorsLoading) {
     return <p className="text-center py-8">جاري التحميل...</p>;
   }
 
-  // ✅ Define filters
-  const filters = [
-    { key: 'all', label: 'الكل' },
-    { key: 'category', label: 'تصنيفات' },
-    { key: 'service', label: 'خدمات' }
+  // ✅ Define service filters
+  const serviceFilters = [
+    { key: 'all', label: 'الكل', icon: '🔍' },
+    { key: 'delivery', label: 'التوصيل', icon: '🚚' },
+    { key: 'consultation', label: 'الاستشارات', icon: '💬' },
+    { key: 'maintenance', label: 'الصيانة', icon: '🔧' },
+    { key: 'installation', label: 'التركيب', icon: '🌱' },
   ];
 
-  // ✅ Filter results by active filter
-  const filteredResults = results.filter(result => {
-    if (activeFilter === 'all') return true;
-    if (activeFilter === 'category') return result.type === 'category';
-    if (activeFilter === 'service') return ['nursery', 'offer'].includes(result.type) && (
-      nurseries.find(n => n.id === result.id && n.services.some(s => s === 'consultation' || s === 'delivery' || s === 'installation' || s === 'maintenance'))
-    );
-    return true;
-  });
+  // ✅ Filter results by service (already done in useEffect above)
+  const filteredResults = results;
 
-  // ✅ Get featured nurseries (controlled by admin)
+  // ✅ Get featured nurseries
   const featuredNurseries = nurseries.filter(n => n.featured);
 
   return (
@@ -262,7 +264,6 @@ const Home = () => {
           <p className="text-xl text-gray-700 mb-8">
             {siteSettings.subtitle || 'اكتشف أكثر من 500 مشتل ومتجر لأدوات الزراعة في مكان واحد'}
           </p>
-
           <div className="flex flex-wrap justify-center gap-6 mb-12">
             {(siteSettings.benefits || ['معلومات كاملة', 'تواصل مباشر', 'خدمات مجانية']).map((benefit, i) => (
               <div key={i} className="flex items-center">
@@ -300,7 +301,6 @@ const Home = () => {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                     </svg>
                   </button>
-
                   <input
                     type="text"
                     placeholder="ابحث عن مشتل، عرض، منطقة، تصنيف..."
@@ -311,19 +311,20 @@ const Home = () => {
                 </form>
               </div>
             </div>
-
+            {/* ✅ Service Filter Buttons */}
             <div className="flex flex-wrap gap-2">
-              {filters.map((filter) => (
+              {serviceFilters.map((filter) => (
                 <button
                   key={filter.key}
-                  onClick={() => setActiveFilter(filter.key)}
-                  className={`px-4 py-2 rounded-full transition-colors ${
-                    activeFilter === filter.key
-                      ? 'bg-green-500 text-white'
+                  onClick={() => setActiveServiceFilter(filter.key)}
+                  className={`px-3 py-2 rounded-full text-sm font-medium transition-colors flex items-center gap-1 ${
+                    activeServiceFilter === filter.key
+                      ? 'bg-green-600 text-white'
                       : 'bg-gray-200 hover:bg-gray-300 text-gray-800'
                   }`}
                 >
-                  {filter.label}
+                  <span>{filter.icon}</span>
+                  <span>{filter.label}</span>
                 </button>
               ))}
             </div>
@@ -335,33 +336,36 @@ const Home = () => {
               <h3 className="text-xl font-bold text-green-800 mb-4">
                 نتائج البحث لـ "{searchTerm}"
               </h3>
-
               {filteredResults.length > 0 ? (
-                <div className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {filteredResults.map((result) => (
                     <Link
-                      key={result.id}
+                      key={`${result.type}-${result.id}`}
                       to={result.link}
-                      className="block p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition"
+                      className="block border border-gray-200 rounded-lg hover:bg-gray-50 transition h-full"
                     >
-                      <div className="flex justify-between">
-                        <h4 className="font-bold text-gray-800">{result.title}</h4>
-                        <span className={`text-xs px-2 py-1 rounded-full ${
-                          result.type === 'nursery' ? 'bg-green-100 text-green-800' :
-                          result.type === 'offer' ? 'bg-orange-100 text-orange-800' :
-                          'bg-blue-100 text-blue-800'
-                        }`}>
-                          {result.type === 'nursery' ? 'مشتل' :
-                           result.type === 'offer' ? 'عرض' : 'تصنيف'}
-                        </span>
-                      </div>
-                      <p className="text-sm text-gray-600 mt-1">{result.subtitle}</p>
-                      <div className="flex flex-wrap gap-1 mt-2">
-                        {result.tags.map((tag, i) => (
-                          <span key={i} className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded">
-                            {tag}
+                      <div className="p-4 flex flex-col h-full">
+                        <div className="flex justify-between items-start">
+                          <h4 className="font-bold text-gray-800 line-clamp-1">{result.title}</h4>
+                          <span className={`text-xs px-2 py-1 rounded-full whitespace-nowrap ${
+                            result.type === 'nursery' ? 'bg-green-100 text-green-800' :
+                            result.type === 'offer' ? 'bg-orange-100 text-orange-800' :
+                            'bg-blue-100 text-blue-800'
+                          }`}>
+                            {result.type === 'nursery' ? 'مشتل' :
+                             result.type === 'offer' ? 'عرض' : 'تصنيف'}
                           </span>
-                        ))}
+                        </div>
+                        <p className="text-sm text-gray-600 mt-1 line-clamp-1 min-h-[1.5rem]">
+                          {result.subtitle}
+                        </p>
+                        <div className="flex flex-wrap gap-1 mt-2">
+                          {result.tags.map((tag, i) => (
+                            <span key={i} className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded">
+                              {tag}
+                            </span>
+                          ))}
+                        </div>
                       </div>
                     </Link>
                   ))}
@@ -383,7 +387,7 @@ const Home = () => {
                 <img
                   src={banner.imageUrl}
                   alt={`بانر ${banner.position}`}
-                  className="w-360 h-64 md:h-96 object-cover rounded-lg shadow-md"
+                  className="w-full h-64 md:h-96 object-cover rounded-lg shadow-md"
                   loading="lazy"
                 />
               </div>
@@ -397,7 +401,6 @@ const Home = () => {
         <section className="py-12 bg-gradient-to-br from-yellow-50 via-orange-50 to-red-50">
           <div className="container mx-auto px-4">
             <h2 className="text-3xl font-bold text-center text-green-800 mb-12">التصنيف الرئيسى</h2>
-
             {categories.length === 0 ? (
               <p className="text-center text-gray-500">لا توجد تصنيفات.</p>
             ) : (
@@ -411,7 +414,6 @@ const Home = () => {
                     }}
                     className="text-white rounded-xl shadow-lg text-center cursor-pointer hover:scale-105 transition-all duration-500 ease-in-out transform hover:shadow-2xl"
                   >
-                    {/* IMAGE CONTAINER — Gradient Background */}
                     <div className={`p-6 rounded-t-xl ${
                       index % 3 === 0 
                         ? 'bg-gradient-to-br from-yellow-50 to-yellow-200' 
@@ -436,8 +438,6 @@ const Home = () => {
                         )}
                       </div>
                     </div>
-
-                    {/* TEXT CONTAINER — Matching Gradient */}
                     <div className={`p-6 rounded-b-xl ${
                       index % 3 === 0 
                         ? 'bg-gradient-to-tr from-pink-400 to-rose-500' 
@@ -456,13 +456,11 @@ const Home = () => {
         </section>
       )}
 
-      {/* Featured Nurseries — Responsive Grid */}
+      {/* Featured Nurseries */}
       {viewMode === 'home' && featuredNurseries.length > 0 && (
         <section className="py-12">
           <div className="container mx-auto px-4">
             <h2 className="text-3xl font-bold text-center text-green-800 mb-8">أبرز المشاتل ✨</h2>
-
-            {/* Responsive Grid: 1 col (mobile), 2 (tablet), 3 (desktop), 4 (large) */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               {featuredNurseries.map((nursery) => (
                 <Link 
@@ -493,8 +491,6 @@ const Home = () => {
                         </span>
                       ))}
                     </div>
-
-                    {/* Services Icons */}
                     <div className="mt-4 flex justify-center flex-wrap gap-3">
                       {nursery.services?.includes('consultation') && (
                         <div className="flex flex-col items-center">
@@ -537,9 +533,7 @@ const Home = () => {
         </section>
       )}
 
-      {/* ==================== */}
       {/* Category Results Section */}
-      {/* ==================== */}
       {viewMode === 'category-results' && selectedCategory && (
         <section className="py-12 bg-white">
           <div className="w-full">
@@ -547,95 +541,85 @@ const Home = () => {
               المشاتل في تصنيف: {selectedCategory}
             </h2>
             <div className="w-full overflow-x-auto scroll-smooth pb-4" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
-            <div className="flex gap-6 px-4 hide-scrollbar" style={{ scrollSnapType: 'x mandatory' }}>
-
-            {/* Outer centering wrapper */}
-            <div className="flex justify-center w-full">
-              <div 
-                className="flex overflow-x-auto scroll-smooth snap-x snap-mandatory space-x-6 pb-4 hide-scrollbar max-w-full"
-                dir="rtl"
-                style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
-              >
-                {nurseries
-                  .filter(nursery => nursery.categories.includes(selectedCategory))
-                  .map((nursery) => (
-                    <Link 
-                      key={nursery.id} 
-                      to={`/nurseries/${nursery.id}`}
-                      className="flex-shrink-0 w-48"
-                    >
-                      <div className="bg-green-100 p-6 rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 flex flex-col items-center">
-                        <div className="w-20 h-20 mx-auto mb-4 bg-green-200 rounded-full flex items-center justify-center overflow-hidden">
-                          <img
-                            src={nursery.image || defaultNurseryImage}
-                            alt={nursery.name}
-                            className="w-full h-full object-cover"
-                            onError={(e) => {
-                              e.target.src = defaultNurseryImage;
-                            }}
-                          />
-                        </div>
-                        <h3 className="text-lg font-bold text-green-800 text-center">{nursery.name}</h3>
-                        <p className="text-sm text-gray-600 text-center">{nursery.location}</p>
-                        <div className="flex justify-center mt-2 flex-wrap gap-1">
-                          {nursery.categories.slice(0, 2).map((cat, i) => (
-                            <span
-                              key={i}
-                              className="text-xs bg-green-200 text-green-800 px-2 py-1 rounded-full"
-                            >
-                              {cat}
-                            </span>
-                          ))}
-                        </div>
-
-                        {/* ✅ SERVICES — HORIZONTAL INLINE */}
-                        <div className="mt-3 flex justify-center gap-3 flex-wrap">
-                          {nursery.services?.includes('consultation') && (
-                            <div className="flex flex-col items-center">
-                              <div className="p-1.5 bg-white border border-gray-200 rounded-full">
-                                <img src="https://img.icons8.com/stickers/26/consultation.png" alt="استشارة" className="w-5 h-5" />
-                              </div>
-                              <span className="text-[10px] text-blue-600 font-medium mt-0.5">استشارة</span>
+              <div className="flex gap-6 px-4 hide-scrollbar" style={{ scrollSnapType: 'x mandatory' }}>
+                <div className="flex justify-center w-full">
+                  <div 
+                    className="flex overflow-x-auto scroll-smooth snap-x snap-mandatory space-x-6 pb-4 hide-scrollbar max-w-full"
+                    dir="rtl"
+                    style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+                  >
+                    {nurseries
+                      .filter(nursery => nursery.categories.includes(selectedCategory))
+                      .map((nursery) => (
+                        <Link 
+                          key={nursery.id} 
+                          to={`/nurseries/${nursery.id}`}
+                          className="flex-shrink-0 w-48"
+                        >
+                          <div className="bg-green-100 p-6 rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 flex flex-col items-center">
+                            <div className="w-20 h-20 mx-auto mb-4 bg-green-200 rounded-full flex items-center justify-center overflow-hidden">
+                              <img
+                                src={nursery.image || defaultNurseryImage}
+                                alt={nursery.name}
+                                className="w-full h-full object-cover"
+                                onError={(e) => {
+                                  e.target.src = defaultNurseryImage;
+                                }}
+                              />
                             </div>
-                          )}
-
-                          {nursery.services?.includes('delivery') && (
-                            <div className="flex flex-col items-center">
-                              <div className="p-1.5 bg-white border border-gray-200 rounded-full">
-                                <img src="https://img.icons8.com/color/26/truck--v1.png" alt="توصيل" className="w-5 h-5" />
-                              </div>
-                              <span className="text-[10px] text-yellow-600 font-medium mt-0.5">توصيل</span>
+                            <h3 className="text-lg font-bold text-green-800 text-center">{nursery.name}</h3>
+                            <p className="text-sm text-gray-600 text-center">{nursery.location}</p>
+                            <div className="flex justify-center mt-2 flex-wrap gap-1">
+                              {nursery.categories.slice(0, 2).map((cat, i) => (
+                                <span
+                                  key={i}
+                                  className="text-xs bg-green-200 text-green-800 px-2 py-1 rounded-full"
+                                >
+                                  {cat}
+                                </span>
+                              ))}
                             </div>
-                          )}
-
-                          {nursery.services?.includes('installation') && (
-                            <div className="flex flex-col items-center">
-                              <div className="p-1.5 bg-white border border-gray-200 rounded-full">
-                                <img src="https://img.icons8.com/offices/26/hand-planting.png" alt="تركيب" className="w-5 h-5" />
-                              </div>
-                              <span className="text-[10px] text-green-600 font-medium mt-0.5">تركيب</span>
+                            <div className="mt-3 flex justify-center gap-3 flex-wrap">
+                              {nursery.services?.includes('consultation') && (
+                                <div className="flex flex-col items-center">
+                                  <div className="p-1.5 bg-white border border-gray-200 rounded-full">
+                                    <img src="https://img.icons8.com/stickers/26/consultation.png" alt="استشارة" className="w-5 h-5" />
+                                  </div>
+                                  <span className="text-[10px] text-blue-600 font-medium mt-0.5">استشارة</span>
+                                </div>
+                              )}
+                              {nursery.services?.includes('delivery') && (
+                                <div className="flex flex-col items-center">
+                                  <div className="p-1.5 bg-white border border-gray-200 rounded-full">
+                                    <img src="https://img.icons8.com/color/26/truck--v1.png" alt="توصيل" className="w-5 h-5" />
+                                  </div>
+                                  <span className="text-[10px] text-yellow-600 font-medium mt-0.5">توصيل</span>
+                                </div>
+                              )}
+                              {nursery.services?.includes('installation') && (
+                                <div className="flex flex-col items-center">
+                                  <div className="p-1.5 bg-white border border-gray-200 rounded-full">
+                                    <img src="https://img.icons8.com/offices/26/hand-planting.png" alt="تركيب" className="w-5 h-5" />
+                                  </div>
+                                  <span className="text-[10px] text-green-600 font-medium mt-0.5">تركيب</span>
+                                </div>
+                              )}
+                              {nursery.services?.includes('maintenance') && (
+                                <div className="flex flex-col items-center">
+                                  <div className="p-1.5 bg-white border border-gray-200 rounded-full">
+                                    <img src="https://img.icons8.com/office/26/maintenance.png" alt="صيانة" className="w-5 h-5" />
+                                  </div>
+                                  <span className="text-[10px] text-red-600 font-medium mt-0.5">صيانة</span>
+                                </div>
+                              )}
                             </div>
-                          )}
-
-                          {nursery.services?.includes('maintenance') && (
-                            <div className="flex flex-col items-center">
-                              <div className="p-1.5 bg-white border border-gray-200 rounded-full">
-                                <img src="https://img.icons8.com/office/26/maintenance.png" alt="صيانة" className="w-5 h-5" />
-                              </div>
-                              <span className="text-[10px] text-red-600 font-medium mt-0.5">صيانة</span>
-                            </div>
-                          )}
-                        </div>
-                        {/* ✅ END SERVICES */}
-                      </div>
-                    </Link>
-                  ))}
+                          </div>
+                        </Link>
+                      ))}
+                  </div>
+                </div>
               </div>
             </div>
-            </div>
-            </div>
-
-            {/* Back to Categories */}
             <div className="text-center mt-6">
               <button
                 onClick={() => setViewMode('home')}
@@ -648,11 +632,11 @@ const Home = () => {
         </section>
       )}
 
-      {/* ✅ Show All Nurseries Button — center */}
+      {/* Show All Nurseries Button */}
       <div className="flex items-center justify-center mb-10">
         <Link to="/nurseries">
           <button className="text-xl text-white bg-gradient-to-l from-yellow-600 to-yellow-500 hover:bg-green-700 px-10 py-4 rounded-lg shadow-md transition-all duration-200 transform hover:scale-105 hover:shadow-lg">
-          عرض جميع المشاتل 🌿
+            عرض جميع المشاتل 🌿
           </button>
         </Link>
       </div>
@@ -664,7 +648,6 @@ const Home = () => {
             <div className="text-center mb-12">
               <h2 className="text-3xl font-bold mb-4">شركاء النجاح ✨</h2>
             </div>
-
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               <div className="bg-gray-800 border border-yellow-500 p-6 rounded-lg text-center hover:-translate-y-2 transition-transform duration-500 ease-in-out">
                 <div className="w-16 h-16 mx-auto mb-4 bg-yellow-500 rounded-full flex items-center justify-center">
@@ -675,7 +658,6 @@ const Home = () => {
                 <h3 className="text-xl font-bold mb-2">حدائق المملكة</h3>
                 <p className="text-sm text-gray-300">نباتات داخلية وخارجية مميزة</p>
               </div>
-
               <div className="bg-gray-800 border border-yellow-500 p-6 rounded-lg text-center hover:-translate-y-2 transition-transform duration-500 ease-in-out">
                 <div className="w-16 h-16 mx-auto mb-4 bg-yellow-500 rounded-full flex items-center justify-center">
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-black" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -685,7 +667,6 @@ const Home = () => {
                 <h3 className="text-xl font-bold mb-2">مشاتل الرياض الخضراء</h3>
                 <p className="text-sm text-gray-300">تنسيق حدائق احترافي</p>
               </div>
-
               <div className="bg-gray-800 border border-yellow-500 p-6 rounded-lg text-center hover:-translate-y-2 transition-transform duration-500 ease-in-out">
                 <div className="w-16 h-16 mx-auto mb-4 bg-yellow-500 rounded-full flex items-center justify-center">
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-black" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -695,7 +676,6 @@ const Home = () => {
                 <h3 className="text-xl font-bold mb-2">مؤسسة النخيل الذهبية</h3>
                 <p className="text-sm text-gray-300">متخصصون في أشجار النخيل النادرة</p>
               </div>
-
               <div className="bg-gray-800 border border-yellow-500 p-6 rounded-lg text-center hover:-translate-y-2 transition-transform duration-500 ease-in-out">
                 <div className="w-16 h-16 mx-auto mb-4 bg-yellow-500 rounded-full flex items-center justify-center">
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-black" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -715,7 +695,7 @@ const Home = () => {
         <section className="py-12 bg-gradient-to-r from-amber-50 to-yellow-50">
           <div className="container mx-auto px-4">
             <div className="text-center mb-8">
-              <h2 className="text-3xl font-bold"> ✨</h2>
+              <h2 className="text-3xl font-bold">✨</h2>
             </div>
             {sponsors.length === 0 ? (
               <p className="text-center text-gray-400">لا توجد رعاة حالياً.</p>
@@ -748,21 +728,21 @@ const Home = () => {
           </div>
         </section>
       )}
+
       <section>
         <div className="mx-auto mt-8 max-w-8xl px-6 sm:mt-8 lg:px-8 mb-8">
           <div
             className="relative isolate overflow-hidden bg-gray-900 px-6 py-24 shadow-2xl rounded-2xl sm:rounded-3xl sm:px-18 xl:py-16">
-          
             <h2 className="mx-auto max-w-2xl text-center text-3xl font-bold tracking-tight text-white sm:text-4xl mb-8">
               هل تملك مشتلًا؟
             </h2>
             <p className="mx-auto mt-2 max-w-xl text-center text-lg leading-8 text-gray-300">
-            انضم إلى منصتنا واحصل على المزيد من العملاء
+              انضم إلى منصتنا واحصل على المزيد من العملاء
             </p>
             <div className="flex items-center justify-center mb-4 mt-10">
               <Link to="/register">
                 <button className="text-xl text-white bg-gradient-to-l from-yellow-600 to-yellow-500 hover:bg-green-700 px-10 py-4 rounded-lg shadow-md transition-all duration-200 transform hover:scale-105 hover:shadow-lg">
-                📝 سجل مشتلك الآن
+                  📝 سجل مشتلك الآن
                 </button>
               </Link>
             </div>
