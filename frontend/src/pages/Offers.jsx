@@ -100,6 +100,54 @@ const Offers = () => {
     return <p className="text-center py-8">جاري التحميل...</p>;
   }
 
+  // Helper function to generate page numbers array with ellipsis
+  const getPageNumbers = () => {
+    const maxVisiblePages = 5;
+    const pages = [];
+    
+    if (totalPages <= maxVisiblePages) {
+      for (let i = 1; i <= totalPages; i++) {
+        pages.push(i);
+      }
+    } else {
+      let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
+      let endPage = startPage + maxVisiblePages - 1;
+      
+      if (endPage > totalPages) {
+        endPage = totalPages;
+        startPage = Math.max(1, endPage - maxVisiblePages + 1);
+      }
+
+      // Add first page
+      pages.push(1);
+
+      // Add ellipsis if needed
+      if (startPage > 2) {
+        pages.push('ellipsis');
+      }
+
+      // Add middle pages
+      for (let i = startPage; i <= endPage; i++) {
+        if (i !== 1 && i !== totalPages) {
+          pages.push(i);
+        }
+      }
+
+      // Add ellipsis if needed
+      if (endPage < totalPages - 1) {
+        pages.push('ellipsis');
+      }
+
+      // Add last page if not already included
+      if (totalPages !== 1) {
+        pages.push(totalPages);
+      }
+    }
+
+    // Remove duplicates (e.g., if totalPages=1)
+    return [...new Set(pages)];
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Hero Section */}
@@ -199,36 +247,71 @@ const Offers = () => {
 
           {/* Pagination */}
           {totalPages > 1 && (
-            <div className="flex justify-center mt-8 gap-2">
-              <button
-                onClick={() => handlePageChange(currentPage + 1)}
-                disabled={currentPage === totalPages}
-                className="px-4 py-2 border border-gray-300 rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100 transition"
+            <div className="flex justify-center items-center mt-8 gap-2">
+              {/* Previous Button (→ in RTL) */}
+              <a
+                href="#"
+                onClick={(e) => {
+                  e.preventDefault();
+                  if (currentPage > 1) handlePageChange(currentPage - 1);
+                }}
+                className={`w-10 h-10 flex items-center justify-center text-sm font-semibold rounded-md shadow transition ${
+                  currentPage === 1
+                    ? 'opacity-50 cursor-not-allowed bg-white text-gray-400'
+                    : 'bg-white text-gray-700 hover:bg-gray-100'
+                }`}
               >
-                التالي
-              </button>
+                →
+              </a>
 
-              {Array.from({ length: totalPages }, (_, i) => (
-                <button
-                  key={i + 1}
-                  onClick={() => handlePageChange(i + 1)}
-                  className={`px-4 py-2 rounded-md transition ${
-                    currentPage === i + 1
-                      ? 'bg-yellow-600/80 text-white font-bold'
-                      : 'border border-gray-300 hover:bg-gray-100'
-                  }`}
-                >
-                  {i + 1}
-                </button>
-              ))}
+              {/* Page Numbers */}
+              {getPageNumbers().map((page, idx, arr) => {
+                // Show ellipsis if needed
+                if (page === 'ellipsis') {
+                  return (
+                    <span
+                      key={`ellipsis-${idx}`}
+                      className="w-10 h-10 flex items-center justify-center text-sm font-semibold text-gray-500"
+                    >
+                      ...
+                    </span>
+                  );
+                }
 
-              <button
-                onClick={() => handlePageChange(currentPage - 1)}
-                disabled={currentPage === 1}
-                className="px-4 py-2 border border-gray-300 rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100 transition"
+                return (
+                  <a
+                    key={page}
+                    href="#"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      handlePageChange(page);
+                    }}
+                    className={`w-10 h-10 flex items-center justify-center text-sm font-semibold rounded-md shadow transition ${
+                      currentPage === page
+                        ? 'bg-green-600 text-white'
+                        : 'bg-white text-gray-700 hover:bg-gray-100'
+                    }`}
+                  >
+                    {page}
+                  </a>
+                );
+              })}
+
+              {/* Next Button (← in RTL) */}
+              <a
+                href="#"
+                onClick={(e) => {
+                  e.preventDefault();
+                  if (currentPage < totalPages) handlePageChange(currentPage + 1);
+                }}
+                className={`w-10 h-10 flex items-center justify-center text-sm font-semibold rounded-md shadow transition ${
+                  currentPage === totalPages
+                    ? 'opacity-50 cursor-not-allowed bg-white text-gray-400'
+                    : 'bg-white text-gray-700 hover:bg-gray-100'
+                }`}
               >
-                السابق
-              </button>
+                ←
+              </a>
             </div>
           )}
         </div>

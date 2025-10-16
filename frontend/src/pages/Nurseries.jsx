@@ -180,7 +180,7 @@ const Nurseries = () => {
     }
   };
 
-  // Helper function to generate page numbers array
+  // Helper function to generate page numbers array with ellipsis
   const getPageNumbers = () => {
     const maxVisiblePages = 5;
     const pages = [];
@@ -197,13 +197,35 @@ const Nurseries = () => {
         endPage = totalPages;
         startPage = Math.max(1, endPage - maxVisiblePages + 1);
       }
-      
+
+      // Add first page
+      pages.push(1);
+
+      // Add ellipsis if needed
+      if (startPage > 2) {
+        pages.push('ellipsis');
+      }
+
+      // Add middle pages
       for (let i = startPage; i <= endPage; i++) {
-        pages.push(i);
+        if (i !== 1 && i !== totalPages) {
+          pages.push(i);
+        }
+      }
+
+      // Add ellipsis if needed
+      if (endPage < totalPages - 1) {
+        pages.push('ellipsis');
+      }
+
+      // Add last page if not already included
+      if (totalPages !== 1) {
+        pages.push(totalPages);
       }
     }
-    
-    return pages;
+
+    // Remove duplicates (e.g., if totalPages=1)
+    return [...new Set(pages)];
   };
 
   // Reset page on filter change
@@ -362,34 +384,70 @@ const Nurseries = () => {
               {/* Pagination */}
               {totalPages > 1 && (
                 <div className="flex justify-center items-center mt-8 gap-2">
-                  <button
-                    onClick={() => handlePageChange(currentPage - 1)}
-                    disabled={currentPage === 1}
-                    className="px-4 py-2 border border-gray-300 rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100 transition"
+                  {/* Previous Button (→ in RTL) */}
+                  <a
+                    href="#"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      if (currentPage > 1) handlePageChange(currentPage - 1);
+                    }}
+                    className={`w-10 h-10 flex items-center justify-center text-sm font-semibold rounded-md shadow transition ${
+                      currentPage === 1
+                        ? 'opacity-50 cursor-not-allowed bg-white text-gray-400'
+                        : 'bg-white text-gray-700 hover:bg-gray-100'
+                    }`}
                   >
-                    السابق
-                  </button>
+                    →
+                  </a>
 
-                  {getPageNumbers().map((pageNum) => (
-                    <button
-                      key={pageNum}
-                      onClick={() => handlePageChange(pageNum)}
-                      className={`px-4 py-2 rounded-md transition ${
-                        currentPage === pageNum
-                          ? 'bg-green-500 text-white font-bold'
-                          : 'border border-gray-300 hover:bg-gray-100'
-                      }`}
-                    >
-                      {pageNum}
-                    </button>
-                  ))}
-                  <button
-                    onClick={() => handlePageChange(currentPage + 1)}
-                    disabled={currentPage === totalPages}
-                    className="px-4 py-2 border border-gray-300 rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100 transition"
+                  {/* Page Numbers */}
+                  {getPageNumbers().map((page, idx, arr) => {
+                    // Show ellipsis if needed
+                    if (page === 'ellipsis') {
+                      return (
+                        <span
+                          key={`ellipsis-${idx}`}
+                          className="w-10 h-10 flex items-center justify-center text-sm font-semibold text-gray-500"
+                        >
+                          ...
+                        </span>
+                      );
+                    }
+
+                    return (
+                      <a
+                        key={page}
+                        href="#"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          handlePageChange(page);
+                        }}
+                        className={`w-10 h-10 flex items-center justify-center text-sm font-semibold rounded-md shadow transition ${
+                          currentPage === page
+                            ? 'bg-green-600 text-white'
+                            : 'bg-white text-gray-700 hover:bg-gray-100'
+                        }`}
+                      >
+                        {page}
+                      </a>
+                    );
+                  })}
+
+                  {/* Next Button (← in RTL) */}
+                  <a
+                    href="#"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      if (currentPage < totalPages) handlePageChange(currentPage + 1);
+                    }}
+                    className={`w-10 h-10 flex items-center justify-center text-sm font-semibold rounded-md shadow transition ${
+                      currentPage === totalPages
+                        ? 'opacity-50 cursor-not-allowed bg-white text-gray-400'
+                        : 'bg-white text-gray-700 hover:bg-gray-100'
+                    }`}
                   >
-                    التالي
-                  </button>
+                    ←
+                  </a>
                 </div>
               )}
             </div>
