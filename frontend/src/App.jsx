@@ -13,6 +13,11 @@ import Contact from './pages/Contact';
 import RegisterNursery from './components/RegisterNursery';
 import OfferDetail from './pages/OfferDetail';
 import Survey from './pages/Survey';
+import PrivacyPolicy from './pages/PrivacyPolicy';
+import TermsOfUse from './pages/TermsOfUse';
+import AboutUs from './pages/AboutUs';
+import FAQ from './pages/FAQ';
+
 
 // ✅ Scroll To Top Wrapper
 const ScrollToTop = () => {
@@ -47,6 +52,10 @@ function App() {
             <Route path="/contact" element={<Contact />} />
             <Route path="/register" element={<RegisterNursery />} />
             <Route path="/survey" element={<Survey />} />
+            <Route path="/PrivacyPolicy" element={<PrivacyPolicy />} />
+            <Route path="/TermsOfUse" element={<TermsOfUse />} />
+            <Route path="/AboutUs" element={<AboutUs />} />
+            <Route path="/FAQ" element={<FAQ />} />
           </Routes>
 
         </main>

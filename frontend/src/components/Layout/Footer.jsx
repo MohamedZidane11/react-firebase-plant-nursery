@@ -60,14 +60,23 @@ const Footer = () => {
 
           {/* روابط سريعة */}
           <div>
-            <h3 className="text-lg font-semibold mb-4 text-yellow-300">روابط سريعة</h3>
-            <ul className="space-y-2">
-              <li><Link to="/" className="hover:text-yellow-300">الرئيسية</Link></li>
-              <li><Link to="/nurseries" className="hover:text-yellow-300">المشاتل</Link></li>
-              <li><Link to="/offers" className="hover:text-yellow-300">العروض</Link></li>
-              <li><Link to="/register" className="hover:text-yellow-300">سجل مشتلك</Link></li>
-              <li><Link to="/survey" className="hover:text-yellow-300">الاستبيان</Link></li>
-            </ul>
+            <h3 className="text-xl font-semibold mb-4 text-yellow-300">روابـط سـريـعـة</h3>
+            <div className="flex flex-col sm:flex-row gap-1">
+              {/* First Column */}
+              <ul className="space-y-2 flex-1">
+                <li><Link to="/" className="hover:text-yellow-300">الرئيسية</Link></li>
+                <li><Link to="/nurseries" className="hover:text-yellow-300">المشاتل</Link></li>
+                <li><Link to="/offers" className="hover:text-yellow-300">العروض</Link></li>
+                <li><Link to="/PrivacyPolicy" className="hover:text-yellow-300">سياسة الخصوصية</Link></li>
+              </ul>
+
+              {/* Second Column */}
+              <ul className="space-y-2 flex-1">
+                <li><Link to="/TermsOfUse" className="hover:text-yellow-300">شروط الاستخدام</Link></li>
+                <li><Link to="/AboutUs" className="hover:text-yellow-300">من نحن</Link></li>
+                <li><Link to="/FAQ" className="hover:text-yellow-300">الأسئلة الشائعة</Link></li>
+              </ul>
+            </div>
           </div>
 
           {/* عن المنصة */}
