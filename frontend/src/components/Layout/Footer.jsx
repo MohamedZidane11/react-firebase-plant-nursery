@@ -80,7 +80,8 @@ const Footer = () => {
         </div>
 
         <div className="border-t border-green-700 mt-8 pt-8 text-center text-sm">
-          <p>&copy; 2025 {siteSettings.title?.split(' ')[3] || 'منصة المشاتل'}. جميع الحقوق محفوظة.</p>
+          <p className="pb-4">&copy; 2025 مشاتل السعودية - جميع الحقوق محفوظة</p>
+          <p>نحن ملتزمون بدعم المشاتل السعودية وتطوير قطاع الزراعة في المملكة</p>
         </div>
       </div>
     </footer>

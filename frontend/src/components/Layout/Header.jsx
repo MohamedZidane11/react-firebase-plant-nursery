@@ -23,7 +23,7 @@ const Header = () => {
             {/* Left Section — Welcome Text */}
             <div className="flex flex-wrap items-center justify-center md:justify-start space-x-3 rtl:space-x-reverse z-10 md:mr-8">
               <span className="text-xs md:text-base tracking-wide text-center md:text-left">
-                🌿 مرحباً بكم في منصة المشاتل السعودية الأولى
+                🌿 مرحباً بكم في منصة مشاتل السعودية 
               </span>
               {/*<span className="text-xs md:text-base tracking-wide text-center md:text-left">
                 📞 الدعم: +4567 123 50 966

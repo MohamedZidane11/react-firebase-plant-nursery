@@ -153,15 +153,15 @@ const Offers = () => {
       {/* Hero Section */}
       <section className="bg-gradient-to-r from-[#34a0a4] to-[#fff3b0] text-white py-16">
         <div className="container mx-auto px-4 text-center">
-          <h1 className="text-4xl md:text-5xl font-bold mb-4">
+          <h1 className="text-4xl md:text-5xl font-bold mb-4 pb-4">
             العروض الخاصة 🎁
           </h1>
           <p className="text-xl mb-8">
             اكتشف أفضل العروض والخصومات من المشاتل المميزة
           </p>
-          <button className="bg-white text-yellow-600/80 px-8 py-4 rounded-full font-bold text-lg hover:bg-gray-100 transition-colors">
+          {/*<button className="bg-white text-yellow-600/80 px-8 py-4 rounded-full font-bold text-lg hover:bg-gray-100 transition-colors">
             {filteredOffers.length} عرض نشط حالياً 🙌
-          </button>
+          </button>*/}
         </div>
       </section>
 

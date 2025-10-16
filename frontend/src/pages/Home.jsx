@@ -460,7 +460,7 @@ const Home = () => {
       {viewMode === 'home' && featuredNurseries.length > 0 && (
         <section className="py-12">
           <div className="container mx-auto px-4">
-            <h2 className="text-3xl font-bold text-center text-green-800 mb-8">أبرز المشاتل ✨</h2>
+            <h2 className="text-3xl font-bold text-center text-green-800 mb-8">مشاتل مميزة ✨</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               {featuredNurseries.map((nursery) => (
                 <Link 
