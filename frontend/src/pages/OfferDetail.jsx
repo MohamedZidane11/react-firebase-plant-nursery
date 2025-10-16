@@ -1,4 +1,4 @@
-// src/pages/OfferDetail.jsx - Complete redesign matching HTML
+// src/pages/OfferDetail.jsx - Fixed: clicking album image opens lightbox without changing main image
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import defaultImage from '../assets/offer_default.png';
@@ -87,11 +87,12 @@ const OfferDetail = () => {
   const validAlbum = (offer?.album || []).filter(
     (img) => img && typeof img === 'string' && img.trim() !== ''
   );
-  const hasMainImage = offer?.image && offer.image !== defaultImage && offer.image.trim() !== '';
-  const allImages = hasMainImage ? [offer.image, ...validAlbum] : validAlbum;
+  const hasMainImage = offer?.image && offer.image.trim() !== '' && offer.image !== defaultImage;
+  const allImages = hasMainImage ? [offer.image, ...validAlbum] : [...validAlbum];
 
   const openLightbox = (index) => {
-    setCurrentImageIndex(index);
+    if (allImages.length === 0) return;
+    setCurrentImageIndex(Math.max(0, Math.min(index, allImages.length - 1)));
     setLightboxOpen(true);
   };
 
@@ -192,7 +193,10 @@ const OfferDetail = () => {
                   alt={offer.title}
                   className="w-full h-[500px] object-cover cursor-pointer"
                   onError={(e) => (e.target.src = defaultImage)}
-                  onClick={() => hasMainImage && openLightbox(0)}
+                  onClick={() => {
+                    const index = hasMainImage ? 0 : validAlbum.indexOf(mainImage);
+                    openLightbox(Math.max(0, index));
+                  }}
                 />
                 {discountBadge && (
                   <div className="absolute top-5 right-5 bg-red-500/90 text-white px-8 py-4 rounded-full font-black text-2xl shadow-lg flex items-center gap-2">
@@ -205,18 +209,26 @@ const OfferDetail = () => {
               {/* Thumbnails */}
               {validAlbum.length > 0 && (
                 <div className="grid grid-cols-4 gap-4 p-6 bg-gray-50">
-                  {validAlbum.map((img, index) => (
-                    <img
-                      key={index}
-                      src={img}
-                      alt={`صورة ${index + 1}`}
-                      className={`w-full h-24 object-cover rounded-lg cursor-pointer border-3 transition ${
-                        mainImage === img ? 'border-green-600 shadow-md' : 'border-transparent hover:border-green-400'
-                      }`}
-                      onClick={() => setMainImage(img)}
-                      onError={(e) => e.target.style.display = 'none'}
-                    />
-                  ))}
+                  {validAlbum.map((img, index) => {
+                    const globalIndex = hasMainImage ? index + 1 : index;
+                    return (
+                      <img
+                        key={index}
+                        src={img}
+                        alt={`صورة ${index + 1}`}
+                        className={`w-full h-24 object-cover rounded-lg cursor-pointer border-3 transition ${
+                          mainImage === img ? 'border-green-600 shadow-md' : 'border-transparent hover:border-green-400'
+                        }`}
+                        onClick={() => {
+                          // ✅ FIXED: Removed setMainImage(img)
+                          openLightbox(globalIndex);
+                        }}
+                        onError={(e) => {
+                          e.target.style.display = 'none';
+                        }}
+                      />
+                    );
+                  })}
                 </div>
               )}
             </div>
@@ -464,7 +476,7 @@ const OfferDetail = () => {
                   className="absolute left-4 top-1/2 transform -translate-y-1/2 text-white text-3xl z-10 bg-black bg-opacity-50 rounded-full w-12 h-12 flex items-center justify-center hover:bg-opacity-70"
                   onClick={prevImage}
                 >
-                   ›
+                  ›
                 </button>
                 <button
                   className="absolute right-4 top-1/2 transform -translate-y-1/2 text-white text-3xl z-10 bg-black bg-opacity-50 rounded-full w-12 h-12 flex items-center justify-center hover:bg-opacity-70"

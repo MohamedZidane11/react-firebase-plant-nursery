@@ -12,10 +12,8 @@ const NurseryDetail = () => {
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
-  // ✅ Fetch nursery and offers
   useEffect(() => {
     const API_BASE = 'http://localhost:5000';
-
     const fetchNursery = async () => {
       try {
         const response = await fetch(`${API_BASE}/api/nurseries/${id}`);
@@ -27,7 +25,6 @@ const NurseryDetail = () => {
         setNursery(null);
       }
     };
-
     const fetchOffers = async () => {
       try {
         const response = await fetch(`${API_BASE}/api/offers`);
@@ -40,13 +37,11 @@ const NurseryDetail = () => {
         setOffers([]);
       }
     };
-
     Promise.all([fetchNursery(), fetchOffers()]).finally(() => {
       setLoading(false);
     });
   }, [id]);
 
-  // ✅ Lightbox keyboard handler
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (e.key === 'Escape') {
@@ -59,18 +54,15 @@ const NurseryDetail = () => {
         nextImage();
       }
     };
-
     if (lightboxOpen) {
       window.addEventListener('keydown', handleKeyDown);
       return () => window.removeEventListener('keydown', handleKeyDown);
     }
   }, [lightboxOpen]);
 
-  // Early returns after all Hooks
   if (loading) return <p className="text-center py-8">جاري التحميل...</p>;
   if (!nursery) return <div className="text-center py-8">المشتل غير موجود أو غير منشور</div>;
 
-  // Helper functions
   const formatPhone = (phone) => {
     if (!phone) return '';
     const digits = phone.replace(/\D/g, '');
@@ -80,33 +72,23 @@ const NurseryDetail = () => {
     return phone;
   };
 
-  // ✅ Check if nursery is open now
   const checkIfOpen = () => {
     if (!nursery.workingHours) {
       return { isOpen: null, message: 'غير محدد' };
     }
-
     const now = new Date();
-    const currentDay = now.getDay(); // 0 = Sunday, 5 = Friday, 6 = Saturday
-    const currentTime = now.getHours() * 60 + now.getMinutes(); // Current time in minutes
-
-    // Determine which hours to use (weekdays or Friday)
+    const currentDay = now.getDay();
+    const currentTime = now.getHours() * 60 + now.getMinutes();
     const isFriday = currentDay === 5;
     const hours = isFriday ? nursery.workingHours.friday : nursery.workingHours.weekdays;
-
     if (!hours || !hours.open || !hours.close) {
       return { isOpen: null, message: 'غير محدد' };
     }
-
-    // Convert opening and closing times to minutes
     const [openHour, openMin] = hours.open.split(':').map(Number);
     const [closeHour, closeMin] = hours.close.split(':').map(Number);
     const openTime = openHour * 60 + openMin;
     const closeTime = closeHour * 60 + closeMin;
-
-    // Check if currently open
     const isOpen = currentTime >= openTime && currentTime < closeTime;
-
     return {
       isOpen,
       message: isOpen ? 'مفتوح الآن' : 'مغلق الآن',
@@ -115,7 +97,6 @@ const NurseryDetail = () => {
   };
 
   const openStatus = checkIfOpen();
-
   const getActiveDiscount = () => {
     const activeOffer = offers.find(offer => 
       offer.published !== false && 
@@ -129,47 +110,55 @@ const NurseryDetail = () => {
   const city = locationParts[1] || '';
   const district = locationParts[2] || '';
 
+  // ✅ FIXED: Build allImages safely
+  const allImages = [];
+  if (nursery.image && nursery.image !== defaultNurseryImage) {
+    allImages.push(nursery.image);
+  }
+  if (nursery.album && Array.isArray(nursery.album)) {
+    nursery.album.forEach(img => {
+      if (img && typeof img === 'string' && img.trim() !== '') {
+        allImages.push(img);
+      }
+    });
+  }
+
   const openLightbox = (index) => {
-    setCurrentImageIndex(index);
+    if (allImages.length === 0) return;
+    setCurrentImageIndex(Math.max(0, Math.min(index, allImages.length - 1)));
     setLightboxOpen(true);
   };
 
   const nextImage = () => {
-    setCurrentImageIndex((prev) => (prev + 1) % (nursery.album?.length || 1));
+    if (allImages.length <= 1) return;
+    setCurrentImageIndex((prev) => (prev + 1) % allImages.length);
   };
 
   const prevImage = () => {
-    setCurrentImageIndex((prev) => (prev - 1 + (nursery.album?.length || 1)) % (nursery.album?.length || 1));
+    if (allImages.length <= 1) return;
+    setCurrentImageIndex((prev) => (prev - 1 + allImages.length) % allImages.length);
   };
 
-  // ✅ Add to browser bookmarks
   const addToBookmarks = () => {
     const pageTitle = `${nursery.name} - مشتل`;
     const pageUrl = window.location.href;
-
-    // Try different methods based on browser
     if (window.sidebar && window.sidebar.addPanel) {
-      // Firefox
       window.sidebar.addPanel(pageTitle, pageUrl, '');
     } else if (window.external && ('AddFavorite' in window.external)) {
-      // IE
       window.external.AddFavorite(pageUrl, pageTitle);
     } else if (window.opera && window.print) {
-      // Opera
       const elem = document.createElement('a');
       elem.setAttribute('href', pageUrl);
       elem.setAttribute('title', pageTitle);
       elem.setAttribute('rel', 'sidebar');
       elem.click();
     } else {
-      // For modern browsers - show instruction
       const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
       const shortcut = isMac ? 'Cmd+D' : 'Ctrl+D';
       alert(`لإضافة هذه الصفحة إلى المفضلة، اضغط ${shortcut} على لوحة المفاتيح`);
     }
   };
 
-  // ✅ Open WhatsApp
   const openWhatsApp = () => {
     const phone = nursery.phones?.[0] || '';
     const cleanPhone = phone.replace(/\D/g, '');
@@ -178,13 +167,10 @@ const NurseryDetail = () => {
     window.open(`https://wa.me/${whatsappNumber}?text=${message}`, '_blank');
   };
 
-  // ✅ Make a call
   const makeCall = () => {
     const phone = nursery.phones?.[0] || '';
     window.location.href = `tel:${phone}`;
   };
-
-  const allImages = [nursery.image || defaultNurseryImage, ...(nursery.album || [])];
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -531,13 +517,13 @@ const NurseryDetail = () => {
               className="absolute left-4 top-1/2 transform -translate-y-1/2 text-white text-2xl z-10 bg-black bg-opacity-50 rounded-full w-10 h-10 flex items-center justify-center"
               onClick={prevImage}
             >
-              ‹
+              ›
             </button>
             <button 
               className="absolute right-4 top-1/2 transform -translate-y-1/2 text-white text-2xl z-10 bg-black bg-opacity-50 rounded-full w-10 h-10 flex items-center justify-center"
               onClick={nextImage}
             >
-              ›
+              ‹
             </button>
             <img 
               src={allImages[currentImageIndex]} 
