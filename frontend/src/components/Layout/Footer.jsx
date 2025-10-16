@@ -12,7 +12,7 @@ const Footer = () => {
   useEffect(() => {
     const fetchSettings = async () => {
       try {
-        const API_BASE = 'http://localhost:5000';
+        const API_BASE = 'https://nurseries.qvtest.com';
         const response = await fetch(`${API_BASE}/api/settings/site`);
         if (!response.ok) throw new Error('فشل تحميل الإعدادات');
         const data = await response.json();
@@ -51,8 +51,8 @@ const Footer = () => {
             <h3 className="text-lg font-semibold mb-4 text-yellow-300">تواصل معنا</h3>
             <ul className="space-y-2">
               {/*<li>📧 {siteSettings.contacts.email}</li>*/}
-              <li>📞 {siteSettings.contacts.phone}</li>
-              <li>💬 {siteSettings.contacts.whatsapp}</li>
+              <li>📞 الهاتف: {siteSettings.contacts.phone}</li>
+              <li>💬 الواتساب: {siteSettings.contacts.whatsapp}</li>
               {/*<li>📍 {siteSettings.contacts.address}</li>*/}
             </ul>
             

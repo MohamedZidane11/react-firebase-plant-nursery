@@ -6,7 +6,7 @@ const SurveyManager = () => {
   const [deleteLoading, setDeleteLoading] = useState(null);
   const [selectedSurvey, setSelectedSurvey] = useState(null);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
-  const API_BASE = 'http://localhost:5000';
+  const API_BASE = 'https://nurseries.qvtest.com';
 
   const [filters, setFilters] = useState({
     name: '',

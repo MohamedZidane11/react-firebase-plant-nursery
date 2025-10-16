@@ -4,7 +4,7 @@ import { db } from '../firebase/firebase';
 import { collection, getDocs, deleteDoc, doc } from 'firebase/firestore';
 import { useNavigate } from 'react-router-dom';
 
-const API_BASE = 'http://localhost:5000';
+const API_BASE = 'https://nurseries.qvtest.com';
 
 const OffersManager = () => {
   const [offers, setOffers] = useState([]);

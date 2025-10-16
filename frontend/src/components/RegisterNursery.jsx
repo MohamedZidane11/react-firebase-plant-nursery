@@ -114,7 +114,7 @@ const RegisterNursery = () => {
         status: 'pending',
       };
 
-      await axios.post('http://localhost:5000/api/pending-nurseries', payload);
+      await axios.post('https://nurseries.qvtest.com/api/pending-nurseries', payload);
 
       alert(
         'تم تسجيل مشتلّك بنجاح! هذا تسجيل اولى وسيقوم الفريق بمراجعته خلال 24 ساعة , وسيتم التواصل معكم لاستكمال البيانات.'

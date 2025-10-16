@@ -13,7 +13,7 @@ const NurseryDetail = () => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
   useEffect(() => {
-    const API_BASE = 'http://localhost:5000';
+    const API_BASE = 'https://nurseries.qvtest.com';
     const fetchNursery = async () => {
       try {
         const response = await fetch(`${API_BASE}/api/nurseries/${id}`);

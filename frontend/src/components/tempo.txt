@@ -12,7 +12,7 @@ const Footer = () => {
   useEffect(() => {
     const fetchSettings = async () => {
       try {
-        const API_BASE = 'http://localhost:5000';
+        const API_BASE = 'https://nurseries.qvtest.com';
         const response = await fetch(`${API_BASE}/api/settings/site`);
         if (!response.ok) throw new Error('فشل تحميل الإعدادات');
         const data = await response.json();
