@@ -10,11 +10,11 @@ const app = express();
 // CORS Configuration
 // ═══════════════════════════════════════════════════════════════
 const allowedOrigins = [
-  'https://react-firebase-plant-nursery.vercel.app',
+  'https://nurseries.qvtest.com',
   'https://plant-nursery-admin.vercel.app',
   'http://localhost:5173',
   'http://localhost:5174',
-  'http://localhost:3000'
+  'http://localhost:5000'
 ];
 
 app.use(cors({
@@ -771,6 +771,41 @@ app.get('/api/survey/stats', async (req, res) => {
   } catch (err) {
     console.error('Error fetching survey stats:', err);
     res.status(500).json({ message: 'فشل تحميل الإحصائيات' });
+  }
+});
+
+// ═══════════════════════════════════════════════════════════════
+// CONTACT FORM SUBMISSION
+// ═══════════════════════════════════════════════════════════════
+app.post('/api/contact', express.json(), async (req, res) => {
+  try {
+    const { name, email, subject, message } = req.body;
+
+    // Validation
+    if (!name?.trim()) return res.status(400).json({ error: 'الاسم مطلوب' });
+    if (!email?.trim()) return res.status(400).json({ error: 'البريد الإلكتروني مطلوب' });
+    if (!/^\S+@\S+\.\S+$/.test(email)) return res.status(400).json({ error: 'بريد إلكتروني غير صالح' });
+    if (!subject?.trim()) return res.status(400).json({ error: 'الموضوع مطلوب' });
+    if (!message?.trim()) return res.status(400).json({ error: 'الرسالة مطلوبة' });
+
+    // Optional: Save to Firestore
+    const contactData = {
+      name: name.trim(),
+      email: email.trim(),
+      subject: subject.trim(),
+      message: message.trim(),
+      createdAt: new Date().toISOString(),
+      status: 'new'
+    };
+
+    await db.collection('contacts').add(contactData);
+
+    // Optional: Send email (you can integrate Nodemailer, SendGrid, etc. later)
+
+    res.status(200).json({ success: true, message: 'تم إرسال رسالتك بنجاح! سنرد عليك قريبًا.' });
+  } catch (error) {
+    console.error('Contact form error:', error);
+    res.status(500).json({ error: 'حدث خطأ أثناء إرسال الرسالة. يرجى المحاولة لاحقًا.' });
   }
 });
 
