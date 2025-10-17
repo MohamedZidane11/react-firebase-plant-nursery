@@ -404,6 +404,31 @@ const NurseryDetail = () => {
             </div>
           </div>
 
+          {/* Videos */}
+          {nursery.videos && nursery.videos.length > 0 && (
+            <div className="mt-12">
+              <h2 className="text-3xl font-bold text-green-800 mb-6">🎥 فيديوهات المشتل</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {nursery.videos.map((video, index) => (
+                  <div key={index} className="bg-white rounded-xl shadow-lg overflow-hidden">
+                    <div className="relative rounded-lg overflow-hidden" style={{ paddingBottom: '56.25%' }}>
+                      <video
+                        controls
+                        className="absolute top-0 left-0 w-full h-full object-cover"
+                        src={video}
+                        onError={(e) => {
+                          e.target.parentElement.style.display = 'none';
+                        }}
+                      >
+                        متصفحك لا يدعم تشغيل الفيديو
+                      </video>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Offers */}
           <div className="mt-12">
             <h2 className="text-3xl font-bold text-green-800 mb-6">🎁 العروض الحالية</h2>

@@ -109,7 +109,7 @@ app.post('/api/upload', imageUpload.single('image'), async (req, res) => {
 });
 
 // ═══════════════════════════════════════════════════════════════
-// VIDEO UPLOAD ENDPOINT (NEW!)
+// VIDEO UPLOAD FOR OFFERS
 // ═══════════════════════════════════════════════════════════════
 app.post('/api/upload-video', videoUpload.single('video'), async (req, res) => {
   try {
@@ -146,8 +146,40 @@ app.post('/api/upload-video', videoUpload.single('video'), async (req, res) => {
 });
 
 // ═══════════════════════════════════════════════════════════════
+// VIDEO UPLOAD FOR NURSERIES
+// ═══════════════════════════════════════════════════════════════
+app.post('/api/upload-nursery-video', videoUpload.single('video'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: 'No video file provided' });
+    }
+    const { nurseryId } = req.body;
+    if (!nurseryId) {
+      return res.status(400).json({ error: 'Nursery ID is required' });
+    }
+    const basePath = `nurs_videos/${nurseryId}`;
+    const timestamp = Date.now();
+    const cleanName = req.file.originalname.replace(/\s+/g, '_').replace(/[^a-zA-Z0-9._-]/g, '');
+    const fileName = `${timestamp}_${cleanName}`;
+    const filePath = `${basePath}/${fileName}`;
+    const bucket = adminStorage.bucket();
+    const file = bucket.file(filePath);
+    await file.save(req.file.buffer, {
+      metadata: { contentType: req.file.mimetype }
+    });
+    await file.makePublic();
+    const publicUrl = `https://firebasestorage.googleapis.com/v0/b/${bucket.name}/o/${encodeURIComponent(filePath)}?alt=media`;
+    res.status(200).json({ url: publicUrl, path: filePath });
+  } catch (error) {
+    console.error('Nursery video upload error:', error);
+    res.status(500).json({ error: 'Failed to upload nursery video.' });
+  }
+});
+
+// ═══════════════════════════════════════════════════════════════
 // DELETE FILE ENDPOINT (Images & Videos)
 // ═══════════════════════════════════════════════════════════════
+
 app.delete('/api/delete-file', async (req, res) => {
   try {
     const { url } = req.body;

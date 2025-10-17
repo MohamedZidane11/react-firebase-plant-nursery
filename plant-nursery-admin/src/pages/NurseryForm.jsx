@@ -27,12 +27,15 @@ const NurseryForm = () => {
   const [existingNurseryNames, setExistingNurseryNames] = useState(new Set());
   const [nameError, setNameError] = useState('');
   const [originalName, setOriginalName] = useState('');
+  const [videoFiles, setVideoFiles] = useState([]);
+  const [videoPreviews, setVideoPreviews] = useState([]);
 
   const [formData, setFormData] = useState({
     name: '',
     description: '',
     image: null,
     album: [],
+    videos: [],
     categories: [],
     region: '',
     city: '',
@@ -133,6 +136,7 @@ const NurseryForm = () => {
               description: data.description || '',
               image: data.image || null,
               album: data.album || [],
+              videos: data.videos || [],
               categories: data.categories || [],
               region: data.region || '',
               city: data.city || '',
@@ -284,6 +288,41 @@ const NurseryForm = () => {
     setFormData(prev => ({ ...prev, album: newAlbum }));
   };
 
+  const uploadNurseryVideoToBackend = async (file, nurseryId) => {
+    const formData = new FormData();
+    formData.append('video', file);
+    formData.append('nurseryId', nurseryId);
+    const res = await fetch(`${API_BASE}/api/upload-nursery-video`, {
+      method: 'POST',
+      body: formData,
+    });
+    if (!res.ok) {
+      const error = await res.json().catch(() => ({}));
+      throw new Error(error.error || 'فشل رفع الفيديو');
+    }
+    const data = await res.json();
+    return data.url;
+  };
+
+  const deleteVideo = async (index) => {
+    const videoUrl = formData.videos[index];
+    await deleteImageFromStorage(videoUrl); // Reuse same delete function
+    const newVideos = formData.videos.filter((_, i) => i !== index);
+    setFormData(prev => ({ ...prev, videos: newVideos }));
+  };
+  
+  const handleVideoChange = (e) => {
+    const files = Array.from(e.target.files);
+    if (files.length > 0) {
+      const newPreviews = files.map(file => ({
+        name: file.name,
+        size: (file.size / (1024 * 1024)).toFixed(2) + ' MB'
+      }));
+      setVideoFiles(prev => [...prev, ...files]);
+      setVideoPreviews(prev => [...prev, ...newPreviews]);
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -394,6 +433,16 @@ const NurseryForm = () => {
       alert('خطأ: ' + err.message);
       console.error(err);
       setLoading(false);
+    };
+
+    // Upload videos
+    let videoUrls = formData.videos;
+    if (videoFiles.length > 0) {
+      const uploadPromises = videoFiles.map(file =>
+        uploadNurseryVideoToBackend(file, finalNurseryId)
+      );
+      const newVideoUrls = await Promise.all(uploadPromises);
+      videoUrls = [...formData.videos, ...newVideoUrls];
     }
   };
 
@@ -572,6 +621,86 @@ const NurseryForm = () => {
                           className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs hover:bg-red-600"
                         >
                           ×
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Video Upload */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">الفيديوهات (اختياري)</label>
+              <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-dashed border-gray-300 rounded-lg hover:border-green-400 transition">
+                <div className="space-y-1 text-center">
+                  <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                  </svg>
+                  <div className="flex text-sm text-gray-600">
+                    <label htmlFor="video-upload" className="relative cursor-pointer bg-white rounded-md font-medium text-green-600 hover:text-green-500">
+                      <span>رفع فيديو</span>
+                      <input
+                        id="video-upload"
+                        name="video-upload"
+                        type="file"
+                        accept="video/*"
+                        multiple
+                        className="sr-only"
+                        onChange={handleVideoChange}
+                      />
+                    </label>
+                    <p className="pl-1">أو اسحب الملفات هنا</p>
+                  </div>
+                  <p className="text-xs text-gray-500">MP4, MOV, AVI حتى 100MB لكل فيديو</p>
+                </div>
+              </div>
+              {(videoPreviews.length > 0 || formData.videos.length > 0) && (
+                <div className="mt-4">
+                  <h4 className="text-sm font-medium text-gray-700 mb-2">الفيديوهات المضافة:</h4>
+                  <div className="space-y-2">
+                    {videoPreviews.map((preview, index) => (
+                      <div key={`new-vid-${index}`} className="flex items-center justify-between p-3 bg-gray-50 rounded border">
+                        <div className="flex items-center gap-2">
+                          <svg className="w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M2 6a2 2 0 012-2h6a2 2 0 012 2v8a2 2 0 01-2 2H4a2 2 0 01-2-2V6zM14.553 7.106A1 1 0 0014 8v4a1 1 0 00.553.894l2 1A1 1 0 0018 13V7a1 1 0 00-1.447-.894l-2 1z" />
+                          </svg>
+                          <div>
+                            <p className="text-sm font-medium">{preview.name}</p>
+                            <p className="text-xs text-gray-500">{preview.size}</p>
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const newPreviews = videoPreviews.filter((_, i) => i !== index);
+                            const newFiles = videoFiles.filter((_, i) => i !== index);
+                            setVideoPreviews(newPreviews);
+                            setVideoFiles(newFiles);
+                          }}
+                          className="text-red-600 hover:text-red-800"
+                        >
+                          حذف
+                        </button>
+                      </div>
+                    ))}
+                    {formData.videos.map((url, index) => (
+                      <div key={`saved-vid-${index}`} className="flex items-center justify-between p-3 bg-gray-50 rounded border">
+                        <div className="flex items-center gap-2">
+                          <svg className="w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M2 6a2 2 0 012-2h6a2 2 0 012 2v8a2 2 0 01-2 2H4a2 2 0 01-2-2V6zM14.553 7.106A1 1 0 0014 8v4a1 1 0 00.553.894l2 1A1 1 0 0018 13V7a1 1 0 00-1.447-.894l-2 1z" />
+                          </svg>
+                          <div>
+                            <p className="text-sm font-medium">فيديو {index + 1}</p>
+                            <p className="text-xs text-gray-500">محفوظ</p>
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => deleteVideo(index)}
+                          className="text-red-600 hover:text-red-800"
+                        >
+                          حذف
                         </button>
                       </div>
                     ))}
