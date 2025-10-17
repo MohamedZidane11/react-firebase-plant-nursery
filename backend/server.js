@@ -111,7 +111,7 @@ app.post('/api/upload', imageUpload.single('image'), async (req, res) => {
 // ═══════════════════════════════════════════════════════════════
 // VIDEO UPLOAD FOR OFFERS
 // ═══════════════════════════════════════════════════════════════
-app.post('/api/upload-video', videoUpload.single('video'), async (req, res) => {
+app.post('/api/upload-offer-video', videoUpload.single('video'), async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ error: 'No video file provided' });

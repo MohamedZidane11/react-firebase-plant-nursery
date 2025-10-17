@@ -87,7 +87,7 @@ const OfferForm = () => {
     const formData = new FormData();
     formData.append('video', file);
     formData.append('offerId', offerId);
-    const res = await fetch(`${API_BASE}/api/upload-video`, {
+    const res = await fetch(`${API_BASE}/api/upload-offer-video`, {
       method: 'POST',
       body: formData,
     });

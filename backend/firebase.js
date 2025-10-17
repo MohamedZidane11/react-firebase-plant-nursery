@@ -14,7 +14,7 @@ const serviceAccountPath = path.join(__dirname, 'FIREBASE_SERVICE_ACCOUNT.json')
 try {
   initializeApp({
     credential: cert(serviceAccountPath),
-    storageBucket: 'nursery-c5de8.firebasestorage.app' // 🔴 REPLACE with your bucket name
+    storageBucket: 'nursery-c5de8.firebasestorage.app'
   });
   console.log('✅ Firebase Admin initialized with service account file');
 } catch (error) {
