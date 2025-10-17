@@ -52,7 +52,7 @@ const FAQ = () => {
       <div className="container mx-auto px-4 py-12 max-w-3xl">
         <h1 className="text-3xl md:text-4xl font-bold text-center mb-10 text-green-800">الأسئلة الشائعة</h1>
         
-        <div className="space-y-4">
+        <div className="space-y-4 bg-[#eeebd0] p-6 rounded-xl">
           {faqs.map((faq, index) => (
             <div 
               key={index} 
@@ -72,7 +72,7 @@ const FAQ = () => {
 
               {/* Answer (Animated) */}
               <div
-                className={`transition-all duration-300 ease-in-out overflow-hidden ${
+                className={`transition-all duration-500 ease-in-out overflow-hidden ${
                   openIndex === index ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'
                 }`}
               >
