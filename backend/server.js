@@ -10,24 +10,38 @@ const app = express();
 // CORS Configuration
 // ═══════════════════════════════════════════════════════════════
 const allowedOrigins = [
+  // Production Frontend
   'https://nurseries.qvtest.com',
+  
+  // Admin Panel
   'https://plant-nursery-admin.vercel.app',
+  
+  // Main Frontend (ADD THIS!)
+  'https://react-firebase-plant-nursery.vercel.app',
+  
+  // Local Development
   'http://localhost:5173',
   'http://localhost:5174',
-  'http://localhost:5000'
+  'http://localhost:5000',
+  'http://localhost:3000'
 ];
 
 app.use(cors({
   origin: (origin, callback) => {
+    // Allow requests with no origin (mobile apps, curl, Postman)
     if (!origin) return callback(null, true);
-    if (allowedOrigins.includes(origin)) {
+    
+    // Allow if in whitelist OR any Vercel preview domain
+    if (allowedOrigins.includes(origin) || origin.endsWith('.vercel.app')) {
       callback(null, true);
     } else {
-      console.log('Blocked by CORS:', origin);
+      console.log('❌ Blocked by CORS:', origin);
       callback(new Error('Not allowed by CORS'));
     }
   },
-  credentials: true
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
 app.use(express.json({ limit: '10mb' }));
