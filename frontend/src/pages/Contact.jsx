@@ -57,9 +57,7 @@ const Contact = () => {
     }
 
     try {
-      const API_BASE = process.env.NODE_ENV === 'development' 
-        ? 'http://localhost:5000' 
-        : 'https://nurseries.qvtest.com';
+      const API_BASE = process.env.REACT_APP_API_URL || 'https://nurseries.qvtest.com';
 
       const response = await fetch(`${API_BASE}/api/contact`, {
         method: 'POST',
