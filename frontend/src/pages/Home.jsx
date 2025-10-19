@@ -10,7 +10,7 @@ import NurseryCard from '../components/NurseryCard';
 const Home = () => {
   // ✅ ALL HOOKS AT THE TOP
   const [searchTerm, setSearchTerm] = useState('');
-  const [activeServiceFilter, setActiveServiceFilter] = useState('all'); // Updated filter key
+  const [activeServiceFilter, setActiveServiceFilter] = useState('all');
   const [selectedCategory, setSelectedCategory] = useState('');
   const [viewMode, setViewMode] = useState('home');
   const [sponsors, setSponsors] = useState([]);
@@ -239,7 +239,7 @@ const Home = () => {
     });
 
     setResults(results);
-  }, [searchTerm, nurseries, offers, categories, activeServiceFilter]); // ✅ Critical: include activeServiceFilter
+  }, [searchTerm, nurseries, offers, categories, activeServiceFilter]);
 
   if (loading || sponsorsLoading) {
     return <p className="text-center py-8">جاري التحميل...</p>;
@@ -254,48 +254,77 @@ const Home = () => {
     { key: 'installation', label: 'التركيب', icon: '🌱' },
   ];
 
-  // ✅ Filter results by service (already done in useEffect above)
   const filteredResults = results;
-
-  // ✅ Get featured nurseries
   const featuredNurseries = nurseries.filter(n => n.featured);
 
   // Filter nurseries by selected category
   const filteredNurseries = selectedCategory
-  ? nurseries.filter(nursery =>
-      Array.isArray(nursery.categories) &&
-      nursery.categories.includes(selectedCategory)
-    )
-  : [];
+    ? nurseries.filter(nursery =>
+        Array.isArray(nursery.categories) &&
+        nursery.categories.includes(selectedCategory)
+      )
+    : [];
 
   // Paginate
   const totalPages = Math.ceil(filteredNurseries.length / itemsPerPage);
   const currentNurseries = filteredNurseries.slice(
-  (currentPage - 1) * itemsPerPage,
-  currentPage * itemsPerPage
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
   );
 
+  // ✅ Same pagination logic as Nurseries page
   const getPageNumbers = () => {
-    const maxVisible = 5;
+    const maxVisiblePages = 5;
     const pages = [];
-    if (totalPages <= maxVisible) {
-      for (let i = 1; i <= totalPages; i++) pages.push(i);
+    
+    if (totalPages <= maxVisiblePages) {
+      for (let i = 1; i <= totalPages; i++) {
+        pages.push(i);
+      }
     } else {
-      let start = Math.max(1, currentPage - Math.floor(maxVisible / 2));
-      let end = start + maxVisible - 1;
-      if (end > totalPages) {
-        end = totalPages;
-        start = Math.max(1, end - maxVisible + 1);
+      let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
+      let endPage = startPage + maxVisiblePages - 1;
+      
+      if (endPage > totalPages) {
+        endPage = totalPages;
+        startPage = Math.max(1, endPage - maxVisiblePages + 1);
       }
+
+      // Add first page
       pages.push(1);
-      if (start > 2) pages.push('ellipsis');
-      for (let i = start; i <= end; i++) {
-        if (i !== 1 && i !== totalPages) pages.push(i);
+
+      // Add ellipsis if needed
+      if (startPage > 2) {
+        pages.push('ellipsis');
       }
-      if (end < totalPages - 1) pages.push('ellipsis');
-      if (totalPages !== 1) pages.push(totalPages);
+
+      // Add middle pages
+      for (let i = startPage; i <= endPage; i++) {
+        if (i !== 1 && i !== totalPages) {
+          pages.push(i);
+        }
+      }
+
+      // Add ellipsis if needed
+      if (endPage < totalPages - 1) {
+        pages.push('ellipsis');
+      }
+
+      // Add last page if not already included
+      if (totalPages !== 1) {
+        pages.push(totalPages);
+      }
     }
+
+    // Remove duplicates
     return [...new Set(pages)];
+  };
+
+  const handlePageChange = (page) => {
+    if (page >= 1 && page <= totalPages) {
+      setCurrentPage(page);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
   };
 
   return (
@@ -356,7 +385,6 @@ const Home = () => {
                 </form>
               </div>
             </div>
-            {/* ✅ Service Filter Buttons */}
             <div className="flex flex-wrap gap-2">
               {serviceFilters.map((filter) => (
                 <button
@@ -609,10 +637,13 @@ const Home = () => {
                 {/* Pagination */}
                 {totalPages > 1 && (
                   <div className="flex justify-center items-center mt-8 gap-2">
-                    {/* Previous */}
-                    <button
-                      onClick={() => currentPage > 1 && setCurrentPage(currentPage - 1)}
-                      disabled={currentPage === 1}
+                    {/* Previous Button */}
+                    <a
+                      href="#"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        if (currentPage > 1) handlePageChange(currentPage - 1);
+                      }}
                       className={`w-10 h-10 flex items-center justify-center text-sm font-semibold rounded-md shadow transition ${
                         currentPage === 1
                           ? 'opacity-50 cursor-not-allowed bg-white text-gray-400'
@@ -620,18 +651,29 @@ const Home = () => {
                       }`}
                     >
                       →
-                    </button>
+                    </a>
 
                     {/* Page Numbers */}
-                    {getPageNumbers().map((page, idx) =>
-                      page === 'ellipsis' ? (
-                        <span key={idx} className="w-10 h-10 flex items-center justify-center text-sm font-semibold text-gray-500">
-                          ...
-                        </span>
-                      ) : (
-                        <button
+                    {getPageNumbers().map((page, idx) => {
+                      if (page === 'ellipsis') {
+                        return (
+                          <span
+                            key={`ellipsis-${idx}`}
+                            className="w-10 h-10 flex items-center justify-center text-sm font-semibold text-gray-500"
+                          >
+                            ...
+                          </span>
+                        );
+                      }
+
+                      return (
+                        <a
                           key={page}
-                          onClick={() => setCurrentPage(page)}
+                          href="#"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            handlePageChange(page);
+                          }}
                           className={`w-10 h-10 flex items-center justify-center text-sm font-semibold rounded-md shadow transition ${
                             currentPage === page
                               ? 'bg-green-600 text-white'
@@ -639,14 +681,17 @@ const Home = () => {
                           }`}
                         >
                           {page}
-                        </button>
-                      )
-                    )}
+                        </a>
+                      );
+                    })}
 
-                    {/* Next */}
-                    <button
-                      onClick={() => currentPage < totalPages && setCurrentPage(currentPage + 1)}
-                      disabled={currentPage === totalPages}
+                    {/* Next Button */}
+                    <a
+                      href="#"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        if (currentPage < totalPages) handlePageChange(currentPage + 1);
+                      }}
                       className={`w-10 h-10 flex items-center justify-center text-sm font-semibold rounded-md shadow transition ${
                         currentPage === totalPages
                           ? 'opacity-50 cursor-not-allowed bg-white text-gray-400'
@@ -654,7 +699,7 @@ const Home = () => {
                       }`}
                     >
                       ←
-                    </button>
+                    </a>
                   </div>
                 )}
               </>
