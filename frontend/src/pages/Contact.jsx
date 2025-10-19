@@ -141,7 +141,7 @@ const Contact = () => {
                       </svg>
                       <div className="mr-4 text-right">
                         <p className="text-gray-600">العنوان</p>
-                        <p className="font-medium text-green-800">الرياض، المملكة العربية السعودية</p>
+                        <p className="font-medium text-green-800"></p>
                       </div>
                     </div>
                   </div>

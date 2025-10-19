@@ -88,7 +88,7 @@ const RegisterNursery = () => {
     }
 
     // Required: Primary categories
-    const primaryCats = ['مشاتل', 'مشاتل مختلطة', 'أدوات الزراعة'];
+    const primaryCats = ['مشاتل', 'مشاتل متنوعة', 'أدوات الزراعة'];
     const hasPrimary = formData.categories.some((cat) => primaryCats.includes(cat));
     if (!hasPrimary) {
       newErrors.categories = 'يرجى اختيار تصنيف رئيسي على الأقل';
@@ -143,7 +143,7 @@ const RegisterNursery = () => {
   };
 
   // Categories
-  const primaryCategories = ['مشاتل', 'مشاتل مختلطة', 'أدوات الزراعة'];
+  const primaryCategories = ['مشاتل', 'مشاتل متنوعة', 'أدوات الزراعة'];
   const otherCategories = ['نباتات داخلية', 'نباتات خارجية', 'زهور', 'نخيل', 'معدات'];
 
   if (loadingLocations) {
