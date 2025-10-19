@@ -329,35 +329,31 @@ const NurseryForm = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
     if (!validateName(formData.name)) {
       alert('يرجى تصحيح اسم المشتل. ' + nameError);
       return;
     }
-
     if (!formData.name.trim()) {
       alert('اسم المشتل مطلوب');
       return;
     }
-    
     if (!formData.region || !formData.city) {
       alert('المنطقة، المدينة مطلوبتان');
       return;
     }
-
-    const mainCategories = ['مشاتل', 'مشاتل مختلطة', 'أدوات الزراعة'];
-    const hasMainCategory = formData.categories.some(cat => mainCategories.includes(cat));
-    if (!hasMainCategory) {
-      alert('يجب اختيار تصنيف رئيسي واحد على الأقل');
+  
+    // ✅ PRIMARY CATEGORY VALIDATION: exactly one required
+    const mainCategories = ['مشاتل', 'مشاتل متنوعة', 'أدوات الزراعة'];
+    const selectedMain = formData.categories.filter(cat => mainCategories.includes(cat));
+    if (selectedMain.length !== 1) {
+      alert('يجب اختيار تصنيف رئيسي واحد فقط (ليس أكثر ولا أقل)');
       return;
     }
-
+  
     try {
       setLoading(true);
-      
       let imageUrl = formData.image;
       let finalNurseryId = id;
-
       if (id) {
         if (imageFile) {
           if (formData.image && formData.image.includes('firebasestorage.googleapis.com')) {
@@ -391,12 +387,11 @@ const NurseryForm = () => {
           updatedBy: auth.currentUser.email
         });
         finalNurseryId = docRef.id;
-
         if (imageFile) {
           imageUrl = await uploadToBackend(imageFile, 'nurs_images', docRef.id);
         }
       }
-
+  
       let albumUrls = formData.album;
       if (albumFiles.length > 0) {
         const uploadPromises = albumFiles.map(file =>
@@ -405,7 +400,17 @@ const NurseryForm = () => {
         const newAlbumUrls = await Promise.all(uploadPromises);
         albumUrls = [...formData.album, ...newAlbumUrls];
       }
-
+  
+      // Upload videos
+      let videoUrls = formData.videos;
+      if (videoFiles.length > 0) {
+        const uploadPromises = videoFiles.map(file =>
+          uploadNurseryVideoToBackend(file, finalNurseryId)
+        );
+        const newVideoUrls = await Promise.all(uploadPromises);
+        videoUrls = [...formData.videos, ...newVideoUrls];
+      }
+  
       const fullLocation = `${formData.region} - ${formData.city} - ${formData.district}`;
       const data = {
         name: formData.name.trim(),
@@ -425,28 +430,19 @@ const NurseryForm = () => {
           ? Object.fromEntries(Object.entries(formData.socialMedia).filter(([_, v]) => v.trim() !== ''))
           : null,
         workingHours: formData.workingHours,
+        videos: videoUrls,
         updatedAt: serverTimestamp(),
         updatedBy: auth.currentUser.email
       };
-
+  
       await updateDoc(doc(db, 'nurseries', finalNurseryId), data);
-      
       alert(id ? 'تم التحديث بنجاح!' : 'تم إضافة المشتل بنجاح!');
       navigate('/nurseries');
     } catch (err) {
       alert('خطأ: ' + err.message);
       console.error(err);
+    } finally {
       setLoading(false);
-    };
-
-    // Upload videos
-    let videoUrls = formData.videos;
-    if (videoFiles.length > 0) {
-      const uploadPromises = videoFiles.map(file =>
-        uploadNurseryVideoToBackend(file, finalNurseryId)
-      );
-      const newVideoUrls = await Promise.all(uploadPromises);
-      videoUrls = [...formData.videos, ...newVideoUrls];
     }
   };
 
@@ -893,9 +889,9 @@ const NurseryForm = () => {
 
             <div>
               <div className="mb-4">
-                <h4 className="text-sm font-medium text-gray-800 mb-2">
-                  <span className="text-red-500">*</span>التصنيف الرئيسي (اختر واحدًا على الأقل)
-                </h4>
+              <h4 className="text-sm font-medium text-gray-800 mb-2">
+                <span className="text-red-500">*</span>التصنيف الرئيسي (اختر <strong>واحدًا فقط</strong>)
+              </h4>
                 <div className="flex flex-wrap gap-2">
                   {mainCategories.map((cat) => (
                     <label key={cat} className="flex items-center">

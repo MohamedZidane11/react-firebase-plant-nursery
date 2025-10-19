@@ -7,7 +7,8 @@ import { doc, getDoc } from 'firebase/firestore';
 const RegisterNursery = () => {
   const [formData, setFormData] = useState({
     name: '',
-    categories: [],
+    primaryCategory: '', // Now a single string, not array
+    otherCategories: [],
     region: '',
     city: '',
     district: '',
@@ -50,12 +51,12 @@ const RegisterNursery = () => {
     }));
   };
 
-  const handleCategoryChange = (category) => {
+  const handleOtherCategoryChange = (category) => {
     setFormData((prev) => ({
       ...prev,
-      categories: prev.categories.includes(category)
-        ? prev.categories.filter((c) => c !== category)
-        : [...prev.categories, category],
+      otherCategories: prev.otherCategories.includes(category)
+        ? prev.otherCategories.filter((c) => c !== category)
+        : [...prev.otherCategories, category],
     }));
   };
 
@@ -71,7 +72,6 @@ const RegisterNursery = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Validation
     const newErrors = {};
     if (!formData.name.trim()) newErrors.name = 'الاسم مطلوب';
     if (!formData.region) newErrors.region = 'المنطقة مطلوبة';
@@ -81,17 +81,13 @@ const RegisterNursery = () => {
     if (!/^[\d+\-\s()]{8,15}$/.test(formData.whatsapp.trim())) {
       newErrors.whatsapp = 'رقم الواتس آب غير صالح';
     }
-
-    // Optional: validate Google Maps link format (basic)
     if (formData.googleMapsLink.trim() && !formData.googleMapsLink.startsWith('https://maps.app.goo.gl/')) {
       newErrors.googleMapsLink = 'يرجى إدخال رابط خرائط جوجل صالح (يبدأ بـ https://maps.app.goo.gl/)';
     }
 
-    // Required: Primary categories
-    const primaryCats = ['مشاتل', 'مشاتل متنوعة', 'أدوات الزراعة'];
-    const hasPrimary = formData.categories.some((cat) => primaryCats.includes(cat));
-    if (!hasPrimary) {
-      newErrors.categories = 'يرجى اختيار تصنيف رئيسي على الأقل';
+    // ✅ Enforce exactly ONE primary category
+    if (!formData.primaryCategory) {
+      newErrors.primaryCategory = 'يرجى اختيار تصنيف رئيسي واحد';
     }
 
     if (Object.keys(newErrors).length > 0) {
@@ -102,10 +98,10 @@ const RegisterNursery = () => {
     setSubmitting(true);
     try {
       const fullLocation = `${formData.region} - ${formData.city}${formData.district ? ` - ${formData.district}` : ''}`;
-
       const payload = {
         ...formData,
-        location: fullLocation, // backward-compatible field
+        categories: [formData.primaryCategory, ...formData.otherCategories], // Combine for backend
+        location: fullLocation,
         name: formData.name.trim(),
         contactName: formData.contactName.trim(),
         whatsapp: formData.whatsapp.trim(),
@@ -115,15 +111,12 @@ const RegisterNursery = () => {
       };
 
       await axios.post('https://nurseries.qvtest.com/api/pending-nurseries', payload);
+      alert('تم تسجيل مشتلّك بنجاح! هذا تسجيل اولى وسيقوم الفريق بمراجعته خلال 24 ساعة , وسيتم التواصل معكم لاستكمال البيانات.');
 
-      alert(
-        'تم تسجيل مشتلّك بنجاح! هذا تسجيل اولى وسيقوم الفريق بمراجعته خلال 24 ساعة , وسيتم التواصل معكم لاستكمال البيانات.'
-      );
-
-      // Reset form
       setFormData({
         name: '',
-        categories: [],
+        primaryCategory: '',
+        otherCategories: [],
         region: '',
         city: '',
         district: '',
@@ -142,7 +135,6 @@ const RegisterNursery = () => {
     }
   };
 
-  // Categories
   const primaryCategories = ['مشاتل', 'مشاتل متنوعة', 'أدوات الزراعة'];
   const otherCategories = ['نباتات داخلية', 'نباتات خارجية', 'زهور', 'نخيل', 'معدات'];
 
@@ -161,14 +153,13 @@ const RegisterNursery = () => {
           <h2 className="text-2xl font-bold text-center mb-6 text-green-800">
             سجل مشتلّك
           </h2>
-          <div className="flex items-center p-4 mb-4 text-green-800 border-t-4 border-green-300 bg-green-50 dark:text-green-400 dark:bg-gray-800 dark:border-green-800">
-            <svg class="shrink-0 w-4 h-4" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
+          <div className="flex items-center p-4 mb-4 text-green-800 border-t-4 border-green-300 bg-green-50">
+            <svg className="shrink-0 w-4 h-4" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
               <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5ZM9.5 4a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3ZM12 15H8a1 1 0 0 1 0-2h1v-3H8a1 1 0 0 1 0-2h2a1 1 0 0 1 1 1v4h1a1 1 0 0 1 0 2Z"/>
             </svg>
-            <h3 className="mr-2">
-              هذا تسجيل اولي 
-            </h3>
+            <h3 className="mr-2">هذا تسجيل اولي</h3>
           </div>
+
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Name */}
             <div>
@@ -206,7 +197,7 @@ const RegisterNursery = () => {
               {errors.contactName && <p className="text-red-500 text-sm mt-1">{errors.contactName}</p>}
             </div>
 
-            {/* WhatsApp Number */}
+            {/* WhatsApp */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 <span className="text-red-500">*</span> رقم التواصل (واتس آب)
@@ -224,7 +215,7 @@ const RegisterNursery = () => {
               {errors.whatsapp && <p className="text-red-500 text-sm mt-1">{errors.whatsapp}</p>}
             </div>
 
-            {/* Location Dropdowns */}
+            {/* Location */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -245,7 +236,6 @@ const RegisterNursery = () => {
                 </select>
                 {errors.region && <p className="text-red-500 text-sm mt-1">{errors.region}</p>}
               </div>
-
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   <span className="text-red-500">*</span> المدينة
@@ -266,7 +256,6 @@ const RegisterNursery = () => {
                 </select>
                 {errors.city && <p className="text-red-500 text-sm mt-1">{errors.city}</p>}
               </div>
-
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">الحي</label>
                 <select
@@ -286,7 +275,7 @@ const RegisterNursery = () => {
               </div>
             </div>
 
-            {/* Google Maps Link */}
+            {/* Google Maps */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 رابط الموقع من خرائط جوجل
@@ -323,25 +312,27 @@ const RegisterNursery = () => {
               </div>
             </div>
 
-            {/* Primary Categories */}
+            {/* Primary Category - RADIO BUTTONS */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                <span className="text-red-500">*</span> التصنيف الرئيسي
+                <span className="text-red-500">*</span> التصنيف الرئيسي (اختر واحدًا فقط)
               </label>
-              <div className="flex flex-wrap gap-2 mb-4">
+              <div className="space-y-2">
                 {primaryCategories.map((cat) => (
                   <label key={cat} className="flex items-center">
                     <input
-                      type="checkbox"
-                      checked={formData.categories.includes(cat)}
-                      onChange={() => handleCategoryChange(cat)}
+                      type="radio"
+                      name="primaryCategory"
+                      value={cat}
+                      checked={formData.primaryCategory === cat}
+                      onChange={handleChange}
                       className="mr-2 h-4 w-4 text-green-600"
                     />
                     <span className="text-sm">{cat}</span>
                   </label>
                 ))}
               </div>
-              {errors.categories && <p className="text-red-500 text-sm">{errors.categories}</p>}
+              {errors.primaryCategory && <p className="text-red-500 text-sm mt-1">{errors.primaryCategory}</p>}
             </div>
 
             {/* Other Categories */}
@@ -354,8 +345,8 @@ const RegisterNursery = () => {
                   <label key={cat} className="flex items-center">
                     <input
                       type="checkbox"
-                      checked={formData.categories.includes(cat)}
-                      onChange={() => handleCategoryChange(cat)}
+                      checked={formData.otherCategories.includes(cat)}
+                      onChange={() => handleOtherCategoryChange(cat)}
                       className="mr-2 h-4 w-4 text-green-600"
                     />
                     <span className="text-sm">{cat}</span>
