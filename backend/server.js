@@ -1,4 +1,4 @@
-// server.js - COMPLETE Final Version with ALL endpoints
+// server.js - COMPLETE Final Version with FIXED CORS
 import express from 'express';
 import cors from 'cors';
 import { db, adminStorage } from './firebase.js';
@@ -44,7 +44,7 @@ app.use((req, res, next) => {
 app.use(cors({
   origin: function (origin, callback) {
     if (!origin) return callback(null, true);
-    if (allowedOrigins.includes(origin) || origin.endsWith('.vercel.app')) {
+    if (allowedOrigins.includes(origin) || (origin && origin.endsWith('.vercel.app'))) {
       return callback(null, true);
     }
     console.log('⚠️  CORS check for:', origin);
@@ -59,11 +59,9 @@ app.use(express.json({ limit: '10mb' }));
 // ═══════════════════════════════════════════════════════════════
 // Multer Configuration
 // ═══════════════════════════════════════════════════════════════
-
-// Image upload configuration
 const imageUpload = multer({
   storage: multer.memoryStorage(),
-  limits: { fileSize: 10 * 1024 * 1024 }, // 10 MB
+  limits: { fileSize: 10 * 1024 * 1024 },
   fileFilter: (req, file, cb) => {
     if (file.mimetype.startsWith('image/')) {
       cb(null, true);
@@ -73,10 +71,9 @@ const imageUpload = multer({
   }
 });
 
-// Video upload configuration
 const videoUpload = multer({
   storage: multer.memoryStorage(),
-  limits: { fileSize: 100 * 1024 * 1024 }, // 100 MB
+  limits: { fileSize: 100 * 1024 * 1024 },
   fileFilter: (req, file, cb) => {
     if (file.mimetype.startsWith('video/')) {
       cb(null, true);
@@ -102,7 +99,6 @@ app.post('/api/upload', imageUpload.single('image'), async (req, res) => {
       return res.status(400).json({ error: `Invalid folder. Allowed: ${allowedFolders.join(', ')}` });
     }
 
-    // Build path with ID if provided
     let basePath = folder;
     if (folder.startsWith('nurs_') && nurseryId) {
       basePath = `${folder}/${nurseryId}`;
@@ -201,9 +197,8 @@ app.post('/api/upload-nursery-video', videoUpload.single('video'), async (req, r
 });
 
 // ═══════════════════════════════════════════════════════════════
-// DELETE FILE ENDPOINT (Images & Videos)
+// DELETE FILE ENDPOINT
 // ═══════════════════════════════════════════════════════════════
-
 app.delete('/api/delete-file', async (req, res) => {
   try {
     const { url } = req.body;
@@ -235,8 +230,6 @@ app.delete('/api/delete-file', async (req, res) => {
 // ═══════════════════════════════════════════════════════════════
 // NURSERIES ENDPOINTS
 // ═══════════════════════════════════════════════════════════════
-
-// GET all published nurseries
 app.get('/api/nurseries', async (req, res) => {
   try {
     const snapshot = await db.collection('nurseries').get();
@@ -247,7 +240,6 @@ app.get('/api/nurseries', async (req, res) => {
       if (data.published !== false) {
         const cleanData = { ...data };
         
-        // Convert Firestore Timestamps to ISO strings
         if (cleanData.createdAt && typeof cleanData.createdAt.toDate === 'function') {
           cleanData.createdAt = cleanData.createdAt.toDate().toISOString();
         }
@@ -266,7 +258,6 @@ app.get('/api/nurseries', async (req, res) => {
   }
 });
 
-// GET single nursery by ID
 app.get('/api/nurseries/:id', async (req, res) => {
   try {
     const { id } = req.params;
@@ -289,10 +280,8 @@ app.get('/api/nurseries/:id', async (req, res) => {
 });
 
 // ═══════════════════════════════════════════════════════════════
-// OFFERS ENDPOINTS (WITH ENHANCED NURSERY INFO)
+// OFFERS ENDPOINTS
 // ═══════════════════════════════════════════════════════════════
-
-// GET all active offers with nursery details
 app.get('/api/offers', async (req, res) => {
   const today = new Date();
   try {
@@ -304,33 +293,28 @@ app.get('/api/offers', async (req, res) => {
       const data = doc.data();
       if (data.published === false) return;
       
-      // If no end date → active
       if (!data.endDate) {
         offersData.push({ id: doc.id, ...data });
         return;
       }
 
-      // Parse end date
       const endDate = new Date(data.endDate);
       if (isNaN(endDate.getTime())) {
         console.warn(`Invalid endDate for offer ${doc.id}:`, data.endDate);
         return;
       }
 
-      // Check if not expired
       if (endDate >= today) {
         offersData.push({ id: doc.id, ...data });
       }
     });
 
-    // Fetch nursery details for each offer
     for (const offer of offersData) {
       if (offer.nurseryId) {
         try {
           const nurseryDoc = await db.collection('nurseries').doc(offer.nurseryId).get();
           if (nurseryDoc.exists) {
             const nurseryData = nurseryDoc.data();
-            // Add enhanced nursery info
             offer.nurseryLocation = nurseryData.location || null;
             offer.nurseryWhatsapp = nurseryData.whatsapp || null;
             offer.nurseryPhone = nurseryData.phone || null;
@@ -352,7 +336,6 @@ app.get('/api/offers', async (req, res) => {
   }
 });
 
-// GET single offer by ID with nursery details
 app.get('/api/offers/:id', async (req, res) => {
   try {
     const { id } = req.params;
@@ -364,7 +347,6 @@ app.get('/api/offers/:id', async (req, res) => {
 
     const offerData = { id: doc.id, ...doc.data() };
 
-    // Fetch nursery details if nurseryId exists
     if (offerData.nurseryId) {
       try {
         const nurseryDoc = await db.collection('nurseries').doc(offerData.nurseryId).get();
@@ -404,9 +386,7 @@ app.get('/api/categories', async (req, res) => {
       }
     });
 
-    // Sort by order
     list.sort((a, b) => (a.order || 0) - (b.order || 0));
-
     res.json(list);
   } catch (err) {
     console.error('Error fetching categories:', err);
@@ -429,9 +409,7 @@ app.get('/api/sponsors', async (req, res) => {
       }
     });
 
-    // Sort by order
     list.sort((a, b) => (a.order || 0) - (b.order || 0));
-
     res.json(list);
   } catch (err) {
     console.error('Error fetching sponsors:', err);
@@ -442,25 +420,13 @@ app.get('/api/sponsors', async (req, res) => {
 // ═══════════════════════════════════════════════════════════════
 // PENDING NURSERIES ENDPOINTS
 // ═══════════════════════════════════════════════════════════════
-
-// POST new pending nursery
-// In server.js — inside app.post('/api/pending-nurseries', ...)
 app.post('/api/pending-nurseries', async (req, res) => {
   try {
     const {
-      name,
-      categories,
-      region,        // ✅ new
-      city,          // ✅ new
-      district,      // ✅ new
-      googleMapsLink, // ✅ new
-      services,
-      featured,
-      contactName,
-      whatsapp
+      name, categories, region, city, district, googleMapsLink,
+      services, featured, contactName, whatsapp
     } = req.body;
 
-    // Validation (same as before)
     if (!name?.trim()) return res.status(400).json({ message: 'الاسم مطلوب' });
     if (!region?.trim()) return res.status(400).json({ message: 'المنطقة مطلوبة' });
     if (!city?.trim()) return res.status(400).json({ message: 'المدينة مطلوبة' });
@@ -470,10 +436,10 @@ app.post('/api/pending-nurseries', async (req, res) => {
     const newNursery = {
       name: name.trim(),
       categories: Array.isArray(categories) ? categories : [],
-      region: region.trim(),           // ✅ stored separately
-      city: city.trim(),               // ✅
-      district: district?.trim() || '', // ✅
-      googleMapsLink: googleMapsLink?.trim() || '', // ✅
+      region: region.trim(),
+      city: city.trim(),
+      district: district?.trim() || '',
+      googleMapsLink: googleMapsLink?.trim() || '',
       location: `${region.trim()} - ${city.trim()}${district?.trim() ? ` - ${district.trim()}` : ''}`,
       services: Array.isArray(services) ? services : [],
       featured: !!featured,
@@ -491,7 +457,6 @@ app.post('/api/pending-nurseries', async (req, res) => {
   }
 });
 
-// GET all pending nurseries (for admin)
 app.get('/api/pending-nurseries', async (req, res) => {
   try {
     const snapshot = await db.collection('pendingNurseries').get();
@@ -509,8 +474,6 @@ app.get('/api/pending-nurseries', async (req, res) => {
 // ═══════════════════════════════════════════════════════════════
 // BANNERS ENDPOINTS
 // ═══════════════════════════════════════════════════════════════
-
-// GET all banners
 app.get('/api/banners', async (req, res) => {
   try {
     const snapshot = await db.collection('banners').get();
@@ -525,7 +488,6 @@ app.get('/api/banners', async (req, res) => {
   }
 });
 
-// GET single banner by ID
 app.get('/api/banners/:id', async (req, res) => {
   try {
     const { id } = req.params;
@@ -542,7 +504,6 @@ app.get('/api/banners/:id', async (req, res) => {
   }
 });
 
-// POST new banner
 app.post('/api/banners', imageUpload.single('image'), async (req, res) => {
   try {
     const { position, active } = req.body;
@@ -586,7 +547,6 @@ app.post('/api/banners', imageUpload.single('image'), async (req, res) => {
   }
 });
 
-// PUT update banner
 app.put('/api/banners/:id', imageUpload.single('image'), async (req, res) => {
   try {
     const { id } = req.params;
@@ -613,7 +573,6 @@ app.put('/api/banners/:id', imageUpload.single('image'), async (req, res) => {
         return res.status(400).json({ error: 'الامتدادات المسموحة: PNG, JPG, WEBP' });
       }
 
-      // Delete old image
       if (oldData.imageUrl) {
         try {
           const urlObj = new URL(oldData.imageUrl);
@@ -624,7 +583,6 @@ app.put('/api/banners/:id', imageUpload.single('image'), async (req, res) => {
         }
       }
 
-      // Upload new
       const timestamp = Date.now();
       const cleanName = req.file.originalname.replace(/\s+/g, '_').replace(/[^a-zA-Z0-9._-]/g, '');
       const fileName = `${timestamp}_${cleanName}`;
@@ -646,7 +604,6 @@ app.put('/api/banners/:id', imageUpload.single('image'), async (req, res) => {
   }
 });
 
-// DELETE banner
 app.delete('/api/banners/:id', async (req, res) => {
   try {
     const { id } = req.params;
@@ -675,8 +632,6 @@ app.delete('/api/banners/:id', async (req, res) => {
 // ═══════════════════════════════════════════════════════════════
 // SURVEYS ENDPOINTS
 // ═══════════════════════════════════════════════════════════════
-
-// POST save survey response
 app.post('/api/survey', async (req, res) => {
   try {
     const {
@@ -685,7 +640,6 @@ app.post('/api/survey', async (req, res) => {
       additional_comments, timestamp, platform, whatsapp, status
     } = req.body;
 
-    // Validation
     if (!interest_level?.trim()) return res.status(400).json({ message: 'مستوى الاهتمام مطلوب' });
     if (!expected_features?.trim()) return res.status(400).json({ message: 'الميزات المتوقعة مطلوبة' });
     if (!communication_method?.trim()) return res.status(400).json({ message: 'وسيلة التواصل مطلوبة' });
@@ -727,7 +681,6 @@ app.post('/api/survey', async (req, res) => {
   }
 });
 
-// GET all surveys (for admin)
 app.get('/api/surveys', async (req, res) => {
   try {
     const snapshot = await db.collection('surveys').orderBy('timestamp', 'desc').get();
@@ -742,18 +695,15 @@ app.get('/api/surveys', async (req, res) => {
   }
 });
 
-// DELETE survey by ID
 app.delete('/api/surveys/:id', async (req, res) => {
   try {
     const { id } = req.params;
     
-    // Check if survey exists
     const doc = await db.collection('surveys').doc(id).get();
     if (!doc.exists) {
       return res.status(404).json({ error: 'الاستبيان غير موجود' });
     }
 
-    // Delete the survey
     await db.collection('surveys').doc(id).delete();
     
     res.json({ message: 'تم حذف الاستبيان بنجاح' });
@@ -763,7 +713,6 @@ app.delete('/api/surveys/:id', async (req, res) => {
   }
 });
 
-// GET survey statistics
 app.get('/api/survey/stats', async (req, res) => {
   try {
     const snapshot = await db.collection('surveys').get();
@@ -801,18 +750,16 @@ app.get('/api/survey/stats', async (req, res) => {
 // ═══════════════════════════════════════════════════════════════
 // CONTACT FORM SUBMISSION
 // ═══════════════════════════════════════════════════════════════
-app.post('/api/contact', express.json(), async (req, res) => {
+app.post('/api/contact', async (req, res) => {
   try {
     const { name, email, subject, message } = req.body;
 
-    // Validation
     if (!name?.trim()) return res.status(400).json({ error: 'الاسم مطلوب' });
     if (!email?.trim()) return res.status(400).json({ error: 'البريد الإلكتروني مطلوب' });
     if (!/^\S+@\S+\.\S+$/.test(email)) return res.status(400).json({ error: 'بريد إلكتروني غير صالح' });
     if (!subject?.trim()) return res.status(400).json({ error: 'الموضوع مطلوب' });
     if (!message?.trim()) return res.status(400).json({ error: 'الرسالة مطلوبة' });
 
-    // Optional: Save to Firestore
     const contactData = {
       name: name.trim(),
       email: email.trim(),
@@ -823,8 +770,6 @@ app.post('/api/contact', express.json(), async (req, res) => {
     };
 
     await db.collection('contacts').add(contactData);
-
-    // Optional: Send email (you can integrate Nodemailer, SendGrid, etc. later)
 
     res.status(200).json({ success: true, message: 'تم إرسال رسالتك بنجاح! سنرد عليك قريبًا.' });
   } catch (error) {
@@ -842,7 +787,6 @@ app.get('/api/settings/site', async (req, res) => {
     if (doc.exists) {
       res.json(doc.data());
     } else {
-      // Return defaults
       res.json({
         title: 'أكبر منصة للمشاتل في المملكة',
         subtitle: 'اكتشف أكثر من 500 مشتل ومتجر لأدوات الزراعة في مكان واحد',
@@ -879,19 +823,63 @@ app.get('/api/settings/site', async (req, res) => {
 app.get('/', (req, res) => {
   res.json({ 
     message: 'Nursery API is running 🌿',
-    version: '2.0.0',
+    version: '2.0.1',
+    status: 'OK',
+    cors: 'FIXED',
+    timestamp: new Date().toISOString(),
     endpoints: {
       nurseries: '/api/nurseries',
       offers: '/api/offers',
       upload: '/api/upload',
-      uploadVideo: '/api/upload-video',
+      uploadOfferVideo: '/api/upload-offer-video',
+      uploadNurseryVideo: '/api/upload-nursery-video',
       deleteFile: '/api/delete-file',
       categories: '/api/categories',
       sponsors: '/api/sponsors',
       banners: '/api/banners',
       surveys: '/api/surveys',
+      pendingNurseries: '/api/pending-nurseries',
+      contact: '/api/contact',
       settings: '/api/settings/site'
     }
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════
+// 404 HANDLER
+// ═══════════════════════════════════════════════════════════════
+app.use((req, res) => {
+  res.status(404).json({ 
+    error: 'Endpoint not found',
+    message: `Cannot ${req.method} ${req.path}`,
+    availableEndpoints: [
+      'GET /',
+      'GET /api/nurseries',
+      'GET /api/nurseries/:id',
+      'GET /api/offers',
+      'GET /api/offers/:id',
+      'GET /api/categories',
+      'GET /api/sponsors',
+      'GET /api/banners',
+      'GET /api/surveys',
+      'GET /api/pending-nurseries',
+      'POST /api/upload',
+      'POST /api/upload-offer-video',
+      'POST /api/upload-nursery-video',
+      'DELETE /api/delete-file'
+    ]
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════
+// ERROR HANDLER
+// ═══════════════════════════════════════════════════════════════
+app.use((err, req, res, next) => {
+  console.error('Server Error:', err);
+  res.status(500).json({ 
+    error: 'Internal Server Error',
+    message: err.message,
+    stack: process.env.NODE_ENV === 'development' ? err.stack : undefined
   });
 });
 
@@ -900,8 +888,11 @@ app.get('/', (req, res) => {
 // ═══════════════════════════════════════════════════════════════
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
+  console.log('═══════════════════════════════════════════════════════');
   console.log(`🚀 Server running on port ${PORT}`);
   console.log(`📍 Health check: http://localhost:${PORT}/`);
   console.log(`🌿 Nurseries API: http://localhost:${PORT}/api/nurseries`);
   console.log(`🎯 Offers API: http://localhost:${PORT}/api/offers`);
+  console.log(`✅ CORS: ENABLED for all Vercel domains`);
+  console.log('═══════════════════════════════════════════════════════');
 });
