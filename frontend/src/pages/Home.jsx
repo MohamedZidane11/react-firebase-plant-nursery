@@ -5,6 +5,7 @@ import Slider from 'react-slick';
 import 'slick-carousel/slick/slick.css';
 import 'slick-carousel/slick/slick-theme.css';
 import defaultNurseryImage from '../assets/nurs_empty.png';
+import NurseryCard from '../components/NurseryCard';
 
 const Home = () => {
   // ✅ ALL HOOKS AT THE TOP
@@ -20,6 +21,8 @@ const Home = () => {
   const [sponsorsLoading, setSponsorsLoading] = useState(true);
   const [results, setResults] = useState([]);
   const [banners, setBanners] = useState([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 6;
 
   const [siteSettings, setSiteSettings] = useState({
     title: 'أكبر منصة للمشاتل في المملكة 🌿',
@@ -39,6 +42,10 @@ const Home = () => {
     rtl: true,
     arrows: false
   };
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [selectedCategory]);
 
   // Fetch banners
   useEffect(() => {
@@ -252,6 +259,44 @@ const Home = () => {
 
   // ✅ Get featured nurseries
   const featuredNurseries = nurseries.filter(n => n.featured);
+
+  // Filter nurseries by selected category
+  const filteredNurseries = selectedCategory
+  ? nurseries.filter(nursery =>
+      Array.isArray(nursery.categories) &&
+      nursery.categories.includes(selectedCategory)
+    )
+  : [];
+
+  // Paginate
+  const totalPages = Math.ceil(filteredNurseries.length / itemsPerPage);
+  const currentNurseries = filteredNurseries.slice(
+  (currentPage - 1) * itemsPerPage,
+  currentPage * itemsPerPage
+  );
+
+  const getPageNumbers = () => {
+    const maxVisible = 5;
+    const pages = [];
+    if (totalPages <= maxVisible) {
+      for (let i = 1; i <= totalPages; i++) pages.push(i);
+    } else {
+      let start = Math.max(1, currentPage - Math.floor(maxVisible / 2));
+      let end = start + maxVisible - 1;
+      if (end > totalPages) {
+        end = totalPages;
+        start = Math.max(1, end - maxVisible + 1);
+      }
+      pages.push(1);
+      if (start > 2) pages.push('ellipsis');
+      for (let i = start; i <= end; i++) {
+        if (i !== 1 && i !== totalPages) pages.push(i);
+      }
+      if (end < totalPages - 1) pages.push('ellipsis');
+      if (totalPages !== 1) pages.push(totalPages);
+    }
+    return [...new Set(pages)];
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -536,98 +581,84 @@ const Home = () => {
       {/* Category Results Section */}
       {viewMode === 'category-results' && selectedCategory && (
         <section className="py-12 bg-white">
-          <div className="w-full">
-            <h2 className="text-3xl font-bold text-center text-green-800 mb-8 px-4">
-              المشاتل في تصنيف: {selectedCategory}
-            </h2>
-            <div className="w-full overflow-x-auto scroll-smooth pb-4" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
-              <div className="flex gap-6 px-4 hide-scrollbar" style={{ scrollSnapType: 'x mandatory' }}>
-                <div className="flex justify-center w-full">
-                  <div 
-                    className="flex overflow-x-auto scroll-smooth snap-x snap-mandatory space-x-6 pb-4 hide-scrollbar max-w-full"
-                    dir="rtl"
-                    style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
-                  >
-                    {nurseries
-                      .filter(nursery => nursery.categories.includes(selectedCategory))
-                      .map((nursery) => (
-                        <Link 
-                          key={nursery.id} 
-                          to={`/nurseries/${nursery.id}`}
-                          className="flex-shrink-0 w-48"
-                        >
-                          <div className="bg-green-100 p-6 rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 flex flex-col items-center">
-                            <div className="w-20 h-20 mx-auto mb-4 bg-green-200 rounded-full flex items-center justify-center overflow-hidden">
-                              <img
-                                src={nursery.image || defaultNurseryImage}
-                                alt={nursery.name}
-                                className="w-full h-full object-cover"
-                                onError={(e) => {
-                                  e.target.src = defaultNurseryImage;
-                                }}
-                              />
-                            </div>
-                            <h3 className="text-lg font-bold text-green-800 text-center">{nursery.name}</h3>
-                            <p className="text-sm text-gray-600 text-center">{nursery.location}</p>
-                            <div className="flex justify-center mt-2 flex-wrap gap-1">
-                              {nursery.categories.slice(0, 2).map((cat, i) => (
-                                <span
-                                  key={i}
-                                  className="text-xs bg-green-200 text-green-800 px-2 py-1 rounded-full"
-                                >
-                                  {cat}
-                                </span>
-                              ))}
-                            </div>
-                            <div className="mt-3 flex justify-center gap-3 flex-wrap">
-                              {nursery.services?.includes('consultation') && (
-                                <div className="flex flex-col items-center">
-                                  <div className="p-1.5 bg-white border border-gray-200 rounded-full">
-                                    <img src="https://img.icons8.com/stickers/26/consultation.png" alt="استشارة" className="w-5 h-5" />
-                                  </div>
-                                  <span className="text-[10px] text-blue-600 font-medium mt-0.5">استشارة</span>
-                                </div>
-                              )}
-                              {nursery.services?.includes('delivery') && (
-                                <div className="flex flex-col items-center">
-                                  <div className="p-1.5 bg-white border border-gray-200 rounded-full">
-                                    <img src="https://img.icons8.com/color/26/truck--v1.png" alt="توصيل" className="w-5 h-5" />
-                                  </div>
-                                  <span className="text-[10px] text-yellow-600 font-medium mt-0.5">توصيل</span>
-                                </div>
-                              )}
-                              {nursery.services?.includes('installation') && (
-                                <div className="flex flex-col items-center">
-                                  <div className="p-1.5 bg-white border border-gray-200 rounded-full">
-                                    <img src="https://img.icons8.com/offices/26/hand-planting.png" alt="تركيب" className="w-5 h-5" />
-                                  </div>
-                                  <span className="text-[10px] text-green-600 font-medium mt-0.5">تركيب</span>
-                                </div>
-                              )}
-                              {nursery.services?.includes('maintenance') && (
-                                <div className="flex flex-col items-center">
-                                  <div className="p-1.5 bg-white border border-gray-200 rounded-full">
-                                    <img src="https://img.icons8.com/office/26/maintenance.png" alt="صيانة" className="w-5 h-5" />
-                                  </div>
-                                  <span className="text-[10px] text-red-600 font-medium mt-0.5">صيانة</span>
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        </Link>
-                      ))}
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div className="text-center mt-6">
+          <div className="container mx-auto px-4">
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-8">
+              <h2 className="text-3xl font-bold text-green-800">
+                المشاتل في تصنيف: {selectedCategory}
+              </h2>
               <button
                 onClick={() => setViewMode('home')}
-                className="text-green-600 hover:underline text-lg"
+                className="mt-4 md:mt-0 text-green-600 hover:underline text-lg"
               >
-                ← عودة الي التصنيفات
+                ← العودة إلى التصنيفات
               </button>
             </div>
+
+            {filteredNurseries.length === 0 ? (
+              <p className="text-center text-gray-500 py-8">لا توجد مشاتل في هذا التصنيف.</p>
+            ) : (
+              <>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+                {currentNurseries.map((nursery) => (
+                  <div key={nursery.id} className="col-span-1">
+                    <NurseryCard nursery={nursery} offers={offers} />
+                  </div>
+                ))}
+                </div>
+
+                {/* Pagination */}
+                {totalPages > 1 && (
+                  <div className="flex justify-center items-center mt-8 gap-2">
+                    {/* Previous */}
+                    <button
+                      onClick={() => currentPage > 1 && setCurrentPage(currentPage - 1)}
+                      disabled={currentPage === 1}
+                      className={`w-10 h-10 flex items-center justify-center text-sm font-semibold rounded-md shadow transition ${
+                        currentPage === 1
+                          ? 'opacity-50 cursor-not-allowed bg-white text-gray-400'
+                          : 'bg-white text-gray-700 hover:bg-gray-100'
+                      }`}
+                    >
+                      →
+                    </button>
+
+                    {/* Page Numbers */}
+                    {getPageNumbers().map((page, idx) =>
+                      page === 'ellipsis' ? (
+                        <span key={idx} className="w-10 h-10 flex items-center justify-center text-sm font-semibold text-gray-500">
+                          ...
+                        </span>
+                      ) : (
+                        <button
+                          key={page}
+                          onClick={() => setCurrentPage(page)}
+                          className={`w-10 h-10 flex items-center justify-center text-sm font-semibold rounded-md shadow transition ${
+                            currentPage === page
+                              ? 'bg-green-600 text-white'
+                              : 'bg-white text-gray-700 hover:bg-gray-100'
+                          }`}
+                        >
+                          {page}
+                        </button>
+                      )
+                    )}
+
+                    {/* Next */}
+                    <button
+                      onClick={() => currentPage < totalPages && setCurrentPage(currentPage + 1)}
+                      disabled={currentPage === totalPages}
+                      className={`w-10 h-10 flex items-center justify-center text-sm font-semibold rounded-md shadow transition ${
+                        currentPage === totalPages
+                          ? 'opacity-50 cursor-not-allowed bg-white text-gray-400'
+                          : 'bg-white text-gray-700 hover:bg-gray-100'
+                      }`}
+                    >
+                      ←
+                    </button>
+                  </div>
+                )}
+              </>
+            )}
           </div>
         </section>
       )}
