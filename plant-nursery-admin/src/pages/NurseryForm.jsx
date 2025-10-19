@@ -29,6 +29,7 @@ const NurseryForm = () => {
   const [originalName, setOriginalName] = useState('');
   const [videoFiles, setVideoFiles] = useState([]);
   const [videoPreviews, setVideoPreviews] = useState([]);
+  const [mainCategories, setMainCategories] = useState([]);
 
   const [formData, setFormData] = useState({
     name: '',
@@ -112,25 +113,31 @@ const NurseryForm = () => {
           setLocations(locDoc.data().data || []);
         }
   
-        // 2. Load existing nursery names for uniqueness check
+        // 2. Load existing nursery names
         const nurseriesSnapshot = await getDocs(collection(db, 'nurseries'));
         const namesSet = new Set();
         nurseriesSnapshot.docs.forEach((doc) => {
           const name = doc.data().name;
-          if (name) {
-            namesSet.add(name.trim().toLowerCase());
-          }
+          if (name) namesSet.add(name.trim().toLowerCase());
         });
         setExistingNurseryNames(namesSet);
   
-        // 3. If editing, load current nursery data
+        // 3. Load main categories (published only)
+        const categoriesSnapshot = await getDocs(collection(db, 'categories'));
+        const mainCats = categoriesSnapshot.docs
+          .map(doc => ({ id: doc.id, ...doc.data() }))
+          .filter(cat => cat.published !== false) // only published
+          .sort((a, b) => (a.order || 0) - (b.order || 0))
+          .map(cat => cat.title); // extract titles only
+  
+        setMainCategories(mainCats);
+  
+        // 4. If editing, load nursery data
         if (id) {
           const nurseryDoc = await getDoc(doc(db, 'nurseries', id));
           if (nurseryDoc.exists()) {
             const data = nurseryDoc.data();
-            
             setOriginalName(data.name || '');
-            
             setFormData({
               name: data.name || '',
               description: data.description || '',
@@ -146,11 +153,7 @@ const NurseryForm = () => {
               published: data.published !== undefined ? data.published : true,
               phones: data.phones && data.phones.length > 0 ? data.phones : [''],
               socialMedia: data.socialMedia || {
-                instagram: '',
-                twitter: '',
-                facebook: '',
-                snapchat: '',
-                tiktok: ''
+                instagram: '', twitter: '', facebook: '', snapchat: '', tiktok: ''
               },
               workingHours: data.workingHours || {
                 weekdays: { open: '09:00', close: '21:00' },
@@ -167,7 +170,6 @@ const NurseryForm = () => {
         setLoading(false);
       }
     };
-  
     fetchData();
   }, [id]);
 
@@ -192,6 +194,8 @@ const NurseryForm = () => {
     setNameError('');
     return true;
   };
+
+  
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -893,7 +897,7 @@ const NurseryForm = () => {
                   <span className="text-red-500">*</span>التصنيف الرئيسي (اختر واحدًا على الأقل)
                 </h4>
                 <div className="flex flex-wrap gap-2">
-                  {['مشاتل', 'مشاتل مختلطة', 'أدوات الزراعة'].map((cat) => (
+                  {mainCategories.map((cat) => (
                     <label key={cat} className="flex items-center">
                       <input
                         type="checkbox"

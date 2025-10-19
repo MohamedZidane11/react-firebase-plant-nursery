@@ -118,7 +118,7 @@ const NurseriesManager = () => {
     return Array.from(cats).sort();
   }, [nurseries]);
 
-  const mainCategories = ['مشاتل', 'مشاتل مختلطة', 'أدوات الزراعة'];
+  const mainCategories = ['مشاتل', 'مشاتل متنوعة', 'أدوات الزراعة'];
   const subCategories = allCategories.filter(cat => !mainCategories.includes(cat));
 
   const filteredNurseries = useMemo(() => {
