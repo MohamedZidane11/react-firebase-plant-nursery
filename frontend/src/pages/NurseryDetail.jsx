@@ -372,14 +372,14 @@ const NurseryDetail = () => {
                         ))}
                       </div>
                     ) : (
-                      <span>+966 55 123 4567</span>
+                      <span>لا يوجد</span>
                     )}
                   </div>
                 </div>
                 <div className="flex items-start">
                   <div className="ml-4">
                     <strong className="block">📧 البريد الإلكتروني:</strong>
-                    <span>{nursery.socialMedia?.email || 'info@nursery.com'}</span>
+                    <span>{nursery.socialMedia?.email || 'لا يوجد'}</span>
                   </div>
                 </div>
               </div>
