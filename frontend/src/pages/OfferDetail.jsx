@@ -122,17 +122,26 @@ const OfferDetail = () => {
 
   const shareOffer = (platform) => {
     const url = window.location.href;
-    const text = `${offer.title} - عرض مميز من منصة المشاتل`;
-
+    const text = encodeURIComponent(`${offer.title} - عرض مميز من منصة المشاتل`);
+  
     switch (platform) {
       case 'facebook':
         window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`, '_blank');
         break;
       case 'twitter':
-        window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`, '_blank');
+        window.open(`https://twitter.com/intent/tweet?text=${text}&url=${encodeURIComponent(url)}`, '_blank');
         break;
       case 'whatsapp':
-        window.open(`https://wa.me/?text=${encodeURIComponent(text + ' ' + url)}`, '_blank');
+        window.open(`https://wa.me/?text=${text}%20${encodeURIComponent(url)}`, '_blank');
+        break;
+      case 'instagram':
+        alert('📸 إنستغرام لا يدعم مشاركة الروابط مباشرة. يُرجى نسخ الرابط يدويًا.');
+        break;
+      case 'snapchat':
+        window.open(`https://www.snapchat.com/scan?link=${encodeURIComponent(url)}`, '_blank');
+        break;
+      case 'tiktok':
+        window.open(`https://www.tiktok.com/share?url=${encodeURIComponent(url)}&text=${text}`, '_blank');
         break;
     }
   };
@@ -429,7 +438,7 @@ const OfferDetail = () => {
             {/* Share Section */}
             <div className="bg-white rounded-xl shadow-lg p-6 text-center">
               <h3 className="text-base font-semibold mb-4">شارك العرض مع أصدقائك</h3>
-              <div className="flex justify-center gap-3">
+              <div className="flex justify-center gap-3 flex-wrap">
                 <button
                   onClick={() => shareOffer('facebook')}
                   className="w-10 h-10 bg-blue-600 text-white rounded-full flex items-center justify-center hover:scale-110 transition"
@@ -450,6 +459,27 @@ const OfferDetail = () => {
                   aria-label="مشاركة على واتساب"
                 >
                   📱
+                </button>
+                <button
+                  onClick={() => shareOffer('instagram')}
+                  className="w-10 h-10 bg-pink-600 text-white rounded-full flex items-center justify-center hover:scale-110 transition"
+                  aria-label="مشاركة على إنستغرام"
+                >
+                  📸
+                </button>
+                <button
+                  onClick={() => shareOffer('snapchat')}
+                  className="w-10 h-10 bg-yellow-400 text-black rounded-full flex items-center justify-center hover:scale-110 transition"
+                  aria-label="مشاركة على سناب شات"
+                >
+                  👻
+                </button>
+                <button
+                  onClick={() => shareOffer('tiktok')}
+                  className="w-10 h-10 bg-black text-white rounded-full flex items-center justify-center hover:scale-110 transition"
+                  aria-label="مشاركة على تيك توك"
+                >
+                  🎵
                 </button>
               </div>
             </div>

@@ -190,7 +190,7 @@ const Offers = () => {
               >
                 <option value="all">جميع التصنيفات</option>
                 <option value="مشاتل"> مشاتل</option>
-                <option value="مشاتل مختلطة"> مشاتل مختلطة</option>
+                <option value="مشاتل مختلطة"> مشاتل متنوعة</option>
                 <option value="أدوات زراعة">أدوات زراعة</option>
                 <option value="نباتات داخلية">نباتات داخلية</option>
                 <option value="نباتات خارجية">نباتات خارجية</option>

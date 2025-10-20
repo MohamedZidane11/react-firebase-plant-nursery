@@ -1,5 +1,5 @@
 // src/components/OfferCard.jsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import defaultImage from '../assets/offer_default.png';
 
@@ -99,26 +99,58 @@ const OfferCard = ({ offer }) => {
   // Handle social share
   const handleSocialShare = (platform) => {
     const shareUrl = `${window.location.origin}/offers/${offer.id}`;
-    const shareText = `${offer.title} - ${offer.nurseryName || 'عرض خاص'}`;
-    
+    const shareText = encodeURIComponent(`${offer.title} - ${offer.nurseryName || 'عرض خاص'} على منصة مشاتل`);
+  
     let url = '';
     switch(platform) {
       case 'whatsapp':
-        url = `https://wa.me/?text=${encodeURIComponent(shareText + ' ' + shareUrl)}`;
+        url = `https://wa.me/?text=${shareText}%20${encodeURIComponent(shareUrl)}`;
         break;
       case 'twitter':
-        url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(shareUrl)}`;
+        url = `https://twitter.com/intent/tweet?text=${shareText}&url=${encodeURIComponent(shareUrl)}`;
         break;
       case 'facebook':
         url = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`;
         break;
+      case 'instagram':
+        // Instagram doesn't support link sharing → open profile or copy link
+        alert('📸 إنستغرام لا يدعم مشاركة الروابط مباشرة. يُرجى نسخ الرابط يدويًا.');
+        return;
+      case 'snapchat':
+        url = `https://www.snapchat.com/scan?link=${encodeURIComponent(shareUrl)}`;
+        break;
+      case 'tiktok':
+        url = `https://www.tiktok.com/share?url=${encodeURIComponent(shareUrl)}&text=${shareText}`;
+        break;
       default:
         return;
     }
-    
+  
     window.open(url, '_blank', 'width=600,height=400');
     setShowShareModal(false);
   };
+
+  // Lock body scroll when modal is open
+  useEffect(() => {
+    if (showShareModal) {
+      // Save current overflow and padding
+      const originalStyle = window.getComputedStyle(document.body).overflow;
+      document.body.style.overflow = 'hidden';
+      // Optional: prevent layout shift by compensating scrollbar width
+      const scrollBarWidth = window.innerWidth - document.documentElement.clientWidth;
+      document.body.style.paddingRight = `${scrollBarWidth}px`;
+    } else {
+      // Restore
+      document.body.style.overflow = '';
+      document.body.style.paddingRight = '';
+    }
+
+    // Cleanup on unmount
+    return () => {
+      document.body.style.overflow = '';
+      document.body.style.paddingRight = '';
+    };
+  }, [showShareModal]);
 
   return (
     <>
@@ -230,32 +262,59 @@ const OfferCard = ({ offer }) => {
               </button>
             </div>
             
-            <div className="grid grid-cols-2 gap-2 mb-3">
+            <div className="grid grid-cols-3 gap-2 mb-3">
               {/* WhatsApp */}
               <button
                 onClick={() => handleSocialShare('whatsapp')}
-                className="flex flex-col items-center p-3 bg-green-500 hover:bg-green-600 text-white rounded-lg text-xs"
+                className="flex flex-col items-center p-2 bg-green-500 hover:bg-green-600 text-white rounded-lg text-xs"
               >
-                <span className="text-2xl mb-1">📱</span>
-                WhatsApp
-              </button>
-
-              {/* Twitter */}
-              <button
-                onClick={() => handleSocialShare('twitter')}
-                className="flex flex-col items-center p-3 bg-blue-400 hover:bg-blue-500 text-white rounded-lg text-xs"
-              >
-                <span className="text-2xl mb-1">🐦</span>
-                Twitter
+                <span className="text-xl mb-1">📱</span>
+                واتساب
               </button>
 
               {/* Facebook */}
               <button
                 onClick={() => handleSocialShare('facebook')}
-                className="flex flex-col items-center p-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs"
+                className="flex flex-col items-center p-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs"
               >
-                <span className="text-2xl mb-1">👥</span>
-                Facebook
+                <span className="text-xl mb-1">👥</span>
+                فيسبوك
+              </button>
+
+              {/* Twitter */}
+              <button
+                onClick={() => handleSocialShare('twitter')}
+                className="flex flex-col items-center p-2 bg-sky-500 hover:bg-sky-600 text-white rounded-lg text-xs"
+              >
+                <span className="text-xl mb-1">🐦</span>
+                تويتر
+              </button>
+
+              {/* Instagram */}
+              <button
+                onClick={() => handleSocialShare('instagram')}
+                className="flex flex-col items-center p-2 bg-pink-600 hover:bg-pink-700 text-white rounded-lg text-xs"
+              >
+                <span className="text-xl mb-1">📸</span>
+                إنستغرام
+              </button>
+
+              {/* Snapchat */}
+              <button
+                onClick={() => handleSocialShare('snapchat')}
+                className="flex flex-col items-center p-2 bg-yellow-400 hover:bg-yellow-500 text-black rounded-lg text-xs"
+              >
+                <span className="text-xl mb-1">👻</span>
+                سناب شات
+              </button>
+
+              {/* TikTok */}
+              <button
+                onClick={() => handleSocialShare('tiktok')}
+                className="flex flex-col items-center p-2 bg-black hover:bg-gray-800 text-white rounded-lg text-xs"
+              >
+                <span className="text-xl mb-1">🎵</span>
+                تيك توك
               </button>
 
               {/* Copy Link */}
