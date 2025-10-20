@@ -93,7 +93,7 @@ const NurseryCard = ({ nursery, offers = [] }) => {
             </div>
 
             {/* Location - Fixed height */}
-            <div className="text-center text-sm text-gray-600 mb-4 h-[1.5rem] line-clamp-1 flex items-center justify-center">
+            <div className="text-center text-[14px] text-gray-600 mb-4 h-[2.5rem] line-clamp-1 flex items-center justify-center">
               📍 {nursery.location}
             </div>
 

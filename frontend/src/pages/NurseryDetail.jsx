@@ -9,8 +9,7 @@ const NurseryDetail = () => {
   const [nursery, setNursery] = useState(null);
   const [offers, setOffers] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [lightboxOpen, setLightboxOpen] = useState(false);
-  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [mainImage, setMainImage] = useState(defaultNurseryImage);
 
   useEffect(() => {
     const API_BASE = 'https://nurseries.qvtest.com';
@@ -20,6 +19,7 @@ const NurseryDetail = () => {
         if (!response.ok) throw new Error('Not found');
         const data = await response.json();
         setNursery(data);
+        setMainImage(data.image || defaultNurseryImage);
       } catch (err) {
         console.error('Error fetching nursery:', err);
         setNursery(null);
@@ -42,23 +42,6 @@ const NurseryDetail = () => {
     });
   }, [id]);
 
-  useEffect(() => {
-    const handleKeyDown = (e) => {
-      if (e.key === 'Escape') {
-        setLightboxOpen(false);
-      }
-      if (e.key === 'ArrowLeft') {
-        prevImage();
-      }
-      if (e.key === 'ArrowRight') {
-        nextImage();
-      }
-    };
-    if (lightboxOpen) {
-      window.addEventListener('keydown', handleKeyDown);
-      return () => window.removeEventListener('keydown', handleKeyDown);
-    }
-  }, [lightboxOpen]);
 
   if (loading) return <p className="text-center py-8">جاري التحميل...</p>;
   if (!nursery) return <div className="text-center py-8">المشتل غير موجود أو غير منشور</div>;
@@ -123,20 +106,32 @@ const NurseryDetail = () => {
     });
   }
 
-  const openLightbox = (index) => {
-    if (allImages.length === 0) return;
-    setCurrentImageIndex(Math.max(0, Math.min(index, allImages.length - 1)));
-    setLightboxOpen(true);
-  };
-
-  const nextImage = () => {
-    if (allImages.length <= 1) return;
-    setCurrentImageIndex((prev) => (prev + 1) % allImages.length);
-  };
-
-  const prevImage = () => {
-    if (allImages.length <= 1) return;
-    setCurrentImageIndex((prev) => (prev - 1 + allImages.length) % allImages.length);
+  // Image Preview in main area
+  const swapToAlbumImage = (clickedImageUrl) => {
+    // Don't swap if it's already the main image
+    if (clickedImageUrl === mainImage) return;
+  
+    const currentMain = mainImage;
+  
+    // Set clicked image as new main
+    setMainImage(clickedImageUrl);
+  
+    // Update nursery.album: add old main only if not already present
+    setNursery((prev) => {
+      if (!prev) return prev;
+  
+      const existingAlbum = prev.album || [];
+      const alreadyInAlbum = existingAlbum.includes(currentMain);
+  
+      let newAlbum = [...existingAlbum];
+  
+      // Add old main to front ONLY if it's not already there
+      if (!alreadyInAlbum && currentMain !== defaultNurseryImage) {
+        newAlbum = [currentMain, ...existingAlbum];
+      }
+  
+      return { ...prev, album: newAlbum };
+    });
   };
 
   const addToBookmarks = () => {
@@ -229,15 +224,12 @@ const NurseryDetail = () => {
 
             {/* Right: Image & Badge */}
             <div className="md:w-1/2 flex flex-col items-center">
-              <div className="relative w-full h-64 mb-4">
+              <div className="relative w-full aspect-[4/3] max-h-[400px] mb-4">
                 <img
-                  src={nursery.image || defaultNurseryImage}
+                  src={mainImage}
                   alt={nursery.name}
-                  onError={(e) => {
-                    e.target.src = defaultNurseryImage;
-                  }}
-                  className="w-full h-full object-cover rounded-xl cursor-pointer"
-                  onClick={() => openLightbox(0)}
+                  onError={(e) => { e.target.src = defaultNurseryImage; }}
+                  className="w-full h-full object-cover rounded-xl"
                 />
                 <div className="absolute top-4 right-4 flex gap-2">
                   {nursery.featured && (
@@ -250,30 +242,20 @@ const NurseryDetail = () => {
               
               {nursery.album && nursery.album.length > 0 && (
                 <div className="flex justify-center gap-2 mt-4">
-                  {nursery.album.slice(0, 4).map((imageUrl, index) => (
+                  {nursery.album?.slice(0, 4).map((imageUrl, index) => (
                     <div 
                       key={index} 
                       className="w-12 h-12 rounded-lg overflow-hidden border-2 border-white shadow-md cursor-pointer hover:scale-105 transition-transform"
-                      onClick={() => openLightbox(index + 1)}
+                      onClick={() => swapToAlbumImage(imageUrl)}
                     >
                       <img 
                         src={imageUrl} 
                         alt={`صورة ${index + 1}`}
                         className="w-full h-full object-cover"
-                        onError={(e) => {
-                          e.target.src = defaultNurseryImage;
-                        }}
+                        onError={(e) => { e.target.src = defaultNurseryImage; }}
                       />
                     </div>
                   ))}
-                  {nursery.album.length > 4 && (
-                    <div 
-                      className="w-12 h-12 rounded-lg bg-black bg-opacity-50 text-white flex items-center justify-center text-sm font-bold cursor-pointer hover:scale-105 transition-transform"
-                      onClick={() => openLightbox(5)}
-                    >
-                      +{nursery.album.length - 4}
-                    </div>
-                  )}
                 </div>
               )}
             </div>
@@ -524,46 +506,6 @@ const NurseryDetail = () => {
           </div>
         </div>
       </section>
-
-      {/* Lightbox */}
-      {lightboxOpen && (
-        <div 
-          className="fixed inset-0 bg-black bg-opacity-90 z-50 flex items-center justify-center p-4"
-          onClick={() => setLightboxOpen(false)}
-        >
-          <div className="relative max-w-4xl max-h-full" onClick={(e) => e.stopPropagation()}>
-            <button 
-              className="absolute top-4 right-4 text-white text-2xl z-10 bg-black bg-opacity-50 rounded-full w-8 h-8 flex items-center justify-center"
-              onClick={() => setLightboxOpen(false)}
-            >
-              &times;
-            </button>
-            <button 
-              className="absolute left-4 top-1/2 transform -translate-y-1/2 text-white text-2xl z-10 bg-black bg-opacity-50 rounded-full w-10 h-10 flex items-center justify-center"
-              onClick={prevImage}
-            >
-              ›
-            </button>
-            <button 
-              className="absolute right-4 top-1/2 transform -translate-y-1/2 text-white text-2xl z-10 bg-black bg-opacity-50 rounded-full w-10 h-10 flex items-center justify-center"
-              onClick={nextImage}
-            >
-              ‹
-            </button>
-            <img 
-              src={allImages[currentImageIndex]} 
-              alt={`صورة ${currentImageIndex + 1}`}
-              className="max-h-[80vh] max-w-full object-contain rounded-lg"
-              onError={(e) => {
-                e.target.src = defaultNurseryImage;
-              }}
-            />
-            <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 text-white text-sm bg-black bg-opacity-50 px-3 py-1 rounded-full">
-              {currentImageIndex + 1} / {allImages.length}
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };
