@@ -1,6 +1,8 @@
 // src/pages/Nurseries.jsx
 import { useState, useEffect } from 'react';
 import NurseryCard from '../components/NurseryCard';
+import { db } from '../firebase/firebase';
+import { doc, getDoc } from 'firebase/firestore';
 
 const Nurseries = () => {
   const [nurseries, setNurseries] = useState([]);
@@ -19,8 +21,9 @@ const Nurseries = () => {
   const [selectedDistrict, setSelectedDistrict] = useState('all');
   const [sortBy, setSortBy] = useState('newest');
   const [showOffersOnly, setShowOffersOnly] = useState(false);
+  const [saudiLocations, setSaudiLocations] = useState([]);
   const [allSaudiRegions, setAllSaudiRegions] = useState([]);
-  
+
   // 🌐 Fetch nurseries
   useEffect(() => {
     const fetchNurseries = async () => {
@@ -88,19 +91,24 @@ const Nurseries = () => {
 
   // 🌍 Fetch full Saudi regions from Firestore (like in NurseryForm)
   useEffect(() => {
-  const fetchLocations = async () => {
-    try {
-      const locDoc = await getDoc(doc(db, 'locations', 'SA'));
-      if (locDoc.exists()) {
-        const locData = locDoc.data().data || [];
-        const allRegions = locData.map(loc => loc.region).sort();
-        setAllSaudiRegions(allRegions); // احفظها في state جديد
+    const fetchLocations = async () => {
+      try {
+        const locDoc = await getDoc(doc(db, 'locations', 'SA'));
+        if (locDoc.exists()) {
+          const locData = locDoc.data().data || [];
+          setSaudiLocations(locData); // ← full structure
+          const allRegions = locData.map(loc => loc.region).sort();
+          setAllSaudiRegions(allRegions);
+        }
+      } catch (err) {
+        console.error('Error fetching locations:', err);
       }
-    } catch (err) {
-      console.error('Error fetching locations:', err);
-    }
-  };
+    };
+
+    fetchLocations();
   }, []);
+
+  
 
   // Helper function to check if offer is expired
   const isExpired = (endDateStr) => {
@@ -137,14 +145,20 @@ const Nurseries = () => {
   // 🌆 Build filter options (regions, cities, districts)
   const regions = [...new Set(nurseries.map(n => n.region).filter(Boolean))].sort();
   const cities = selectedRegion === 'all'
-    ? [...new Set(nurseries.map(n => n.city).filter(Boolean))].sort()
-    : [...new Set(nurseries.filter(n => n.region === selectedRegion).map(n => n.city))].sort();
+    ? []
+    : saudiLocations
+        .find(loc => loc.region === selectedRegion)
+        ?.cities?.map(c => c.name)
+        .sort() || [];
 
   const districts = selectedCity === 'all'
-    ? selectedRegion === 'all'
-      ? [...new Set(nurseries.map(n => n.district).filter(Boolean))].sort()
-      : [...new Set(nurseries.filter(n => n.region === selectedRegion).map(n => n.district))].sort()
-    : [...new Set(nurseries.filter(n => n.city === selectedCity).map(n => n.district))].sort();
+    ? []
+    : saudiLocations
+        .find(loc => loc.region === selectedRegion)
+        ?.cities
+        ?.find(c => c.name === selectedCity)
+        ?.districts
+        .sort() || [];
 
   // 🔎 Filter nurseries
   const filteredNurseries = nurseries.filter((nursery) => {
@@ -308,9 +322,14 @@ const Nurseries = () => {
                 className="w-full md:w-auto px-4 py-2 border border-green-800 rounded-full"
               >
                 <option value="all">جميع المناطق</option>
-                {regions.map(region => (
-                  <option key={region} value={region}>{region}</option>
-                ))}
+                {allSaudiRegions.length > 0
+                  ? allSaudiRegions.map(region => (
+                      <option key={region} value={region}>{region}</option>
+                    ))
+                  : regions.map(region => (
+                      <option key={region} value={region}>{region}</option>
+                    ))
+                }
               </select>
 
               {/* City Filter */}
@@ -320,7 +339,7 @@ const Nurseries = () => {
                   setSelectedCity(e.target.value);
                   setSelectedDistrict('all');
                 }}
-                disabled={selectedRegion === 'all' && cities.length === 0}
+                disabled={selectedRegion === 'all'}
                 className="w-full md:w-auto px-4 py-2 border border-green-800 rounded-full disabled:opacity-50"
               >
                 <option value="all">جميع المدن</option>
@@ -333,7 +352,7 @@ const Nurseries = () => {
               <select
                 value={selectedDistrict}
                 onChange={(e) => setSelectedDistrict(e.target.value)}
-                disabled={selectedCity === 'all' && districts.length === 0}
+                disabled={selectedCity === 'all'}
                 className="w-full md:w-auto px-4 py-2 border border-green-800 rounded-full disabled:opacity-50"
               >
                 <option value="all">جميع الأحياء</option>
@@ -341,7 +360,7 @@ const Nurseries = () => {
                   <option key={district} value={district}>{district}</option>
                 ))}
               </select>
-            </div>
+            </div> {/* ✅ This was missing! */}
 
             {/* Sort & Offers */}
             <div className="flex flex-col md:flex-row gap-4 mt-4">
@@ -358,7 +377,9 @@ const Nurseries = () => {
               </div>
 
               <div className="flex items-center">
-                <label className="mr-2 px-4 py-3 text-sm border bg-yellow-500/80 rounded-full ml-2 hover:bg-yellow-600/80 transition-all duration-500 ease-in-out">المشاتل ذات عروض فقط</label>
+                <label className="mr-2 px-4 py-3 text-sm border bg-yellow-500/80 rounded-full ml-2 hover:bg-yellow-600/80 transition-all duration-500 ease-in-out">
+                  المشاتل ذات عروض فقط
+                </label>
                 <input
                   type="checkbox"
                   checked={showOffersOnly}
