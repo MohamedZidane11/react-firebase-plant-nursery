@@ -560,7 +560,7 @@ const OfferForm = () => {
             {/* Basic Info */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">عنوان العرض *</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">* عنوان العرض</label>
                 <input
                   type="text"
                   name="title"
@@ -572,14 +572,15 @@ const OfferForm = () => {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">اسم المشتل</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">* اسم المشتل</label>
                 <select
                   name="nurseryId"
                   value={formData.nurseryId}
                   onChange={handleChange}
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
+                  required
                 >
-                  <option value="">اختر المشتل (اختياري)</option>
+                  <option value="" >اختر المشتل</option>
                   {nurseries.map((nursery) => (
                     <option key={nursery.id} value={nursery.id}>
                       {nursery.name}
@@ -602,7 +603,7 @@ const OfferForm = () => {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">تاريخ الانتهاء *</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">* تاريخ الانتهاء </label>
                 <input
                   type="date"
                   name="endDate"
@@ -659,7 +660,7 @@ const OfferForm = () => {
 
             {/* Description */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">الوصف *</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">الوصف</label>
               <textarea
                 name="description"
                 value={formData.description}
@@ -667,7 +668,6 @@ const OfferForm = () => {
                 rows="4"
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
                 placeholder="احصل على خصم مميز..."
-                required
               />
             </div>
 
