@@ -171,17 +171,6 @@ const Survey = () => {
     setShowShareModal(false);
   };
 
-  const downloadData = () => {
-    const dataStr = JSON.stringify(savedData, null, 2);
-    const dataBlob = new Blob([dataStr], { type: 'application/json' });
-    const url = URL.createObjectURL(dataBlob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `mashatel-survey-${new Date().toISOString().split('T')[0]}.json`;
-    link.click();
-    URL.revokeObjectURL(url);
-  };
-
   if (submitted) {
     return (
       <>
@@ -201,13 +190,6 @@ const Survey = () => {
                 >
                   <span>📤</span>
                   شارك الاستبيان
-                </button>
-                
-                <button
-                  onClick={downloadData}
-                  className="bg-green-700 hover:bg-green-800 text-white px-6 py-3 rounded-full font-medium transition-all"
-                >
-                  تحميل البيانات (JSON)
                 </button>
 
                 <Link
