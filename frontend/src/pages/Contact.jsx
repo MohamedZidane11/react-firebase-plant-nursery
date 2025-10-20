@@ -110,19 +110,19 @@ const Contact = () => {
                       </svg>
                       <div className="mr-4 text-right">
                         <p className="text-gray-600">البريد الإلكتروني</p>
-                        <p className="font-medium text-green-800">info@nurseries.sa</p>
+                        <p className="font-medium text-green-800">tshgeer50@gmail.com</p>
                       </div>
                     </div>
 
-                    <div className="flex items-start">
+                    {/*<div className="flex items-start">
                       <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-green-500 mt-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.54 1.06l-1.519.76a11.042 11.042 0 006.105 6.105l.76-1.519a1 1 0 011.06-.54l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
                       </svg>
                       <div className="mr-4 text-right">
-                        <p className="text-gray-600">رقم الهاتف</p>
-                        <p className="font-medium text-green-800">552020272</p>
+                        <p className="text-gray-600"> </p>
+                        <p className="font-medium text-green-800"></p>
                       </div>
-                    </div>
+                    </div>*/}
 
                     <div className="flex items-start">
                       <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-green-500 mt-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -130,11 +130,11 @@ const Contact = () => {
                       </svg>
                       <div className="mr-4 text-right">
                         <p className="text-gray-600">رقم الواتساب</p>
-                        <p className="font-medium text-green-800">552020272</p>
+                        <p className="font-medium text-green-800">0552020272</p>
                       </div>
-                    </div>
+                  </div>
 
-                    <div className="flex items-start">
+                    {/*<div className="flex items-start">
                       <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-green-500 mt-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.707 12.707a1 1 0 00-1.414 0l-3.95 3.95a1 1 0 001.414 1.414l1.5-1.5a1 1 0 011.414 0l3.95 3.95a1 1 0 001.414-1.414l-1.5-1.5z" />
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5.437a2 2 0 01.586-1.414l5.414-5.414A2 2 0 0115.414 0H18a2 2 0 012 2v3.437a2 2 0 01-.586 1.414l-5.414 5.414A2 2 0 0112 10z" />
@@ -143,7 +143,7 @@ const Contact = () => {
                         <p className="text-gray-600">العنوان</p>
                         <p className="font-medium text-green-800"></p>
                       </div>
-                    </div>
+                    </div>*/}
                   </div>
                 </div>
 
