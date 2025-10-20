@@ -218,7 +218,6 @@ const Offers = () => {
               >
                 <option value="newest">الأحدث أولاً</option>
                 <option value="popular">الأكثر شعبية</option>
-                <option value="lowest_price">أقل السعر</option>
               </select>
             </div>
           </div>
