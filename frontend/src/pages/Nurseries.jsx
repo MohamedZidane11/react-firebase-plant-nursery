@@ -19,7 +19,8 @@ const Nurseries = () => {
   const [selectedDistrict, setSelectedDistrict] = useState('all');
   const [sortBy, setSortBy] = useState('newest');
   const [showOffersOnly, setShowOffersOnly] = useState(false);
-
+  const [allSaudiRegions, setAllSaudiRegions] = useState([]);
+  
   // 🌐 Fetch nurseries
   useEffect(() => {
     const fetchNurseries = async () => {
@@ -83,6 +84,22 @@ const Nurseries = () => {
     };
 
     fetchCategories();
+  }, []);
+
+  // 🌍 Fetch full Saudi regions from Firestore (like in NurseryForm)
+  useEffect(() => {
+  const fetchLocations = async () => {
+    try {
+      const locDoc = await getDoc(doc(db, 'locations', 'SA'));
+      if (locDoc.exists()) {
+        const locData = locDoc.data().data || [];
+        const allRegions = locData.map(loc => loc.region).sort();
+        setAllSaudiRegions(allRegions); // احفظها في state جديد
+      }
+    } catch (err) {
+      console.error('Error fetching locations:', err);
+    }
+  };
   }, []);
 
   // Helper function to check if offer is expired
