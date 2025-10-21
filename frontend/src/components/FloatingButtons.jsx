@@ -170,7 +170,7 @@ const FloatingButtons = () => {
           key={position}
           className={`fixed ${getPositionClasses(position)} z-[9999] flex ${
             position.includes('left') ? 'flex-col-reverse' : 'flex-col-reverse'
-          } gap-3`}
+          } gap-10`}
         >
           {posButtons.map((button) => (
             <FloatingButton

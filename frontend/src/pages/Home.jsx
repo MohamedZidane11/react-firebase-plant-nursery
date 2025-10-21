@@ -43,6 +43,17 @@ const Home = () => {
     arrows: false
   };
 
+  const arabicToServiceKey = {
+    'تركيب': 'installation',
+    'التركيب': 'installation',
+    'توصيل': 'delivery',
+    'التوصيل': 'delivery',
+    'استشارات': 'consultation',
+    'الاستشارات': 'consultation',
+    'صيانة': 'maintenance',
+    'الصيانة': 'maintenance'
+  };
+
   useEffect(() => {
     setCurrentPage(1);
   }, [selectedCategory]);
@@ -195,6 +206,7 @@ const Home = () => {
     });
 
     // 🔍 Search offers
+    // 🔍 Search offers
     offers.forEach(o => {
       const matchesSearch =
         o.title.toLowerCase().includes(term) ||
@@ -202,12 +214,14 @@ const Home = () => {
         (o.tags || []).some(tag => tag.toLowerCase().includes(term)) ||
         (o.nurseryName && o.nurseryName.toLowerCase().includes(term));
 
-      const matchesService =
+      // ✅ NEW: Handle Arabic service keywords
+      const serviceKey = arabicToServiceKey[term];
+      const matchesServiceFilter =
         activeServiceFilter === 'all' ||
         (o.services || []).includes(activeServiceFilter) ||
-        (o.nurseryId && nurseries.find(n => n.id === o.nurseryId)?.services?.includes(activeServiceFilter));
+        (serviceKey && (o.services || []).includes(serviceKey));
 
-      if (matchesSearch && matchesService) {
+      if (matchesSearch && matchesServiceFilter) {
         results.push({
           type: 'offer',
           id: o.id,
