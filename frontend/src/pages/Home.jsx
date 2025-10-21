@@ -18,6 +18,7 @@ const Home = () => {
   const [nurseries, setNurseries] = useState([]);
   const [offers, setOffers] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [premiumNurseries, setPremiumNurseries] = useState([]);
   const [sponsorsLoading, setSponsorsLoading] = useState(true);
   const [results, setResults] = useState([]);
   const [banners, setBanners] = useState([]);
@@ -129,6 +130,24 @@ const Home = () => {
       }
     };
     fetchCategories();
+  }, []);
+
+  // Fetch premium nurseries
+  useEffect(() => {
+    const fetchPremiumNurseries = async () => {
+      try {
+        const API_BASE = 'http://localhost:5000'; // => https://nurseries.qvtest.com
+        const response = await fetch(`${API_BASE}/api/premium-nurseries`);
+        if (!response.ok) throw new Error('فشل تحميل شركاء النجاح');
+        const data = await response.json();
+        const publishedOnly = data.filter(item => item.published !== false);
+        setPremiumNurseries(publishedOnly);
+      } catch (err) {
+        console.error('Error fetching premium nurseries:', err);
+        setPremiumNurseries([]);
+      }
+    };
+    fetchPremiumNurseries();
   }, []);
 
   // Fetch sponsors
@@ -732,49 +751,43 @@ const Home = () => {
       </div>
 
       {/* Premium Nurseries */}
-      {viewMode === 'home' && (
+      {viewMode === 'home' && premiumNurseries.length > 0 && (
         <section className="py-12 bg-gray-900 text-white">
           <div className="container mx-auto px-4">
             <div className="text-center mb-12">
               <h2 className="text-3xl font-bold mb-4">شركاء النجاح ✨</h2>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              <div className="bg-gray-800 border border-yellow-500 p-6 rounded-lg text-center hover:-translate-y-2 transition-transform duration-500 ease-in-out">
-                <div className="w-16 h-16 mx-auto mb-4 bg-yellow-500 rounded-full flex items-center justify-center">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-black" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                  </svg>
-                </div>
-                <h3 className="text-xl font-bold mb-2">حدائق المملكة</h3>
-                <p className="text-sm text-gray-300">نباتات داخلية وخارجية مميزة</p>
-              </div>
-              <div className="bg-gray-800 border border-yellow-500 p-6 rounded-lg text-center hover:-translate-y-2 transition-transform duration-500 ease-in-out">
-                <div className="w-16 h-16 mx-auto mb-4 bg-yellow-500 rounded-full flex items-center justify-center">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-black" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                </div>
-                <h3 className="text-xl font-bold mb-2">مشاتل الرياض الخضراء</h3>
-                <p className="text-sm text-gray-300">تنسيق حدائق احترافي</p>
-              </div>
-              <div className="bg-gray-800 border border-yellow-500 p-6 rounded-lg text-center hover:-translate-y-2 transition-transform duration-500 ease-in-out">
-                <div className="w-16 h-16 mx-auto mb-4 bg-yellow-500 rounded-full flex items-center justify-center">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-black" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                  </svg>
-                </div>
-                <h3 className="text-xl font-bold mb-2">مؤسسة النخيل الذهبية</h3>
-                <p className="text-sm text-gray-300">متخصصون في أشجار النخيل النادرة</p>
-              </div>
-              <div className="bg-gray-800 border border-yellow-500 p-6 rounded-lg text-center hover:-translate-y-2 transition-transform duration-500 ease-in-out">
-                <div className="w-16 h-16 mx-auto mb-4 bg-yellow-500 rounded-full flex items-center justify-center">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-black" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                  </svg>
-                </div>
-                <h3 className="text-xl font-bold mb-2">مشتل الخليج الأخضر</h3>
-                <p className="text-sm text-gray-300">الرائد في النباتات المحلية والمستوردة</p>
-              </div>
+              {premiumNurseries.map((pn) => (
+                <a
+                  key={pn.id}
+                  href={
+                    pn.type === 'external'
+                      ? pn.externalUrl
+                      : `/nurseries/${pn.nurseryId}`
+                  }
+                  target={pn.type === 'external' ? '_blank' : '_self'}
+                  rel={pn.type === 'external' ? 'noopener noreferrer' : ''}
+                  className="block bg-gray-800 border border-yellow-500 p-6 rounded-lg text-center hover:-translate-y-2 transition-transform duration-500 ease-in-out"
+                >
+                  <div className="w-16 h-16 mx-auto mb-4 bg-yellow-500 rounded-full flex items-center justify-center overflow-hidden">
+                    {pn.logo ? (
+                      <img
+                        src={pn.logo}
+                        alt={pn.name}
+                        className="w-full h-full object-contain"
+                        onError={(e) => {
+                          e.target.src = 'https://placehold.co/100x100/fbbf24/ffffff?text=Logo';
+                        }}
+                      />
+                    ) : (
+                      <span className="text-black font-bold">؟</span>
+                    )}
+                  </div>
+                  <h3 className="text-xl font-bold mb-2">{pn.name}</h3>
+                  <p className="text-sm text-gray-300">{pn.description || 'مشتل مميز'}</p>
+                </a>
+              ))}
             </div>
           </div>
         </section>

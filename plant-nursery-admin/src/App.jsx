@@ -13,6 +13,7 @@ import OffersManager from './pages/OffersManager';
 import OfferForm from './pages/OfferForm';
 import CategoriesManager from './pages/CategoriesManager';
 import FiltersManager from './pages/FiltersManager';
+import PremiumNurseriesManager from './pages/PremiumNurseriesManager';
 import SponsorsManager from './pages/SponsorsManager';
 import SiteSettings from './pages/SiteSettings';
 import PendingNurseriesManager from './pages/PendingNurseriesManager';
@@ -57,6 +58,7 @@ function App() {
               <Route path="/banners/edit/:id" element={<BannerForm />} />
               <Route path="/categories" element={<CategoriesManager />} />
               <Route path="/filters" element={<FiltersManager />} />
+              <Route path="/premium-nurseries" element={<PremiumNurseriesManager />} />
               <Route path="/sponsors" element={<SponsorsManager />} />
               <Route path="/pending-nurseries" element={<PendingNurseriesManager />} />
               <Route path="/surveys" element={<SurveyManager />} />

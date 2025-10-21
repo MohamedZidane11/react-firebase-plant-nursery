@@ -18,6 +18,7 @@ const AdminHeader = () => {
     { path: '/banners', label: '🖼️ البانر' },
     { path: '/categories', label: '🔖 التصنيفات' },
     // Filter Mngr { path: '/filters', label: '🔍 الفلاتر' },
+    { path: '/premium-nurseries', label: '🌟 شركاء النجاح' },
     { path: '/sponsors', label: '✨ الرعاة' },
     { path: '/pending-nurseries', label: '📋 المراجعة' },
     { path: '/surveys', label: '📊 الاستبيانات' },

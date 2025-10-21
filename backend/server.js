@@ -93,7 +93,7 @@ app.post('/api/upload', imageUpload.single('image'), async (req, res) => {
     }
 
     const { folder, nurseryId, offerId } = req.body;
-    const allowedFolders = ['nurs_images', 'nurs_album', 'offers_images', 'offers_album', 'banner_images'];
+    const allowedFolders = ['nurs_images', 'nurs_album', 'offers_images', 'offers_album', 'banner_images', 'prem_nurs_images'];
     
     if (!folder || !allowedFolders.includes(folder)) {
       return res.status(400).json({ error: `Invalid folder. Allowed: ${allowedFolders.join(', ')}` });
@@ -391,6 +391,134 @@ app.get('/api/categories', async (req, res) => {
   } catch (err) {
     console.error('Error fetching categories:', err);
     res.status(500).json({ message: 'فشل تحميل التصنيفات' });
+  }
+});
+
+// ═══════════════════════════════════════════════════════════════
+// PREMIUM NURSERIES ENDPOINTS
+// ═══════════════════════════════════════════════════════════════
+app.get('/api/premium-nurseries', async (req, res) => {
+  try {
+    const snapshot = await db.collection('premiumNurseries').orderBy('order', 'asc').get();
+    const list = [];
+    snapshot.forEach(doc => {
+      list.push({ id: doc.id, ...doc.data() });
+    });
+    res.json(list);
+  } catch (err) {
+    console.error('Error fetching premium nurseries:', err);
+    res.status(500).json({ message: 'فشل تحميل شركاء النجاح' });
+  }
+});
+
+app.post('/api/premium-nurseries', async (req, res) => {
+  try {
+    const {
+      name,
+      type, // 'internal' or 'external'
+      nurseryId, // required if type === 'internal'
+      externalUrl, // required if type === 'external'
+      logo,
+      description,
+      order = 0,
+      published = true
+    } = req.body;
+
+    if (!name?.trim()) return res.status(400).json({ message: 'الاسم مطلوب' });
+    if (!type || !['internal', 'external'].includes(type)) {
+      return res.status(400).json({ message: 'نوع المشتل غير صالح (داخلي/خارجي)' });
+    }
+
+    if (type === 'internal' && !nurseryId?.trim()) {
+      return res.status(400).json({ message: 'معرف المشتل الداخلي مطلوب' });
+    }
+    if (type === 'external' && !externalUrl?.trim()) {
+      return res.status(400).json({ message: 'رابط المشتل الخارجي مطلوب' });
+    }
+
+    const newEntry = {
+      name: name.trim(),
+      type,
+      nurseryId: type === 'internal' ? nurseryId.trim() : null,
+      externalUrl: type === 'external' ? externalUrl.trim() : null,
+      logo: logo?.trim() || null,
+      description: description?.trim() || null,
+      order: Number(order) || 0,
+      published: Boolean(published),
+      createdAt: new Date().toISOString()
+    };
+
+    const docRef = await db.collection('premiumNurseries').add(newEntry);
+    res.status(201).json({ id: docRef.id, ...newEntry });
+  } catch (err) {
+    console.error('Error creating premium nursery:', err);
+    res.status(500).json({ message: 'فشل إنشاء مشتل مميز' });
+  }
+});
+
+app.put('/api/premium-nurseries/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const {
+      name,
+      type,
+      nurseryId,
+      externalUrl,
+      logo,
+      description,
+      order,
+      published
+    } = req.body;
+
+    const doc = await db.collection('premiumNurseries').doc(id).get();
+    if (!doc.exists) {
+      return res.status(404).json({ message: 'المشتل المميز غير موجود' });
+    }
+
+    if (!name?.trim()) return res.status(400).json({ message: 'الاسم مطلوب' });
+    if (!type || !['internal', 'external'].includes(type)) {
+      return res.status(400).json({ message: 'نوع المشتل غير صالح' });
+    }
+
+    if (type === 'internal' && !nurseryId?.trim()) {
+      return res.status(400).json({ message: 'معرف المشتل الداخلي مطلوب' });
+    }
+    if (type === 'external' && !externalUrl?.trim()) {
+      return res.status(400).json({ message: 'رابط المشتل الخارجي مطلوب' });
+    }
+
+    const updateData = {
+      name: name.trim(),
+      type,
+      nurseryId: type === 'internal' ? nurseryId.trim() : null,
+      externalUrl: type === 'external' ? externalUrl.trim() : null,
+      logo: logo?.trim() || null,
+      description: description?.trim() || null,
+      order: Number(order) || 0,
+      published: Boolean(published),
+      updatedAt: new Date().toISOString()
+    };
+
+    await db.collection('premiumNurseries').doc(id).update(updateData);
+    res.json({ id, ...updateData });
+  } catch (err) {
+    console.error('Error updating premium nursery:', err);
+    res.status(500).json({ message: 'فشل تحديث المشتل المميز' });
+  }
+});
+
+app.delete('/api/premium-nurseries/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const doc = await db.collection('premiumNurseries').doc(id).get();
+    if (!doc.exists) {
+      return res.status(404).json({ message: 'المشتل المميز غير موجود' });
+    }
+    await db.collection('premiumNurseries').doc(id).delete();
+    res.json({ message: 'تم حذف المشتل المميز بنجاح' });
+  } catch (err) {
+    console.error('Error deleting premium nursery:', err);
+    res.status(500).json({ message: 'فشل حذف المشتل المميز' });
   }
 });
 
