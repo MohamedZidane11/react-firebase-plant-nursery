@@ -9,23 +9,20 @@ const SponsorsManager = () => {
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState(null);
+  const [logoFile, setLogoFile] = useState(null);
+  const [logoPreview, setLogoPreview] = useState(null);
   const formRef = useRef();
+
+  const API_BASE = 'https://nurseries.qvtest.com';
 
   const [formData, setFormData] = useState({
     name: '',
-    tier: 'gold',
     blurb: '',
     logo: '',
     url: '',
     order: 0,
     published: true
   });
-
-  const tiers = {
-    gold: 'ذهبي',
-    silver: 'فضي',
-    bronze: 'برونزي'
-  };
 
   // Auto-scroll to form when editing
   useLayoutEffect(() => {
@@ -34,6 +31,7 @@ const SponsorsManager = () => {
     }
   }, [showForm, editing]);
 
+  // Fetch sponsors
   const fetchSponsors = async () => {
     try {
       const snapshot = await getDocs(collection(db, 'sponsors'));
@@ -64,7 +62,6 @@ const SponsorsManager = () => {
   const resetForm = () => {
     setFormData({
       name: '',
-      tier: 'gold',
       blurb: '',
       logo: '',
       url: '',
@@ -73,18 +70,72 @@ const SponsorsManager = () => {
     });
     setEditing(null);
     setShowForm(false);
+    setLogoFile(null);
+    setLogoPreview(null);
+  };
+
+  // Delete image from storage
+  const deleteFileFromStorage = async (fileUrl) => {
+    try {
+      if (!fileUrl || !fileUrl.includes('firebasestorage.googleapis.com')) return;
+      const response = await fetch(`${API_BASE}/api/delete-file`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: fileUrl }),
+      });
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({}));
+        console.warn('Failed to delete file:', error.error || 'Unknown error');
+      }
+    } catch (err) {
+      console.warn('Could not delete file:', err);
+    }
+  };
+
+  // Upload image to Firebase via backend
+  const uploadImageToBackend = async (file) => {
+    const formData = new FormData();
+    formData.append('image', file);
+    formData.append('folder', 'sponsors_images');
+    const res = await fetch(`${API_BASE}/api/upload`, {
+      method: 'POST',
+      body: formData,
+    });
+    if (!res.ok) {
+      const error = await res.json().catch(() => ({}));
+      throw new Error(error.error || 'فشل رفع الصورة');
+    }
+    const data = await res.json();
+    return data.url;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!formData.name.trim() || !formData.logo.trim()) {
-      alert('الاسم والشعار مطلوبان');
+    if (!formData.name.trim()) {
+      alert('اسم الراعي مطلوب');
+      return;
+    }
+    if (!logoFile && !formData.logo?.trim()) {
+      alert('الرجاء رفع شعار');
       return;
     }
 
     try {
+      setLoading(true);
+
+      let finalLogoUrl = formData.logo;
+
+      if (logoFile) {
+        // Delete old image if editing
+        if (editing && formData.logo?.includes('firebasestorage.googleapis.com')) {
+          await deleteFileFromStorage(formData.logo);
+        }
+        finalLogoUrl = await uploadImageToBackend(logoFile);
+      }
+
       const data = {
         ...formData,
+        logo: finalLogoUrl,
         order: Number(formData.order),
         updatedAt: serverTimestamp(),
         updatedBy: auth.currentUser.email
@@ -106,6 +157,8 @@ const SponsorsManager = () => {
       fetchSponsors();
     } catch (err) {
       alert('خطأ في الحفظ: ' + err.message);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -122,14 +175,15 @@ const SponsorsManager = () => {
 
   const handleEdit = (sponsor) => {
     setFormData({
-      name: sponsor.name,
-      tier: sponsor.tier || 'gold',
+      name: sponsor.name || '',
       blurb: sponsor.blurb || '',
-      logo: sponsor.logo,
+      logo: sponsor.logo || '',
       url: sponsor.url || '',
       order: sponsor.order || 0,
       published: sponsor.published !== false
     });
+    setLogoPreview(sponsor.logo || null);
+    setLogoFile(null);
     setEditing(sponsor.id);
     setShowForm(true);
   };
@@ -159,7 +213,7 @@ const SponsorsManager = () => {
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">اسم الراعي</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">اسم الراعي *</label>
                   <input
                     type="text"
                     name="name"
@@ -167,33 +221,8 @@ const SponsorsManager = () => {
                     onChange={handleChange}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500"
                     placeholder="مثل: مشاتل الرياض الخضراء"
+                    required
                   />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">الشعار</label>
-                  <input
-                    type="url"
-                    name="logo"
-                    value={formData.logo}
-                    onChange={handleChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500"
-                    placeholder="https://example.com/logo.png"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">الرتبة</label>
-                  <select
-                    name="tier"
-                    value={formData.tier}
-                    onChange={handleChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500"
-                  >
-                    <option value="gold">ذهبي</option>
-                    <option value="silver">فضي</option>
-                    <option value="bronze">برونزي</option>
-                  </select>
                 </div>
 
                 <div>
@@ -216,7 +245,7 @@ const SponsorsManager = () => {
                     value={formData.order}
                     onChange={handleChange}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500"
-                    placeholder="مثل: 1, 2, 3"
+                    placeholder="1, 2, 3..."
                   />
                 </div>
               </div>
@@ -231,6 +260,67 @@ const SponsorsManager = () => {
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500"
                   placeholder="نباتات داخلية وخارجية مميزة"
                 />
+              </div>
+
+              {/* Logo Upload */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">الشعار *</label>
+                <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-dashed border-gray-300 rounded-lg hover:border-yellow-400 transition">
+                  <div className="space-y-1 text-center">
+                    <svg className="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
+                      <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                    <div className="flex text-sm text-gray-600">
+                      <label htmlFor="logo-upload" className="relative cursor-pointer bg-white rounded-md font-medium text-yellow-600 hover:text-yellow-500">
+                        <span>رفع شعار</span>
+                        <input
+                          id="logo-upload"
+                          name="logo-upload"
+                          type="file"
+                          accept="image/*"
+                          className="sr-only"
+                          onChange={(e) => {
+                            const file = e.target.files[0];
+                            if (file) {
+                              setLogoFile(file);
+                              setLogoPreview(URL.createObjectURL(file));
+                            }
+                          }}
+                        />
+                      </label>
+                      <p className="pl-1">أو اسحب الملف هنا</p>
+                    </div>
+                    <p className="text-xs text-gray-500">PNG, JPG, WEBP حتى 10MB</p>
+                  </div>
+                </div>
+
+                {/* Preview */}
+                {(logoPreview || formData.logo) && (
+                  <div className="mt-4 flex flex-col items-center">
+                    <img
+                      src={logoPreview || formData.logo}
+                      alt="معاينة الشعار"
+                      className="w-24 h-24 object-contain rounded-lg border mb-2 bg-gray-50"
+                      onError={(e) => {
+                        e.target.src = 'https://placehold.co/100x100/fbbf24/ffffff?text=Logo';
+                      }}
+                    />
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        if (formData.logo && formData.logo.includes('firebasestorage.googleapis.com')) {
+                          await deleteFileFromStorage(formData.logo);
+                        }
+                        setLogoFile(null);
+                        setLogoPreview(null);
+                        setFormData(prev => ({ ...prev, logo: '' }));
+                      }}
+                      className="text-red-600 hover:text-red-800 text-sm font-medium flex items-center gap-1 mt-2"
+                    >
+                      🗑️ حذف الشعار
+                    </button>
+                  </div>
+                )}
               </div>
 
               <div className="flex items-center">
@@ -249,7 +339,8 @@ const SponsorsManager = () => {
               <div className="flex flex-col sm:flex-row gap-4">
                 <button
                   type="submit"
-                  className="bg-yellow-600 hover:bg-yellow-700 text-white px-6 py-3 rounded-lg font-medium transition"
+                  disabled={loading}
+                  className="bg-yellow-600 hover:bg-yellow-700 text-white px-6 py-3 rounded-lg font-medium transition disabled:opacity-50"
                 >
                   {editing ? 'تحديث' : 'إضافة'}
                 </button>
@@ -286,7 +377,6 @@ const SponsorsManager = () => {
                     <div>
                       <h3 className="font-bold text-gray-800">{sponsor.name}</h3>
                       <p className="text-sm text-gray-600">{sponsor.blurb}</p>
-                      <div className="text-sm text-yellow-600 mt-1">الرتبة: {tiers[sponsor.tier] || sponsor.tier}</div>
                     </div>
                   </div>
 

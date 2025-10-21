@@ -93,7 +93,7 @@ app.post('/api/upload', imageUpload.single('image'), async (req, res) => {
     }
 
     const { folder, nurseryId, offerId } = req.body;
-    const allowedFolders = ['nurs_images', 'nurs_album', 'offers_images', 'offers_album', 'banner_images', 'prem_nurs_images'];
+    const allowedFolders = ['nurs_images', 'nurs_album', 'offers_images', 'offers_album', 'banner_images', 'prem_nurs_images', 'sponsors_images'];
     
     if (!folder || !allowedFolders.includes(folder)) {
       return res.status(400).json({ error: `Invalid folder. Allowed: ${allowedFolders.join(', ')}` });
