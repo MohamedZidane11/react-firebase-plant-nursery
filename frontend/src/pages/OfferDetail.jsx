@@ -9,8 +9,6 @@ const OfferDetail = () => {
   const [nursery, setNursery] = useState(null);
   const [relatedOffers, setRelatedOffers] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [lightboxOpen, setLightboxOpen] = useState(false);
-  const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [mainImage, setMainImage] = useState(null);
   const [countdown, setCountdown] = useState('');
 
@@ -87,38 +85,6 @@ const OfferDetail = () => {
   const validAlbum = (offer?.album || []).filter(
     (img) => img && typeof img === 'string' && img.trim() !== ''
   );
-  const hasMainImage = offer?.image && offer.image.trim() !== '' && offer.image !== defaultImage;
-  const allImages = hasMainImage ? [offer.image, ...validAlbum] : [...validAlbum];
-
-  const openLightbox = (index) => {
-    if (allImages.length === 0) return;
-    setCurrentImageIndex(Math.max(0, Math.min(index, allImages.length - 1)));
-    setLightboxOpen(true);
-  };
-
-  const nextImage = () => {
-    if (!allImages.length) return;
-    setCurrentImageIndex((prev) => (prev + 1) % allImages.length);
-  };
-
-  const prevImage = () => {
-    if (!allImages.length) return;
-    setCurrentImageIndex((prev) => (prev - 1 + allImages.length) % allImages.length);
-  };
-
-  useEffect(() => {
-    const handleKeyDown = (e) => {
-      if (!lightboxOpen) return;
-      if (e.key === 'Escape') setLightboxOpen(false);
-      if (e.key === 'ArrowLeft') prevImage();
-      if (e.key === 'ArrowRight') nextImage();
-    };
-
-    if (lightboxOpen) {
-      window.addEventListener('keydown', handleKeyDown);
-      return () => window.removeEventListener('keydown', handleKeyDown);
-    }
-  }, [lightboxOpen, currentImageIndex]);
 
   const shareOffer = (platform) => {
     const url = window.location.href;
@@ -194,18 +160,15 @@ const OfferDetail = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Left Column - Gallery */}
           <div className="lg:col-span-2 space-y-6">
-            {/* Main Image */}
+            {/* Main Image + Thumbnails*/}
             <div className="bg-white rounded-xl shadow-lg overflow-hidden">
+              {/* Main Image */}
               <div className="relative">
                 <img
                   src={mainImage}
                   alt={offer.title}
-                  className="w-full h-[500px] object-cover cursor-pointer"
+                  className="w-full h-[500px] object-cover"
                   onError={(e) => (e.target.src = defaultImage)}
-                  onClick={() => {
-                    const index = hasMainImage ? 0 : validAlbum.indexOf(mainImage);
-                    openLightbox(Math.max(0, index));
-                  }}
                 />
                 {discountBadge && (
                   <div className="absolute top-5 right-5 bg-red-500/90 text-white px-8 py-4 rounded-full font-black text-2xl shadow-lg flex items-center gap-2">
@@ -218,26 +181,48 @@ const OfferDetail = () => {
               {/* Thumbnails */}
               {validAlbum.length > 0 && (
                 <div className="grid grid-cols-4 gap-4 p-6 bg-gray-50">
-                  {validAlbum.map((img, index) => {
-                    const globalIndex = hasMainImage ? index + 1 : index;
-                    return (
+                  {validAlbum.map((imageUrl, index) => (
+                    <div
+                      key={index}
+                      className={`w-full h-24 rounded-lg overflow-hidden border-3 cursor-pointer transition ${
+                        mainImage === imageUrl
+                          ? 'border-green-600 shadow-md'
+                          : 'border-transparent hover:border-green-400'
+                      }`}
+                      onClick={() => {
+                        // Don't swap if already main
+                        if (imageUrl === mainImage) return;
+
+                        const currentMain = mainImage;
+
+                        // Set clicked image as new main
+                        setMainImage(imageUrl);
+
+                        // Update offer.album: add old main to front if not already present
+                        setOffer((prev) => {
+                          if (!prev) return prev;
+                          const existingAlbum = prev.album || [];
+                          const alreadyInAlbum = existingAlbum.includes(currentMain);
+                          let newAlbum = [...existingAlbum];
+
+                          if (!alreadyInAlbum && currentMain !== defaultImage) {
+                            newAlbum = [currentMain, ...existingAlbum];
+                          }
+
+                          return { ...prev, album: newAlbum };
+                        });
+                      }}
+                    >
                       <img
-                        key={index}
-                        src={img}
+                        src={imageUrl}
                         alt={`صورة ${index + 1}`}
-                        className={`w-full h-24 object-cover rounded-lg cursor-pointer border-3 transition ${
-                          mainImage === img ? 'border-green-600 shadow-md' : 'border-transparent hover:border-green-400'
-                        }`}
-                        onClick={() => {
-                          // ✅ FIXED: Removed setMainImage(img)
-                          openLightbox(globalIndex);
-                        }}
+                        className="w-full h-full object-cover"
                         onError={(e) => {
                           e.target.style.display = 'none';
                         }}
                       />
-                    );
-                  })}
+                    </div>
+                  ))}
                 </div>
               )}
             </div>
@@ -486,50 +471,6 @@ const OfferDetail = () => {
           </div>
         </div>
       </div>
-
-      {/* Lightbox Modal */}
-      {lightboxOpen && allImages.length > 0 && (
-        <div
-          className="fixed inset-0 bg-black bg-opacity-95 z-50 flex items-center justify-center p-4"
-          onClick={() => setLightboxOpen(false)}
-        >
-          <div className="relative max-w-5xl max-h-full" onClick={(e) => e.stopPropagation()}>
-            <button
-              className="absolute top-4 right-4 text-white text-3xl z-10 bg-black bg-opacity-50 rounded-full w-10 h-10 flex items-center justify-center hover:bg-opacity-70"
-              onClick={() => setLightboxOpen(false)}
-            >
-              &times;
-            </button>
-            {allImages.length > 1 && (
-              <>
-                <button
-                  className="absolute left-4 top-1/2 transform -translate-y-1/2 text-white text-3xl z-10 bg-black bg-opacity-50 rounded-full w-12 h-12 flex items-center justify-center hover:bg-opacity-70"
-                  onClick={prevImage}
-                >
-                  ›
-                </button>
-                <button
-                  className="absolute right-4 top-1/2 transform -translate-y-1/2 text-white text-3xl z-10 bg-black bg-opacity-50 rounded-full w-12 h-12 flex items-center justify-center hover:bg-opacity-70"
-                  onClick={nextImage}
-                >
-                  ‹
-                </button>
-              </>
-            )}
-            <img
-              src={allImages[currentImageIndex]}
-              alt={`صورة ${currentImageIndex + 1}`}
-              className="max-h-[85vh] max-w-full object-contain rounded-lg"
-              onError={(e) => {
-                e.target.src = defaultImage;
-              }}
-            />
-            <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 text-white text-sm bg-black bg-opacity-60 px-4 py-2 rounded-full">
-              {currentImageIndex + 1} / {allImages.length}
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

@@ -13,7 +13,7 @@ const SponsorsManager = () => {
   const [logoPreview, setLogoPreview] = useState(null);
   const formRef = useRef();
 
-  const API_BASE = 'https://nurseries.qvtest.com';
+  const API_BASE = 'http://localhost:5000'; // => https://nurseries.qvtest.com
 
   const [formData, setFormData] = useState({
     name: '',
