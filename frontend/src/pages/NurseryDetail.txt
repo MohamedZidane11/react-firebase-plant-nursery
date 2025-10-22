@@ -4,17 +4,15 @@ import { useParams } from 'react-router-dom';
 import { Link } from 'react-router-dom';
 import defaultNurseryImage from '../assets/nurs_empty.png';
 
-const API_BASE = 'http://localhost:5000'; // => https://nurseries.qvtest.com
-
 const NurseryDetail = () => {
   const { id } = useParams();
   const [nursery, setNursery] = useState(null);
   const [offers, setOffers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [mainImage, setMainImage] = useState(defaultNurseryImage);
-  const [mapError, setMapError] = useState(false);
 
   useEffect(() => {
+    const API_BASE = 'http://localhost:5000'; // => https://nurseries.qvtest.com
     const fetchNursery = async () => {
       try {
         const response = await fetch(`${API_BASE}/api/nurseries/${id}`);
@@ -27,7 +25,6 @@ const NurseryDetail = () => {
         setNursery(null);
       }
     };
-    
     const fetchOffers = async () => {
       try {
         const response = await fetch(`${API_BASE}/api/offers`);
@@ -40,11 +37,11 @@ const NurseryDetail = () => {
         setOffers([]);
       }
     };
-    
     Promise.all([fetchNursery(), fetchOffers()]).finally(() => {
       setLoading(false);
     });
   }, [id]);
+
 
   if (loading) return <p className="text-center py-8">جاري التحميل...</p>;
   if (!nursery) return <div className="text-center py-8">المشتل غير موجود أو غير منشور</div>;
@@ -111,11 +108,15 @@ const NurseryDetail = () => {
 
   // Image Preview in main area
   const swapToAlbumImage = (clickedImageUrl) => {
+    // Don't swap if it's already the main image
     if (clickedImageUrl === mainImage) return;
   
     const currentMain = mainImage;
+  
+    // Set clicked image as new main
     setMainImage(clickedImageUrl);
   
+    // Update nursery.album: add old main only if not already present
     setNursery((prev) => {
       if (!prev) return prev;
   
@@ -124,6 +125,7 @@ const NurseryDetail = () => {
   
       let newAlbum = [...existingAlbum];
   
+      // Add old main to front ONLY if it's not already there
       if (!alreadyInAlbum && currentMain !== defaultNurseryImage) {
         newAlbum = [currentMain, ...existingAlbum];
       }
@@ -163,12 +165,6 @@ const NurseryDetail = () => {
   const makeCall = () => {
     const phone = nursery.phones?.[0] || '';
     window.location.href = `tel:${phone}`;
-  };
-
-  const openGoogleMaps = () => {
-    if (nursery.googleMapsUrl) {
-      window.open(nursery.googleMapsUrl, '_blank');
-    }
   };
 
   return (
@@ -486,7 +482,7 @@ const NurseryDetail = () => {
                 {nursery.socialMedia.snapchat && (
                   <a href={nursery.socialMedia.snapchat} target="_blank" rel="noopener noreferrer" className="flex items-center text-yellow-500 hover:text-yellow-700">
                     <svg className="w-6 h-6" viewBox="0 0 24 24" fill="currentColor">
-                      <path d="M12.206 2.18c-1.14 0-2.072.904-2.072 2.014 0 .44.116.856.318 1.213a5.11 5.11 0 00-.525.118c-.258.07-.61.167-.943.167a.88.88 0 00-.885.876c0 .487.396.883.885.883.5 0 1.008-.172 1.513-.344.495-.168.99-.336 1.465-.336.22 0 .474.012.667.073.168.053.253.135.253.244 0 .08-.028.145-.168.234-.297.19-.66.284-1.07.36-.664.122-1.49.275-1.49 1.26 0 .384.106.753.315 1.096-.467.103-1.156.256-1.86.256-.885 0-1.755-.195-2.472-.553-.717-.358-1.247-.853-1.247-1.508 0-.308.125-.601.351-.826l.37-.367c.14-.138.327-.325.36-.615.034-.315-.128-.598-.354-.8-.226-.2-.565-.324-.935-.324-.28 0-.555.057-.813.168-.26.112-.48.27-.655.475-.175.203-.31.45-.408.732-.1.288-.15.598-.15.918 0 1.015.42 1.905 1.18 2.655.76.75 1.817 1.34 3.046 1.706.248.074.51.14.784.2-.11.33-.165.682-.165 1.046 0 .51.114 1.005.337 1.464a4.04 4.04 0 001.047 1.265c.453.388 1.018.695 1.656.9.638.206 1.36.31 2.115.31.756 0 1.477-.104 2.115-.31.638-.205 1.203-.512 1.657-.9a4.041 4.041 0 001.046-1.265 4.23 4.23 0 00.337-1.464c0-.364-.055-.716-.165-1.046.275-.06.536-.126.784-.2 1.23-.366 2.286-.956 3.046-1.707.76-.75 1.18-1.64 1.18-2.654 0-.32-.05-.63-.15-.918-.098-.282-.233-.53-.408-.732-.175-.204-.395-.363-.655-.475-.258-.111-.533-.168-.813-.168-.37 0-.71.123-.935.323-.226.202-.388.485-.354.8.033.29.22.477.36.616l.37.366c.226.225.351.518.351.826 0 .655-.53 1.15-1.247 1.508-.717.358-1.587.553-2.472.553-.704 0-1.393-.153-1.86-.256.209-.343.315-.712.315-1.096 0-.985-.826-1.138-1.49-1.26-.41-.076-.773-.17-1.07-.36-.14-.089-.168-.154-.168-.234 0-.109.085-.19.253-.244.193-.061.447-.073.667-.073.475 0 .97.168 1.465.336.505.172 1.013.344 1.513.344a.88.88 0 00.885-.883.88.88 0 00-.885-.876c-.333 0-.685-.097-.943-.167a5.11 5.11 0 00-.525-.118c.202-.357.318-.773.318-1.213 0-1.11-.932-2.014-2.072-2.014z"/>
+                      <path d="M12.206 2.18..."/>
                     </svg>
                     <span className="ml-2">سناب شات</span>
                   </a>
@@ -501,62 +497,25 @@ const NurseryDetail = () => {
             </div>
           )}
 
-          {/* Google Maps */}
+          {/* Map */}
           <div className="mt-12 bg-white rounded-xl shadow-lg p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-3xl font-bold text-green-800">🗺️ الموقع على الخريطة</h3>
-              {nursery.googleMapsUrl && (
-                <button
-                  onClick={openGoogleMaps}
-                  className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                  </svg>
-                  فتح في خرائط جوجل
-                </button>
-              )}
-            </div>
-            
-            {nursery.googleMapsEmbedUrl || nursery.googleMapsUrl ? (
-              <div className="relative rounded-lg overflow-hidden bg-gray-100" style={{ height: '400px' }}>
-                {!mapError ? (
-                  <iframe
-                    src={nursery.googleMapsEmbedUrl || nursery.googleMapsUrl}
-                    width="100%"
-                    height="100%"
-                    style={{ border: 0 }}
-                    allowFullScreen={true}
-                    loading="lazy"
-                    referrerPolicy="no-referrer-when-downgrade"
-                    title={`موقع ${nursery.name} على خرائط جوجل`}
-                    onError={() => setMapError(true)}
-                    className="w-full h-full"
-                  ></iframe>
-                ) : (
-                  <div className="flex flex-col items-center justify-center h-full text-gray-600">
-                    <svg className="w-16 h-16 mb-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
-                    </svg>
-                    <p className="text-lg font-medium mb-2">تعذر تحميل الخريطة</p>
-                    <p className="text-sm text-gray-500 mb-4">يمكنك فتح الموقع مباشرة في خرائط جوجل</p>
-                    <button
-                      onClick={openGoogleMaps}
-                      className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg font-medium transition-colors"
-                    >
-                      فتح في خرائط جوجل
-                    </button>
-                  </div>
-                )}
+            <h3 className="text-3xl font-bold text-green-800 mb-4">الموقع على الخريطة</h3>
+            {nursery.googleMapsLink ? (
+              <div className="relative rounded-lg overflow-hidden" style={{ height: '400px' }}>
+                <iframe
+                  src={nursery.googleMapsLink}
+                  width="100%"
+                  height="100%"
+                  style={{ border: 0 }}
+                  allowFullScreen=""
+                  loading="lazy"
+                  referrerPolicy="no-referrer-when-downgrade"
+                  title={`${nursery.name} على خرائط جوجل`}
+                ></iframe>
               </div>
             ) : (
-              <div className="bg-gray-200 h-64 flex flex-col items-center justify-center rounded-lg">
-                <svg className="w-16 h-16 mb-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                </svg>
-                <p className="text-gray-500 text-lg">لم يتم إضافة رابط خريطة لهذا المشتل</p>
-                <p className="text-gray-400 text-sm mt-2">الموقع: {region} - {city} - {district}</p>
+              <div className="bg-gray-200 h-64 flex items-center justify-center rounded-lg">
+                <p className="text-gray-500">لم يتم إضافة رابط خريطة لهذا المشتل</p>
               </div>
             )}
           </div>

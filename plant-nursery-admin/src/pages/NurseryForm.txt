@@ -30,9 +30,6 @@ const NurseryForm = () => {
   const [videoFiles, setVideoFiles] = useState([]);
   const [videoPreviews, setVideoPreviews] = useState([]);
   const [mainCategories, setMainCategories] = useState([]);
-  const [mapsUrlValidating, setMapsUrlValidating] = useState(false);
-  const [mapsUrlError, setMapsUrlError] = useState('');
-  const [mapsUrlSuccess, setMapsUrlSuccess] = useState(false);
 
   const [formData, setFormData] = useState({
     name: '',
@@ -44,8 +41,7 @@ const NurseryForm = () => {
     region: '',
     city: '',
     district: '',
-    googleMapsUrl: '',
-    googleMapsEmbedUrl: '',
+    googleMapsLink: '',
     services: [],
     featured: false,
     published: true,
@@ -70,7 +66,7 @@ const NurseryForm = () => {
         return;
       }
 
-      const response = await fetch(`${API_BASE}/api/delete-file`, {
+      const response = await fetch(`${API_BASE}/api/delete-image`, {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
@@ -109,105 +105,6 @@ const NurseryForm = () => {
     return data.url;
   };
 
-  // Validate Google Maps URL
-  const validateGoogleMapsUrl = async (url) => {
-    if (!url || !url.trim()) {
-      setMapsUrlError('');
-      setMapsUrlSuccess(false);
-      return false;
-    }
-  
-    setMapsUrlValidating(true);
-    setMapsUrlError('');
-    setMapsUrlSuccess(false);
-  
-    try {
-      // إنشاء location string من البيانات الموجودة
-      const locationString = formData.location || 
-        `${formData.district}، ${formData.city}، ${formData.region}`.replace(/،\s*،/g, '،').trim();
-  
-      const response = await fetch(`${API_BASE}/api/validate-maps-url`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ 
-          url: url.trim(),
-          location: locationString  // ← إضافة location كـ fallback
-        }),
-      });
-  
-      const data = await response.json();
-  
-      if (data.valid) {
-        setMapsUrlSuccess(true);
-        setFormData(prev => ({
-          ...prev,
-          googleMapsEmbedUrl: data.embedUrl
-        }));
-        
-        // إظهار رسالة إعلامية إذا تم استخدام fallback
-        if (data.fallback) {
-          console.info('ℹ️ تم استخدام نص الموقع لإنشاء الخريطة');
-        }
-        
-        return true;
-      } else {
-        setMapsUrlError(data.error || 'رابط خرائط Google غير صالح');
-        return false;
-      }
-    } catch (err) {
-      setMapsUrlError('فشل التحقق من رابط الخريطة');
-      console.error('Maps URL validation error:', err);
-      return false;
-    } finally {
-      setMapsUrlValidating(false);
-    }
-  };
-
-  const generateMapFromLocation = async () => {
-    if (!formData.region || !formData.city) {
-      alert('يرجى إدخال المنطقة والمدينة أولاً');
-      return;
-    }
-  
-    setMapsUrlValidating(true);
-    
-    try {
-      const locationString = `${formData.district}، ${formData.city}، ${formData.region}`
-        .replace(/،\s*،/g, '،')
-        .trim();
-  
-      const response = await fetch(`${API_BASE}/api/validate-maps-url`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ 
-          location: locationString
-        }),
-      });
-  
-      const data = await response.json();
-  
-      if (data.valid) {
-        setFormData(prev => ({
-          ...prev,
-          googleMapsEmbedUrl: data.embedUrl,
-          googleMapsUrl: '' // مسح الرابط القديم
-        }));
-        setMapsUrlSuccess(true);
-        setMapsUrlError('');
-        alert('✅ تم إنشاء الخريطة من الموقع بنجاح!');
-      }
-    } catch (err) {
-      console.error('Error generating map:', err);
-      alert('فشل إنشاء الخريطة');
-    } finally {
-      setMapsUrlValidating(false);
-    }
-  };
-
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -230,9 +127,9 @@ const NurseryForm = () => {
         const categoriesSnapshot = await getDocs(collection(db, 'categories'));
         const mainCats = categoriesSnapshot.docs
           .map(doc => ({ id: doc.id, ...doc.data() }))
-          .filter(cat => cat.published !== false)
+          .filter(cat => cat.published !== false) // only published
           .sort((a, b) => (a.order || 0) - (b.order || 0))
-          .map(cat => cat.title);
+          .map(cat => cat.title); // extract titles only
   
         setMainCategories(mainCats);
   
@@ -252,8 +149,6 @@ const NurseryForm = () => {
               region: data.region || '',
               city: data.city || '',
               district: data.district || '',
-              googleMapsUrl: data.googleMapsUrl || '',
-              googleMapsEmbedUrl: data.googleMapsEmbedUrl || '',
               services: data.services || [],
               featured: data.featured || false,
               published: data.published !== undefined ? data.published : true,
@@ -267,11 +162,6 @@ const NurseryForm = () => {
               }
             });
             setImagePreview(data.image || defaultImage);
-            
-            // Set success state if Google Maps URL exists
-            if (data.googleMapsUrl) {
-              setMapsUrlSuccess(true);
-            }
           }
         }
       } catch (err) {
@@ -306,6 +196,8 @@ const NurseryForm = () => {
     return true;
   };
 
+  
+
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
     
@@ -316,19 +208,6 @@ const NurseryForm = () => {
 
     if (name === 'name') {
       validateName(value);
-    }
-
-    // Validate Google Maps URL on change
-    if (name === 'googleMapsUrl') {
-      if (value.trim()) {
-        const timeoutId = setTimeout(() => {
-          validateGoogleMapsUrl(value);
-        }, 800);
-        return () => clearTimeout(timeoutId);
-      } else {
-        setMapsUrlError('');
-        setMapsUrlSuccess(false);
-      }
     }
   };
 
@@ -432,7 +311,7 @@ const NurseryForm = () => {
 
   const deleteVideo = async (index) => {
     const videoUrl = formData.videos[index];
-    await deleteImageFromStorage(videoUrl);
+    await deleteImageFromStorage(videoUrl); // Reuse same delete function
     const newVideos = formData.videos.filter((_, i) => i !== index);
     setFormData(prev => ({ ...prev, videos: newVideos }));
   };
@@ -451,7 +330,6 @@ const NurseryForm = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
     if (!validateName(formData.name)) {
       alert('يرجى تصحيح اسم المشتل. ' + nameError);
       return;
@@ -472,23 +350,11 @@ const NurseryForm = () => {
       alert('يجب اختيار تصنيف رئيسي واحد فقط (ليس أكثر ولا أقل)');
       return;
     }
-
-    // Validate Google Maps URL if provided
-    if (formData.googleMapsUrl && formData.googleMapsUrl.trim()) {
-      if (!mapsUrlSuccess) {
-        const isValid = await validateGoogleMapsUrl(formData.googleMapsUrl);
-        if (!isValid) {
-          alert('رابط خرائط Google غير صالح. يرجى استخدام رابط صحيح من تطبيق خرائط Google.');
-          return;
-        }
-      }
-    }
   
     try {
       setLoading(true);
       let imageUrl = formData.image;
       let finalNurseryId = id;
-      
       if (id) {
         if (imageFile) {
           if (formData.image && formData.image.includes('firebasestorage.googleapis.com')) {
@@ -508,8 +374,7 @@ const NurseryForm = () => {
           city: formData.city,
           district: formData.district,
           location: fullLocation,
-          googleMapsUrl: formData.googleMapsUrl.trim() || '',
-          googleMapsEmbedUrl: formData.googleMapsEmbedUrl || '',
+          googleMapsLink: formData.googleMapsLink.trim() || '',
           services: formData.services,
           featured: formData.featured,
           published: formData.published,
@@ -559,8 +424,7 @@ const NurseryForm = () => {
         city: formData.city,
         district: formData.district,
         location: fullLocation,
-        googleMapsUrl: formData.googleMapsUrl.trim() || '',
-        googleMapsEmbedUrl: formData.googleMapsEmbedUrl || '',
+        googleMapsLink: formData.googleMapsLink.trim() || '',
         services: formData.services,
         featured: formData.featured,
         published: formData.published,
@@ -909,82 +773,22 @@ const NurseryForm = () => {
               </div>
             </div>
             
-            {/* Google Maps Link with validation */}
-            <div className="space-y-2">
-              <label className="block text-sm font-medium text-gray-700">
-                رابط خرائط Google (اختياري)
+            {/* google maps link */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                رابط خريطة جوجل (اختياري)
               </label>
-              
-              <div className="flex gap-2">
-                <div className="flex-1">
-                  <input
-                    type="url"
-                    name="googleMapsUrl"
-                    value={formData.googleMapsUrl}
-                    onChange={handleChange}
-                    onBlur={(e) => {
-                      if (e.target.value.trim()) {
-                        validateGoogleMapsUrl(e.target.value);
-                      }
-                    }}
-                    className={`w-full px-4 py-2 border rounded focus:ring-2 focus:ring-green-500 focus:border-transparent ${
-                      mapsUrlError ? 'border-red-500' : 
-                      mapsUrlSuccess ? 'border-green-500' : 
-                      'border-gray-300'
-                    }`}
-                    placeholder="https://maps.app.goo.gl/..."
-                    dir="ltr"
-                  />
-                  
-                  {mapsUrlValidating && (
-                    <p className="text-xs text-blue-600 mt-1">
-                      جاري التحقق من الرابط...
-                    </p>
-                  )}
-                  
-                  {mapsUrlError && (
-                    <p className="text-xs text-red-600 mt-1">
-                      {mapsUrlError}
-                    </p>
-                  )}
-                  
-                  {mapsUrlSuccess && (
-                    <p className="text-xs text-green-600 mt-1">
-                      ✓ رابط صحيح
-                    </p>
-                  )}
-                </div>
-                
-                <button
-                  type="button"
-                  onClick={generateMapFromLocation}
-                  disabled={mapsUrlValidating || !formData.region || !formData.city}
-                  className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed whitespace-nowrap text-sm"
-                  title="إنشاء خريطة من الموقع"
-                >
-                  إنشاء تلقائي
-                </button>
-              </div>
-              
-              <p className="text-xs text-gray-500">
-                يمكنك لصق رابط من خرائط Google أو الضغط على "إنشاء تلقائي" لإنشاء خريطة من الموقع
+              <input
+                type="url"
+                name="googleMapsLink"
+                value={formData.googleMapsLink}
+                onChange={handleChange}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                placeholder="https://maps.app.goo.gl/..."
+              />
+              <p className="mt-1 text-xs text-gray-500">
+                استخدم رابط "مشاركة" من تطبيق خرائط جوجل (يبدأ بـ <code>https://maps.app.goo.gl/</code>)
               </p>
-              
-              {formData.googleMapsEmbedUrl && (
-                <div className="mt-3 border rounded-lg overflow-hidden bg-gray-50">
-                  <p className="text-xs text-gray-600 px-3 py-2 border-b">معاينة الخريطة:</p>
-                  <iframe
-                    src={formData.googleMapsEmbedUrl}
-                    width="100%"
-                    height="250"
-                    style={{ border: 0 }}
-                    allowFullScreen
-                    loading="lazy"
-                    referrerPolicy="no-referrer-when-downgrade"
-                    title="معاينة الخريطة"
-                  />
-                </div>
-              )}
             </div>
 
             {/* Working Hours Section */}
@@ -1192,7 +996,7 @@ const NurseryForm = () => {
             <div className="flex gap-4 pt-4">
               <button
                 type="submit"
-                disabled={loading || !!nameError || (formData.googleMapsUrl && mapsUrlValidating)}
+                disabled={loading || !!nameError}
                 className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-medium transition disabled:bg-gray-400 disabled:cursor-not-allowed"
               >
                 {loading ? 'جاري الحفظ...' : id ? 'تحديث' : 'إضافة'}
