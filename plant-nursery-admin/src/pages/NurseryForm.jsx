@@ -13,7 +13,7 @@ import {
 } from 'firebase/firestore';
 
 const defaultImage = '/images/nurs_empty.png';
-const API_BASE = 'http://localhost:5000'; // => https://nurseries.qvtest.com
+const API_BASE = 'https://nurseries.qvtest.com'; // => https://nurseries.qvtest.com http://localhost:5000
 
 const NurseryForm = () => {
   const { id } = useParams();

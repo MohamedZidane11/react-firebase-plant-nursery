@@ -15,7 +15,7 @@ const PremiumNurseriesManager = () => {
   const [logoPreview, setLogoPreview] = useState(null);
   const formRef = useRef();
 
-  const API_BASE = 'http://localhost:5000'; // => https://nurseries.qvtest.com
+  const API_BASE = 'https://nurseries.qvtest.com'; // => https://nurseries.qvtest.com http://localhost:5000
 
   // Delete file from storage
   const deleteFileFromStorage = async (fileUrl) => {

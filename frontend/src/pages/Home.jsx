@@ -136,7 +136,7 @@ const Home = () => {
   useEffect(() => {
     const fetchPremiumNurseries = async () => {
       try {
-        const API_BASE = 'http://localhost:5000'; // => https://nurseries.qvtest.com
+        const API_BASE = 'https://nurseries.qvtest.com'; // => https://nurseries.qvtest.com http://localhost:5000
         const response = await fetch(`${API_BASE}/api/premium-nurseries`);
         if (!response.ok) throw new Error('فشل تحميل شركاء النجاح');
         const data = await response.json();

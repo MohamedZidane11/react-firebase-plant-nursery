@@ -4,7 +4,7 @@ import { useParams } from 'react-router-dom';
 import { Link } from 'react-router-dom';
 import defaultNurseryImage from '../assets/nurs_empty.png';
 
-const API_BASE = 'http://localhost:5000'; // => https://nurseries.qvtest.com
+const API_BASE = 'https://nurseries.qvtest.com'; // => https://nurseries.qvtest.com http://localhost:5000
 
 const NurseryDetail = () => {
   const { id } = useParams();
