@@ -709,14 +709,29 @@ const OfferForm = () => {
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">التصنيفات</label>
               <div className="flex flex-wrap gap-2">
-                {['نباتات داخلية', 'توصيل', 'استشارات', 'أدوات زراعة', 'موسمي'].map((tag) => (
+                {['مشاتل', 'مشاتل متنوعة', 'أدوات الزراعة'].map((tag) => (
                   <label key={tag} className="flex items-center">
                     <input
-                      type="checkbox"
-                      checked={formData.tags.includes(tag)}
-                      onChange={() => handleTagChange(tag)}
-                      className="mr-2 h-4 w-4 text-orange-600"
+                      type="radio"
+                      name="offerCategory" // same name = single selection
+                      value={tag}
+                      checked={formData.tags[0] === tag}
+                      onChange={() => setFormData(prev => ({ ...prev, tags: [tag] }))}
+                      className="sr-only" // hide default radio circle
                     />
+                    <span
+                      className={`inline-block w-4 h-4 border rounded-sm mr-2 flex items-center justify-center ${
+                        formData.tags[0] === tag
+                          ? 'bg-orange-500 border-orange-500'
+                          : 'border-gray-300'
+                      }`}
+                    >
+                      {formData.tags[0] === tag && (
+                        <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" />
+                        </svg>
+                      )}
+                    </span>
                     <span className="text-sm">{tag}</span>
                   </label>
                 ))}
