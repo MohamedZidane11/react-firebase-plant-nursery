@@ -31,7 +31,7 @@ const AdminHeader = () => {
       dir="rtl"
     >
       <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between">
-        <h1 className="text-2xl font-bold text-green-800 whitespace-nowrap">
+        <h1 className="text-2xl font-bold text-green-800 whitespace-nowrap pb-4">
           لوحة التحكم
         </h1>
 
