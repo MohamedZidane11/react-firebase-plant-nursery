@@ -1,4 +1,4 @@
-// src/pages/OfferDetail.jsx - Fixed: clicking album image opens lightbox without changing main image
+// src/pages/OfferDetail.jsx
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import defaultImage from '../assets/offer_default.png';
@@ -9,7 +9,7 @@ const OfferDetail = () => {
   const [nursery, setNursery] = useState(null);
   const [relatedOffers, setRelatedOffers] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [mainImage, setMainImage] = useState(null);
+  const [mainImage, setMainImage] = useState(defaultImage);
   const [countdown, setCountdown] = useState('');
 
   useEffect(() => {
@@ -17,7 +17,6 @@ const OfferDetail = () => {
       try {
         const API_BASE = 'https://nurseries.qvtest.com';
         const response = await fetch(`${API_BASE}/api/offers/${id}`);
-
         if (!response.ok) throw new Error('Not found');
         const data = await response.json();
         setOffer(data);
@@ -31,7 +30,6 @@ const OfferDetail = () => {
           }
         }
 
-        // Fetch related offers
         const offersRes = await fetch(`${API_BASE}/api/offers`);
         if (offersRes.ok) {
           const allOffers = await offersRes.json();
@@ -54,42 +52,54 @@ const OfferDetail = () => {
   // Countdown timer
   useEffect(() => {
     if (!offer?.endDate) return;
-
     const updateCountdown = () => {
       const endDate = new Date(offer.endDate + 'T23:59:59');
       const now = new Date();
       const difference = endDate - now;
-
       if (difference > 0) {
         const days = Math.floor(difference / (1000 * 60 * 60 * 24));
         const hours = Math.floor((difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
         const minutes = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60));
-
         let timerText = '';
         if (days > 0) timerText += `${days} ${days === 1 ? 'يوم' : 'أيام'} و `;
         if (hours > 0) timerText += `${hours} ساعة و `;
         if (minutes > 0) timerText += `${minutes} دقيقة`;
-
         setCountdown(timerText);
       } else {
         setCountdown('انتهى العرض');
       }
     };
-
     updateCountdown();
-    const interval = setInterval(updateCountdown, 60000); // Update every minute
-
+    const interval = setInterval(updateCountdown, 60000);
     return () => clearInterval(interval);
   }, [offer]);
 
-  const validAlbum = (offer?.album || []).filter(
-    (img) => img && typeof img === 'string' && img.trim() !== ''
-  );
+  // ✅ FIXED: Build displayThumbnails safely — include main image + album, no dupes
+  const displayThumbnails = [];
+  const seen = new Set();
+
+  // Add main image (offer.image) if valid and not default
+  if (offer?.image && offer.image !== defaultImage) {
+    const url = offer.image;
+    if (!seen.has(url)) {
+      displayThumbnails.push(url);
+      seen.add(url);
+    }
+  }
+
+  // Add album images
+  if (offer?.album && Array.isArray(offer.album)) {
+    for (const img of offer.album) {
+      if (img && typeof img === 'string' && img.trim() !== '' && !seen.has(img)) {
+        displayThumbnails.push(img);
+        seen.add(img);
+      }
+    }
+  }
 
   const shareOffer = (platform) => {
     const url = window.location.href;
     const text = encodeURIComponent(`${offer.title} - عرض مميز من منصة المشاتل`);
-  
     switch (platform) {
       case 'facebook':
         window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`, '_blank');
@@ -130,15 +140,19 @@ const OfferDetail = () => {
     </div>
   );
 
-  // Calculate discount badge
   const discountBadge = offer.discount || 
     (offer.originalPrice && offer.finalPrice 
       ? Math.round(((offer.originalPrice - offer.finalPrice) / offer.originalPrice) * 100)
       : null);
 
-  // Get nursery contact info
   const nurseryPhone = offer.nurseryPhone || nursery?.phones?.[0] || '';
   const nurseryWhatsapp = offer.nurseryWhatsapp || nursery?.whatsapp || nursery?.phones?.[0] || '';
+
+  // Handle thumbnail click: update main image, but DO NOT modify offer.album
+  const handleThumbnailClick = (imageUrl) => {
+    if (imageUrl === mainImage) return;
+    setMainImage(imageUrl);
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -160,7 +174,7 @@ const OfferDetail = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Left Column - Gallery */}
           <div className="lg:col-span-2 space-y-6">
-            {/* Main Image + Thumbnails*/}
+            {/* Main Image + Thumbnails */}
             <div className="bg-white rounded-xl shadow-lg overflow-hidden">
               {/* Main Image */}
               <div className="relative">
@@ -179,9 +193,9 @@ const OfferDetail = () => {
               </div>
 
               {/* Thumbnails */}
-              {validAlbum.length > 0 && (
+              {displayThumbnails.length > 0 && (
                 <div className="grid grid-cols-4 gap-4 p-6 bg-gray-50">
-                  {validAlbum.map((imageUrl, index) => (
+                  {displayThumbnails.map((imageUrl, index) => (
                     <div
                       key={index}
                       className={`w-full h-24 rounded-lg overflow-hidden border-3 cursor-pointer transition ${
@@ -189,36 +203,14 @@ const OfferDetail = () => {
                           ? 'border-green-600 shadow-md'
                           : 'border-transparent hover:border-green-400'
                       }`}
-                      onClick={() => {
-                        // Don't swap if already main
-                        if (imageUrl === mainImage) return;
-
-                        const currentMain = mainImage;
-
-                        // Set clicked image as new main
-                        setMainImage(imageUrl);
-
-                        // Update offer.album: add old main to front if not already present
-                        setOffer((prev) => {
-                          if (!prev) return prev;
-                          const existingAlbum = prev.album || [];
-                          const alreadyInAlbum = existingAlbum.includes(currentMain);
-                          let newAlbum = [...existingAlbum];
-
-                          if (!alreadyInAlbum && currentMain !== defaultImage) {
-                            newAlbum = [currentMain, ...existingAlbum];
-                          }
-
-                          return { ...prev, album: newAlbum };
-                        });
-                      }}
+                      onClick={() => handleThumbnailClick(imageUrl)}
                     >
                       <img
                         src={imageUrl}
                         alt={`صورة ${index + 1}`}
                         className="w-full h-full object-cover"
                         onError={(e) => {
-                          e.target.style.display = 'none';
+                          e.target.parentElement.style.display = 'none';
                         }}
                       />
                     </div>
@@ -260,8 +252,6 @@ const OfferDetail = () => {
                 <span>تفاصيل العرض</span>
               </h2>
               <p className="text-gray-700 text-lg leading-relaxed mb-6">{offer.description}</p>
-
-              {/* Features */}
               {offer.features && offer.features.length > 0 && (
                 <>
                   <h4 className="text-xl font-bold text-green-800 mb-4">مميزات العرض:</h4>
@@ -276,32 +266,6 @@ const OfferDetail = () => {
                 </>
               )}
             </div>
-
-            {/* Related Offers */}
-            {relatedOffers.length > 0 && (
-              <div className="bg-white rounded-xl shadow-lg p-6">
-                <h2 className="text-2xl font-bold mb-6">عروض مشابهة</h2>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  {relatedOffers.map((relOffer) => (
-                    <Link
-                      key={relOffer.id}
-                      to={`/offers/${relOffer.id}`}
-                      className="bg-gray-50 rounded-lg overflow-hidden hover:shadow-md transition"
-                    >
-                      <div className="h-40 bg-gray-200 flex items-center justify-center text-5xl">
-                        {relOffer.image ? (
-                          <img src={relOffer.image} alt={relOffer.title} className="w-full h-full object-cover" />
-                        ) : '🌿'}
-                      </div>
-                      <div className="p-4">
-                        <h3 className="font-bold text-gray-800 mb-1 line-clamp-2">{relOffer.title}</h3>
-                        <p className="text-sm text-green-600">{relOffer.nurseryName}</p>
-                      </div>
-                    </Link>
-                  ))}
-                </div>
-              </div>
-            )}
           </div>
 
           {/* Right Column - Info */}
@@ -309,8 +273,6 @@ const OfferDetail = () => {
             {/* Offer Header */}
             <div className="bg-white rounded-xl shadow-lg p-6">
               <h1 className="text-3xl font-black text-gray-800 mb-4 leading-tight">{offer.title}</h1>
-
-              {/* Nursery Info */}
               <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-lg mb-6">
                 <div className="w-14 h-14 bg-gradient-to-br from-green-600 to-green-800 rounded-xl flex items-center justify-center text-3xl text-white">
                   🌳
@@ -331,7 +293,6 @@ const OfferDetail = () => {
                 </div>
               </div>
 
-              {/* Countdown Timer */}
               {countdown && countdown !== 'انتهى العرض' && (
                 <div className="bg-gradient-to-r from-orange-50 to-yellow-50 border-r-4 border-orange-500 p-5 rounded-lg mb-6 flex items-center gap-4">
                   <div className="text-4xl">⏰</div>
@@ -342,7 +303,6 @@ const OfferDetail = () => {
                 </div>
               )}
 
-              {/* Dates */}
               <div className="grid grid-cols-2 gap-4 mb-6">
                 {offer.startDate && (
                   <div className="text-center p-4 bg-gray-50 rounded-lg">
@@ -365,19 +325,16 @@ const OfferDetail = () => {
                   <div className="text-lg font-semibold">{offer.title}</div>
                 </div>
               )}
-
               {offer.originalPrice && (
                 <p className="text-lg text-gray-500 line-through mb-2">
                   السعر الأصلي: {offer.originalPrice} ريال
                 </p>
               )}
-
               {offer.finalPrice && (
                 <p className="text-4xl font-black text-green-600 mb-2">
                   {offer.finalPrice} <span className="text-2xl">ريال</span>
                 </p>
               )}
-
               {!offer.finalPrice && !offer.originalPrice && discountBadge && (
                 <p className="text-xl font-bold text-green-600">وفر حتى {discountBadge}%</p>
               )}
@@ -395,7 +352,6 @@ const OfferDetail = () => {
                     <span>اتصل الآن</span>
                   </a>
                 )}
-
                 {nurseryWhatsapp && (
                   <a
                     href={`https://wa.me/${nurseryWhatsapp.replace(/[^0-9]/g, '')}`}
@@ -407,7 +363,6 @@ const OfferDetail = () => {
                     <span>تواصل عبر واتساب</span>
                   </a>
                 )}
-
                 {offer.nurseryId && (
                   <Link
                     to={`/nurseries/${offer.nurseryId}`}
