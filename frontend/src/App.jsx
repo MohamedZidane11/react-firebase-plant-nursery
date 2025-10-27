@@ -1,5 +1,6 @@
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import { useEffect } from 'react';
+import { HelmetProvider } from 'react-helmet-async';
 
 import Header from './components/Layout/Header';
 import Footer from './components/Layout/Footer';
@@ -36,34 +37,36 @@ const ScrollToTop = () => {
 
 function App() {
   return (
-    <Router>
-      <div className="min-h-screen bg-gray-50 flex flex-col">
-        <Header />
-        
-        <main>
-          <ScrollToTop />
+    <HelmetProvider>
+      <Router>
+        <div className="min-h-screen bg-gray-50 flex flex-col">
+          <Header />
+          
+          <main>
+            <ScrollToTop />
 
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/nurseries" element={<Nurseries />} />
-            <Route path="/nurseries/:id" element={<NurseryDetail />} />
-            <Route path="/offers" element={<Offers />} />
-            <Route path="/offers/:id" element={<OfferDetail />} />
-            <Route path="/contact" element={<Contact />} />
-            <Route path="/register" element={<RegisterNursery />} />
-            <Route path="/survey" element={<Survey />} />
-            <Route path="/PrivacyPolicy" element={<PrivacyPolicy />} />
-            <Route path="/TermsOfUse" element={<TermsOfUse />} />
-            <Route path="/AboutUs" element={<AboutUs />} />
-            <Route path="/FAQ" element={<FAQ />} />
-          </Routes>
+            <Routes>
+              <Route path="/" element={<Home />} />
+              <Route path="/nurseries" element={<Nurseries />} />
+              <Route path="/nurseries/:id" element={<NurseryDetail />} />
+              <Route path="/offers" element={<Offers />} />
+              <Route path="/offers/:id" element={<OfferDetail />} />
+              <Route path="/contact" element={<Contact />} />
+              <Route path="/register" element={<RegisterNursery />} />
+              <Route path="/survey" element={<Survey />} />
+              <Route path="/PrivacyPolicy" element={<PrivacyPolicy />} />
+              <Route path="/TermsOfUse" element={<TermsOfUse />} />
+              <Route path="/AboutUs" element={<AboutUs />} />
+              <Route path="/FAQ" element={<FAQ />} />
+            </Routes>
 
-        </main>
-        
-        <Footer />
-        <FloatingButtons />
-      </div>
-    </Router>
+          </main>
+          
+          <Footer />
+          <FloatingButtons />
+        </div>
+      </Router>
+    </HelmetProvider>
   );
 }
 

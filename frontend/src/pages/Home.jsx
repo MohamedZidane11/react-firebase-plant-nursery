@@ -6,6 +6,8 @@ import 'slick-carousel/slick/slick.css';
 import 'slick-carousel/slick/slick-theme.css';
 import defaultNurseryImage from '../assets/nurs_empty.png';
 import NurseryCard from '../components/NurseryCard';
+import { useSEO } from '../hooks/useSEO';
+import SEO from '../components/SEO';
 
 const Home = () => {
   // ✅ ALL HOOKS AT THE TOP
@@ -24,6 +26,9 @@ const Home = () => {
   const [banners, setBanners] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 6;
+  const { seo, setSEO } = useSEO('home');
+
+  if (setSEO) return <div>جاري التحميل...</div>;
 
   const [siteSettings, setSiteSettings] = useState({
     title: 'أكبر منصة للمشاتل في المملكة 🌿',
@@ -225,7 +230,6 @@ const Home = () => {
     });
 
     // 🔍 Search offers
-    // 🔍 Search offers
     offers.forEach(o => {
       const matchesSearch =
         o.title.toLowerCase().includes(term) ||
@@ -361,6 +365,14 @@ const Home = () => {
   };
 
   return (
+    <>
+    <SEO
+        title={seo?.title}
+        description={seo?.description}
+        keywords={seo?.keywords}
+        ogUrl="http://localhost:5000"
+        canonical="http://localhost:5000"
+      />
     <div className="min-h-screen bg-gray-50">
       {/* Hero Section */}
       <section className="bg-gradient-to-r from-green-100 to-green-200 py-16">
@@ -853,6 +865,7 @@ const Home = () => {
         </div>
       </section>
     </div>
+    </>
   );
 };
 

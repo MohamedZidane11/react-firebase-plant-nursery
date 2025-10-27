@@ -7,17 +7,14 @@ const AdminHeader = () => {
   const location = useLocation();
   const [isOpen, setIsOpen] = useState(false);
 
-  // Helper to check if link is active
   const isActive = (path) => location.pathname === path;
 
-  // Navigation items
   const navItems = [
     { path: '/', label: '🏠 الرئيسية' },
     { path: '/nurseries', label: '🌿 المشاتل' },
     { path: '/offers', label: '💰 العروض' },
     { path: '/banners', label: '🖼️ البانر' },
     { path: '/categories', label: '🔖 التصنيفات' },
-    // Filter Mngr { path: '/filters', label: '🔍 الفلاتر' },
     { path: '/premium-nurseries', label: '🌟 شركاء النجاح' },
     { path: '/sponsors', label: '✨ الرعاة' },
     { path: '/pending-nurseries', label: '📋 المراجعة' },
@@ -31,9 +28,35 @@ const AdminHeader = () => {
       dir="rtl"
     >
       <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between">
-        <h1 className="text-2xl font-bold text-green-800 whitespace-nowrap pb-4">
+        {/* Logo / Title */}
+        <h1 className="text-3xl font-bold text-green-800 whitespace-nowrap mb-2">
           لوحة التحكم
         </h1>
+
+        {/* Desktop Navigation + Logout */}
+        <div className="hidden md:flex items-center space-x-1 space-x-reverse">
+          {navItems.map((item) => (
+            <Link
+              key={item.path}
+              to={item.path}
+              className={`px-4 py-2 font-medium rounded-lg transition-all duration-300 ease-in-out
+                ${
+                  isActive(item.path)
+                    ? 'bg-orange-500 text-white shadow-md'
+                    : 'text-gray-700 hover:bg-green-100 hover:-translate-y-1 hover:shadow-sm'
+                }`}
+            >
+              {item.label}
+            </Link>
+          ))}
+          {/* Logout button aligned with tabs */}
+          <button
+            onClick={() => auth.signOut()}
+            className="px-4 py-3 mr-3 bg-red-500 hover:bg-red-600 text-white rounded-lg text-sm font-medium transition transform hover:scale-105 hover:shadow-md whitespace-nowrap"
+          >
+            تسجيل الخروج
+          </button>
+        </div>
 
         {/* Mobile Menu Button */}
         <button
@@ -66,26 +89,7 @@ const AdminHeader = () => {
           </svg>
         </button>
 
-        {/* Desktop Navigation */}
-        <ul className="hidden md:flex space-x-1 space-x-reverse">
-          {navItems.map((item) => (
-            <li key={item.path}>
-              <Link
-                to={item.path}
-                className={`px-4 py-2 font-medium rounded-lg transition-all duration-300 ease-in-out
-                  ${
-                    isActive(item.path)
-                      ? 'bg-orange-500 text-white shadow-md'
-                      : 'text-gray-700 hover:bg-green-100 hover:-translate-y-1 hover:shadow-sm'
-                  }`}
-              >
-                {item.label}
-              </Link>
-            </li>
-          ))}
-        </ul>
-
-        {/* Mobile Navigation */}
+        {/* Mobile Navigation (full-width below) */}
         {isOpen && (
           <div className="md:hidden w-full mt-4 p-4 bg-white rounded-lg shadow-lg animate-fadeIn">
             <ul className="space-y-3">
@@ -93,7 +97,7 @@ const AdminHeader = () => {
                 <li key={item.path}>
                   <Link
                     to={item.path}
-                    onClick={() => setIsOpen(false)} // Close menu on click
+                    onClick={() => setIsOpen(false)}
                     className={`block px-4 py-3 font-medium rounded-lg transition-all
                       ${
                         isActive(item.path)
@@ -105,35 +109,22 @@ const AdminHeader = () => {
                   </Link>
                 </li>
               ))}
+              {/* Logout in mobile menu */}
+              <li>
+                <button
+                  onClick={() => {
+                    auth.signOut();
+                    setIsOpen(false);
+                  }}
+                  className="w-full text-right block px-4 py-3 font-medium text-red-600 hover:bg-red-50 rounded-lg"
+                >
+                  تسجيل الخروج
+                </button>
+              </li>
             </ul>
           </div>
         )}
-
-        {/* Logout Button (Visible on all screens) */}
-        <button
-          onClick={() => auth.signOut()}
-          className="mt-4 md:mt-0 bg-red-500 hover:bg-red-600 text-white px-5 py-2 rounded-lg text-sm font-medium transition transform hover:scale-105 hover:shadow-md whitespace-nowrap"
-        >
-          تسجيل الخروج
-        </button>
       </div>
-
-      {/* Optional: Add fade-in animation for mobile menu */}
-      <style jsx>{`
-        @keyframes fadeIn {
-          from {
-            opacity: 0;
-            transform: translateY(-10px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-        .animate-fadeIn {
-          animation: fadeIn 0.3s ease-out;
-        }
-      `}</style>
     </nav>
   );
 };

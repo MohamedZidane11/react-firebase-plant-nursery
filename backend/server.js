@@ -1138,11 +1138,6 @@ app.get('/api/settings/site', async (req, res) => {
         subtitle: 'اكتشف أكثر من 500 مشتل ومتجر لأدوات الزراعة في مكان واحد',
         heroImage: 'https://placehold.co/1200x600/10b981/ffffff?text=Hero+Image',
         benefits: ['معلومات كاملة', 'تواصل مباشر', 'خدمات مجانية'],
-        seo: {
-          title: 'مشاتل النباتات في السعودية | Plant Nursery Finder',
-          description: 'أكبر منصة تجمع مشاتل النباتات وأدوات الزراعة في المملكة.',
-          ogImage: 'https://placehold.co/1200x630/10b981/ffffff?text=OG+Image'
-        },
         contacts: {
           email: 'info@nurseries.sa',
           phone: '0551234567',
@@ -1163,12 +1158,143 @@ app.get('/api/settings/site', async (req, res) => {
   }
 });
 
+// POST: Save site settings
+app.post('/api/settings', async (req, res) => {
+  try {
+    const settings = req.body;
+    
+    await db.collection('settings').doc('site').set(settings, { merge: true });
+    
+    res.status(200).json({ 
+      message: 'Settings saved successfully',
+      data: settings
+    });
+  } catch (error) {
+    console.error('❌ Error saving settings:', error);
+    res.status(500).json({ error: 'Failed to save settings' });
+  }
+});
+
+// ═══════════════════════════════════════════════════════════════════
+// SEO ENDPOINTS - NEW
+// ═══════════════════════════════════════════════════════════════════
+
+// GET: Retrieve SEO settings for all pages
+app.get('/api/seo', async (req, res) => {
+  try {
+    const seoDoc = await db.collection('seo').doc('pages').get();
+    
+    if (!seoDoc.exists) {
+      return res.status(404).json({ error: 'SEO settings not found' });
+    }
+    
+    res.status(200).json(seoDoc.data());
+  } catch (error) {
+    console.error('❌ Error fetching SEO:', error);
+    res.status(500).json({ error: 'Failed to fetch SEO settings' });
+  }
+});
+
+// GET: Retrieve SEO for a specific page
+app.get('/api/seo/:pageName', async (req, res) => {
+  try {
+    const { pageName } = req.params;
+    const seoDoc = await db.collection('seo').doc('pages').get();
+    
+    if (!seoDoc.exists) {
+      return res.status(404).json({ error: 'SEO settings not found' });
+    }
+    
+    const allSeo = seoDoc.data();
+    const pageSeo = allSeo[pageName];
+    
+    if (!pageSeo) {
+      return res.status(404).json({ error: `SEO for page '${pageName}' not found` });
+    }
+    
+    res.status(200).json(pageSeo);
+  } catch (error) {
+    console.error('❌ Error fetching page SEO:', error);
+    res.status(500).json({ error: 'Failed to fetch page SEO' });
+  }
+});
+
+// POST: Save/Update SEO settings
+app.post('/api/seo', async (req, res) => {
+  try {
+    const seoData = req.body;
+    
+    // Validate required fields
+    if (!seoData || typeof seoData !== 'object') {
+      return res.status(400).json({ error: 'Invalid SEO data format' });
+    }
+    
+    await db.collection('seo').doc('pages').set(seoData, { merge: true });
+    
+    res.status(200).json({ 
+      message: 'SEO settings saved successfully',
+      data: seoData
+    });
+  } catch (error) {
+    console.error('❌ Error saving SEO:', error);
+    res.status(500).json({ error: 'Failed to save SEO settings' });
+  }
+});
+
+// PUT: Update specific page SEO
+app.put('/api/seo/:pageName', async (req, res) => {
+  try {
+    const { pageName } = req.params;
+    const pageSeoData = req.body;
+    
+    if (!pageSeoData || typeof pageSeoData !== 'object') {
+      return res.status(400).json({ error: 'Invalid SEO data format' });
+    }
+    
+    await db.collection('seo').doc('pages').set({
+      [pageName]: pageSeoData
+    }, { merge: true });
+    
+    res.status(200).json({ 
+      message: `SEO for '${pageName}' updated successfully`,
+      data: pageSeoData
+    });
+  } catch (error) {
+    console.error('❌ Error updating page SEO:', error);
+    res.status(500).json({ error: 'Failed to update page SEO' });
+  }
+});
+
+// DELETE: Remove specific page SEO
+app.delete('/api/seo/:pageName', async (req, res) => {
+  try {
+    const { pageName } = req.params;
+    
+    const seoDoc = await db.collection('seo').doc('pages').get();
+    if (!seoDoc.exists) {
+      return res.status(404).json({ error: 'SEO settings not found' });
+    }
+    
+    const allSeo = seoDoc.data();
+    delete allSeo[pageName];
+    
+    await db.collection('seo').doc('pages').set(allSeo);
+    
+    res.status(200).json({ 
+      message: `SEO for '${pageName}' deleted successfully`
+    });
+  } catch (error) {
+    console.error('❌ Error deleting page SEO:', error);
+    res.status(500).json({ error: 'Failed to delete page SEO' });
+  }
+});
+
 // ═══════════════════════════════════════════════════════════════════
 // HEALTH CHECK
 // ═══════════════════════════════════════════════════════════════════
 app.get('/', (req, res) => {
   res.json({ 
-    message: 'Nursery API is running 🌿',
+    message: 'Nursery API is running with SEO support 🌿',
     version: '3.0.0',
     status: 'OK',
     cors: 'FIXED',
