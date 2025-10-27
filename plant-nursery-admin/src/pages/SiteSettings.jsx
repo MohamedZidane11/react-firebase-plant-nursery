@@ -33,39 +33,51 @@ const SiteSettings = () => {
     about: ['']
   });
 
-  // Upload image via backend
-const uploadToBackend = async (file, folder) => {
-  const formData = new FormData();
-  formData.append('image', file);
-  formData.append('folder', folder);
-  const res = await fetch(`${API_BASE}/api/upload`, {
-    method: 'POST',
-    body: formData,
-  });
-  if (!res.ok) {
-    const error = await res.json().catch(() => ({}));
-    throw new Error(error.error || 'فشل رفع الصورة');
-  }
-  const data = await res.json();
-  return data.url;
-};
+  const SEO_PAGE_ORDER = [
+    'home',
+    'nurseries',
+    'offers',
+    'contact',
+    'register',
+    'about',
+    'terms',
+    'faq',
+    'privacy'
+  ];
 
-// Delete image via backend
-const deleteImageFromStorage = async (imageUrl) => {
-  try {
-    if (!imageUrl || !imageUrl.includes('firebasestorage.googleapis.com')) return;
-    const response = await fetch(`${API_BASE}/api/delete-file`, {
-      method: 'DELETE',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ url: imageUrl }),
+  // Upload image via backend
+  const uploadToBackend = async (file, folder) => {
+    const formData = new FormData();
+    formData.append('image', file);
+    formData.append('folder', folder);
+    const res = await fetch(`${API_BASE}/api/upload`, {
+      method: 'POST',
+      body: formData,
     });
-    if (!response.ok) {
-      console.warn('Failed to delete image');
+    if (!res.ok) {
+      const error = await res.json().catch(() => ({}));
+      throw new Error(error.error || 'فشل رفع الصورة');
     }
-  } catch (err) {
-    console.warn('Could not delete image:', err);
-  }
-};
+    const data = await res.json();
+    return data.url;
+  };
+
+  // Delete image via backend
+  const deleteImageFromStorage = async (imageUrl) => {
+    try {
+      if (!imageUrl || !imageUrl.includes('firebasestorage.googleapis.com')) return;
+      const response = await fetch(`${API_BASE}/api/delete-file`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: imageUrl }),
+      });
+      if (!response.ok) {
+        console.warn('Failed to delete image');
+      }
+    } catch (err) {
+      console.warn('Could not delete image:', err);
+    }
+  };
 
   // SEO Settings for All Pages
   const [seoPages, setSeoPages] = useState({
@@ -528,69 +540,72 @@ const deleteImageFromStorage = async (imageUrl) => {
             </div>
 
             {/* SEO for Each Page */}
-            {Object.entries(seoPages).map(([pageName, pageData]) => (
-              <div key={pageName} className="bg-white p-8 rounded-2xl shadow-lg border border-gray-100">
-                <h2 className="text-2xl font-bold mb-6 text-gray-800 flex items-center gap-2">
-                  <span className="text-3xl">
-                    {pageName === 'home' && '🏠'}
-                    {pageName === 'nurseries' && '🌿'}
-                    {pageName === 'offers' && '🎁'}
-                    {pageName === 'contact' && '📞'}
-                    {pageName === 'register' && '📝'}
-                    {pageName === 'about' && 'ℹ️'}
-                    {pageName === 'terms' && '📜'}
-                    {pageName === 'faq' && '❓'}
-                    {pageName === 'privacy' && '🔒'}
-                  </span>
-                  صفحة {
-                    pageName === 'home' ? 'الرئيسية' :
-                    pageName === 'nurseries' ? 'المشاتل' :
-                    pageName === 'offers' ? 'العروض' :
-                    pageName === 'contact' ? 'اتصل بنا' :
-                    pageName === 'register' ? 'سجل مشتلك' :
-                    pageName === 'about' ? 'من نحن' :
-                    pageName === 'terms' ? 'شروط الاستخدام' :
-                    pageName === 'faq' ? 'الأسئلة الشائعة' :
-                    'سياسة الخصوصية'
-                  }
-                </h2>
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">عنوان الصفحة (Title)</label>
-                    <input
-                      placeholder="عنوان SEO للصفحة"
-                      value={pageData.title}
-                      onChange={(e) => handleSeoChange(pageName, 'title', e.target.value)}
-                      className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500"
-                    />
-                    <p className="text-xs text-gray-500 mt-1">طول مثالي: 50-60 حرف</p>
-                  </div>
-                  
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">الوصف (Description)</label>
-                    <textarea
-                      placeholder="وصف SEO للصفحة"
-                      value={pageData.description}
-                      onChange={(e) => handleSeoChange(pageName, 'description', e.target.value)}
-                      rows="3"
-                      className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500"
-                    />
-                    <p className="text-xs text-gray-500 mt-1">طول مثالي: 150-160 حرف</p>
-                  </div>
-                  
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">الكلمات المفتاحية (Keywords)</label>
-                    <input
-                      placeholder="الكلمات المفتاحية مفصولة بفاصلة"
-                      value={pageData.keywords}
-                      onChange={(e) => handleSeoChange(pageName, 'keywords', e.target.value)}
-                      className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500"
-                    />
-                    <p className="text-xs text-gray-500 mt-1">مثال: مشاتل السعودية، نباتات الزينة، مشاتل الرياض</p>
+            {SEO_PAGE_ORDER.map(pageName => {
+              const pageData = seoPages[pageName] || { title: '', description: '', keywords: '' };
+              return (
+                <div key={pageName} className="bg-white p-8 rounded-2xl shadow-lg border border-gray-100">
+                  <h2 className="text-2xl font-bold mb-6 text-gray-800 flex items-center gap-2">
+                    <span className="text-3xl">
+                      {pageName === 'home' && '🏠'}
+                      {pageName === 'nurseries' && '🌿'}
+                      {pageName === 'offers' && '🎁'}
+                      {pageName === 'contact' && '📞'}
+                      {pageName === 'register' && '📝'}
+                      {pageName === 'about' && 'ℹ️'}
+                      {pageName === 'terms' && '📜'}
+                      {pageName === 'faq' && '❓'}
+                      {pageName === 'privacy' && '🔒'}
+                    </span>
+                    صفحة {
+                      pageName === 'home' ? 'الرئيسية' :
+                      pageName === 'nurseries' ? 'المشاتل' :
+                      pageName === 'offers' ? 'العروض' :
+                      pageName === 'contact' ? 'اتصل بنا' :
+                      pageName === 'register' ? 'سجل مشتلك' :
+                      pageName === 'about' ? 'من نحن' :
+                      pageName === 'terms' ? 'شروط الاستخدام' :
+                      pageName === 'faq' ? 'الأسئلة الشائعة' :
+                      'سياسة الخصوصية'
+                    }
+                  </h2>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">عنوان الصفحة (Title)</label>
+                      <input
+                        placeholder="عنوان SEO للصفحة"
+                        value={pageData.title}
+                        onChange={(e) => handleSeoChange(pageName, 'title', e.target.value)}
+                        className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                      />
+                      <p className="text-xs text-gray-500 mt-1">طول مثالي: 50-60 حرف</p>
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">الوصف (Description)</label>
+                      <textarea
+                        placeholder="وصف SEO للصفحة"
+                        value={pageData.description}
+                        onChange={(e) => handleSeoChange(pageName, 'description', e.target.value)}
+                        rows="3"
+                        className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                      />
+                      <p className="text-xs text-gray-500 mt-1">طول مثالي: 150-160 حرف</p>
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">الكلمات المفتاحية (Keywords)</label>
+                      <input
+                        placeholder="الكلمات المفتاحية مفصولة بفاصلة"
+                        value={pageData.keywords}
+                        onChange={(e) => handleSeoChange(pageName, 'keywords', e.target.value)}
+                        className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                      />
+                      <p className="text-xs text-gray-500 mt-1">مثال: مشاتل السعودية، نباتات الزينة، مشاتل الرياض</p>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
 
             <button
               onClick={saveSeoSettings}
