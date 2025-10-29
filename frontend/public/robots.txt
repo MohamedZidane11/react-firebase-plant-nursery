@@ -1,0 +1,9 @@
+// public/robots.txt
+User-agent: *
+Allow: /
+
+Sitemap: https://nurseries.qvtest.com/sitemap.xml
+
+# Disallow admin or sensitive paths (if any)
+# Disallow: /admin
+# Disallow: /settings

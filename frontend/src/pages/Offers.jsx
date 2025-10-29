@@ -1,6 +1,8 @@
 // src/pages/Offers.jsx
 import { useState, useEffect } from 'react';
 import OfferCard from '../components/OfferCard';
+import { useSEO } from '../hooks/useSEO';
+import SEO from '../components/SEO';
 
 const Offers = () => {
   const [offers, setOffers] = useState([]);
@@ -13,6 +15,8 @@ const Offers = () => {
   const [filterCategory, setFilterCategory] = useState('all');
   const [filterService, setFilterService] = useState('all');
   const [sortBy, setSortBy] = useState('newest');
+
+  const { seo } = useSEO('offers');
 
   // 🌐 Fetch offers from backend
   useEffect(() => {
@@ -149,173 +153,182 @@ const Offers = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Hero Section */}
-      <section className="bg-gradient-to-r from-[#34a0a4] to-[#fff3b0] text-white py-16">
-        <div className="container mx-auto px-4 text-center">
-          <h1 className="text-4xl md:text-5xl font-bold mb-4 pb-4">
-            العروض الخاصة 🎁
-          </h1>
-          <p className="text-xl mb-8">
-            اكتشف أفضل العروض والخصومات من المشاتل المميزة
-          </p>
-          {/*<button className="bg-white text-yellow-600/80 px-8 py-4 rounded-full font-bold text-lg hover:bg-gray-100 transition-colors">
-            {filteredOffers.length} عرض نشط حالياً 🙌
-          </button>*/}
-        </div>
-      </section>
+    <>
+      <SEO
+        title={seo?.title}
+        description={seo?.description}
+        keywords={seo?.keywords}
+        ogUrl="https://nurseries.qvtest.com/offers"
+        canonical="https://nurseries.qvtest.com/offers"
+      />
+      <div className="min-h-screen bg-gray-50">
+        {/* Hero Section */}
+        <section className="bg-gradient-to-r from-[#34a0a4] to-[#fff3b0] text-white py-16">
+          <div className="container mx-auto px-4 text-center">
+            <h1 className="text-4xl md:text-5xl font-bold mb-4 pb-4">
+              العروض الخاصة 🎁
+            </h1>
+            <p className="text-xl mb-8">
+              اكتشف أفضل العروض والخصومات من المشاتل المميزة
+            </p>
+            {/*<button className="bg-white text-yellow-600/80 px-8 py-4 rounded-full font-bold text-lg hover:bg-gray-100 transition-colors">
+              {filteredOffers.length} عرض نشط حالياً 🙌
+            </button>*/}
+          </div>
+        </section>
 
-      {/* Filters */}
-      <section className="py-8">
-        <div className="container mx-auto px-4">
-          <div className="bg-white rounded-xl p-6 shadow-md">
-            <div className="flex flex-wrap gap-4 items-center justify-center">
-              {/* Filter by Type */}
-              <select
-                value={filterType}
-                onChange={(e) => setFilterType(e.target.value)}
-                className="px-4 py-2 border border-gray-300 rounded-md min-w-36"
-              >
-                <option value="all">جميع العروض</option>
-                <option value="discount">خصومات</option>
-                <option value="free_delivery">توصيل مجاني</option>
-                <option value="consultation">استشارات مجانية</option>
-              </select>
+        {/* Filters */}
+        <section className="py-8">
+          <div className="container mx-auto px-4">
+            <div className="bg-white rounded-xl p-6 shadow-md">
+              <div className="flex flex-wrap gap-4 items-center justify-center">
+                {/* Filter by Type */}
+                <select
+                  value={filterType}
+                  onChange={(e) => setFilterType(e.target.value)}
+                  className="px-4 py-2 border border-gray-300 rounded-md min-w-36"
+                >
+                  <option value="all">جميع العروض</option>
+                  <option value="discount">خصومات</option>
+                  <option value="free_delivery">توصيل مجاني</option>
+                  <option value="consultation">استشارات مجانية</option>
+                </select>
 
-              {/* Filter by Category */}
-              <select
-                value={filterCategory}
-                onChange={(e) => setFilterCategory(e.target.value)}
-                className="px-4 py-2 border border-gray-300 rounded-md min-w-36"
-              >
-                <option value="all">جميع التصنيفات</option>
-                <option value="مشاتل"> مشاتل</option>
-                <option value="مشاتل مختلطة"> مشاتل متنوعة</option>
-                <option value="أدوات زراعة">أدوات زراعة</option>
-                <option value="نباتات داخلية">نباتات داخلية</option>
-                <option value="نباتات خارجية">نباتات خارجية</option>
-                <option value="زهور">زهور</option>
-              </select>
+                {/* Filter by Category */}
+                <select
+                  value={filterCategory}
+                  onChange={(e) => setFilterCategory(e.target.value)}
+                  className="px-4 py-2 border border-gray-300 rounded-md min-w-36"
+                >
+                  <option value="all">جميع التصنيفات</option>
+                  <option value="مشاتل"> مشاتل</option>
+                  <option value="مشاتل مختلطة"> مشاتل متنوعة</option>
+                  <option value="أدوات زراعة">أدوات زراعة</option>
+                  <option value="نباتات داخلية">نباتات داخلية</option>
+                  <option value="نباتات خارجية">نباتات خارجية</option>
+                  <option value="زهور">زهور</option>
+                </select>
 
-              {/* Filter by Service */}
-              <select
-                value={filterService}
-                onChange={(e) => setFilterService(e.target.value)}
-                className="px-4 py-2 border border-gray-300 rounded-md min-w-36"
-              >
-                <option value="all">جميع الخدمات</option>
-                <option value="تركيب وصيانة">تركيب وصيانة</option>
-                <option value="توصيل">توصيل</option>
-                <option value="ضمان نباتات">ضمان نباتات</option>
-                <option value="استشارات">استشارات</option>
-              </select>
+                {/* Filter by Service */}
+                <select
+                  value={filterService}
+                  onChange={(e) => setFilterService(e.target.value)}
+                  className="px-4 py-2 border border-gray-300 rounded-md min-w-36"
+                >
+                  <option value="all">جميع الخدمات</option>
+                  <option value="تركيب وصيانة">تركيب وصيانة</option>
+                  <option value="توصيل">توصيل</option>
+                  <option value="ضمان نباتات">ضمان نباتات</option>
+                  <option value="استشارات">استشارات</option>
+                </select>
 
-              {/* Sort by */}
-              <select
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value)}
-                className="px-4 py-2 border border-gray-300 rounded-md min-w-36"
-              >
-                <option value="newest">الأحدث أولاً</option>
-                <option value="popular">الأكثر شعبية</option>
-              </select>
+                {/* Sort by */}
+                <select
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value)}
+                  className="px-4 py-2 border border-gray-300 rounded-md min-w-36"
+                >
+                  <option value="newest">الأحدث أولاً</option>
+                  <option value="popular">الأكثر شعبية</option>
+                </select>
+              </div>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* Offers Grid */}
-      <section className="py-12">
-        <div className="container mx-auto px-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {currentOffers.length > 0 ? (
-              currentOffers.map((offer) => (
-                <div 
-                  key={offer.id} 
-                  className='hover:-translate-y-4 transition-transform duration-500 ease-in-out flex'
+        {/* Offers Grid */}
+        <section className="py-12">
+          <div className="container mx-auto px-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {currentOffers.length > 0 ? (
+                currentOffers.map((offer) => (
+                  <div 
+                    key={offer.id} 
+                    className='hover:-translate-y-4 transition-transform duration-500 ease-in-out flex'
+                  >
+                    <OfferCard offer={offer} />
+                  </div>
+                ))
+              ) : (
+                <p className="col-span-full text-center text-gray-500 py-8">
+                  لا توجد عروض مطابقة للبحث.
+                </p>
+              )}
+            </div>
+
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="flex justify-center items-center mt-8 gap-2">
+                {/* Previous Button (→ in RTL) */}
+                <a
+                  href="#"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    if (currentPage > 1) handlePageChange(currentPage - 1);
+                  }}
+                  className={`w-10 h-10 flex items-center justify-center text-sm font-semibold rounded-md shadow transition ${
+                    currentPage === 1
+                      ? 'opacity-50 cursor-not-allowed bg-white text-gray-400'
+                      : 'bg-white text-gray-700 hover:bg-gray-100'
+                  }`}
                 >
-                  <OfferCard offer={offer} />
-                </div>
-              ))
-            ) : (
-              <p className="col-span-full text-center text-gray-500 py-8">
-                لا توجد عروض مطابقة للبحث.
-              </p>
+                  →
+                </a>
+
+                {/* Page Numbers */}
+                {getPageNumbers().map((page, idx, arr) => {
+                  // Show ellipsis if needed
+                  if (page === 'ellipsis') {
+                    return (
+                      <span
+                        key={`ellipsis-${idx}`}
+                        className="w-10 h-10 flex items-center justify-center text-sm font-semibold text-gray-500"
+                      >
+                        ...
+                      </span>
+                    );
+                  }
+
+                  return (
+                    <a
+                      key={page}
+                      href="#"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        handlePageChange(page);
+                      }}
+                      className={`w-10 h-10 flex items-center justify-center text-sm font-semibold rounded-md shadow transition ${
+                        currentPage === page
+                          ? 'bg-green-600 text-white'
+                          : 'bg-white text-gray-700 hover:bg-gray-100'
+                      }`}
+                    >
+                      {page}
+                    </a>
+                  );
+                })}
+
+                {/* Next Button (← in RTL) */}
+                <a
+                  href="#"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    if (currentPage < totalPages) handlePageChange(currentPage + 1);
+                  }}
+                  className={`w-10 h-10 flex items-center justify-center text-sm font-semibold rounded-md shadow transition ${
+                    currentPage === totalPages
+                      ? 'opacity-50 cursor-not-allowed bg-white text-gray-400'
+                      : 'bg-white text-gray-700 hover:bg-gray-100'
+                  }`}
+                >
+                  ←
+                </a>
+              </div>
             )}
           </div>
-
-          {/* Pagination */}
-          {totalPages > 1 && (
-            <div className="flex justify-center items-center mt-8 gap-2">
-              {/* Previous Button (→ in RTL) */}
-              <a
-                href="#"
-                onClick={(e) => {
-                  e.preventDefault();
-                  if (currentPage > 1) handlePageChange(currentPage - 1);
-                }}
-                className={`w-10 h-10 flex items-center justify-center text-sm font-semibold rounded-md shadow transition ${
-                  currentPage === 1
-                    ? 'opacity-50 cursor-not-allowed bg-white text-gray-400'
-                    : 'bg-white text-gray-700 hover:bg-gray-100'
-                }`}
-              >
-                →
-              </a>
-
-              {/* Page Numbers */}
-              {getPageNumbers().map((page, idx, arr) => {
-                // Show ellipsis if needed
-                if (page === 'ellipsis') {
-                  return (
-                    <span
-                      key={`ellipsis-${idx}`}
-                      className="w-10 h-10 flex items-center justify-center text-sm font-semibold text-gray-500"
-                    >
-                      ...
-                    </span>
-                  );
-                }
-
-                return (
-                  <a
-                    key={page}
-                    href="#"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      handlePageChange(page);
-                    }}
-                    className={`w-10 h-10 flex items-center justify-center text-sm font-semibold rounded-md shadow transition ${
-                      currentPage === page
-                        ? 'bg-green-600 text-white'
-                        : 'bg-white text-gray-700 hover:bg-gray-100'
-                    }`}
-                  >
-                    {page}
-                  </a>
-                );
-              })}
-
-              {/* Next Button (← in RTL) */}
-              <a
-                href="#"
-                onClick={(e) => {
-                  e.preventDefault();
-                  if (currentPage < totalPages) handlePageChange(currentPage + 1);
-                }}
-                className={`w-10 h-10 flex items-center justify-center text-sm font-semibold rounded-md shadow transition ${
-                  currentPage === totalPages
-                    ? 'opacity-50 cursor-not-allowed bg-white text-gray-400'
-                    : 'bg-white text-gray-700 hover:bg-gray-100'
-                }`}
-              >
-                ←
-              </a>
-            </div>
-          )}
-        </div>
-      </section>
-    </div>
+        </section>
+      </div>
+    </>  
   );
 };
 

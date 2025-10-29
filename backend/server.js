@@ -1289,6 +1289,70 @@ app.delete('/api/seo/:pageName', async (req, res) => {
   }
 });
 
+// Dynamic Sitemap
+app.get('/sitemap.xml', async (req, res) => {
+  try {
+    const baseUrl = 'https://nurseries.qvtest.com';
+    const now = new Date().toISOString().split('T')[0];
+
+    // Fetch live nurseries and offers
+    const nurseriesSnapshot = await db.collection('nurseries').where('published', '==', true).get();
+    const offersSnapshot = await db.collection('offers').get();
+
+    const nurseryUrls = nurseriesSnapshot.docs.map(doc => ({
+      loc: `${baseUrl}/nurseries/${doc.id}`,
+      lastmod: now,
+      changefreq: 'weekly',
+      priority: '0.8'
+    }));
+
+    const offerUrls = offersSnapshot.docs.map(doc => ({
+      loc: `${baseUrl}/offers/${doc.id}`,
+      lastmod: now,
+      changefreq: 'weekly',
+      priority: '0.7'
+    }));
+
+    const staticUrls = [
+      { loc: baseUrl, lastmod: now, changefreq: 'daily', priority: '1.0' },
+      { loc: `${baseUrl}/nurseries`, lastmod: now, changefreq: 'daily', priority: '0.9' },
+      { loc: `${baseUrl}/offers`, lastmod: now, changefreq: 'daily', priority: '0.9' },
+      { loc: `${baseUrl}/contact`, lastmod: now, changefreq: 'monthly', priority: '0.6' },
+      { loc: `${baseUrl}/register`, lastmod: now, changefreq: 'monthly', priority: '0.6' },
+      { loc: `${baseUrl}/AboutUs`, lastmod: now, changefreq: 'monthly', priority: '0.5' },
+      { loc: `${baseUrl}/FAQ`, lastmod: now, changefreq: 'monthly', priority: '0.5' },
+      { loc: `${baseUrl}/PrivacyPolicy`, lastmod: now, changefreq: 'yearly', priority: '0.4' },
+      { loc: `${baseUrl}/TermsOfUse`, lastmod: now, changefreq: 'yearly', priority: '0.4' }
+    ];
+
+    const allUrls = [...staticUrls, ...nurseryUrls, ...offerUrls];
+
+    const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+${allUrls.map(url => `
+  <url>
+    <loc>${url.loc}</loc>
+    <lastmod>${url.lastmod}</lastmod>
+    <changefreq>${url.changefreq}</changefreq>
+    <priority>${url.priority}</priority>
+  </url>`).join('')}
+</urlset>`;
+
+    res.header('Content-Type', 'application/xml');
+    res.send(sitemap);
+  } catch (err) {
+    console.error('Sitemap error:', err);
+    // Fallback to static sitemap
+    res.redirect('/static-sitemap.xml'); // optional
+  }
+});
+
+// Serve robots.txt
+app.get('/robots.txt', (req, res) => {
+  res.type('text/plain');
+  res.sendFile('robots.txt', { root: '.' });
+});
+
 // ═══════════════════════════════════════════════════════════════════
 // HEALTH CHECK
 // ═══════════════════════════════════════════════════════════════════

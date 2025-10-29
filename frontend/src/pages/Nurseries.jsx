@@ -3,6 +3,8 @@ import { useState, useEffect } from 'react';
 import NurseryCard from '../components/NurseryCard';
 import { db } from '../firebase/firebase';
 import { doc, getDoc } from 'firebase/firestore';
+import { useSEO } from '../hooks/useSEO';
+import SEO from '../components/SEO';
 
 const Nurseries = () => {
   const [nurseries, setNurseries] = useState([]);
@@ -23,6 +25,8 @@ const Nurseries = () => {
   const [showOffersOnly, setShowOffersOnly] = useState(false);
   const [saudiLocations, setSaudiLocations] = useState([]);
   const [allSaudiRegions, setAllSaudiRegions] = useState([]);
+
+  const { seo } = useSEO('nurseries');
 
   // 🌐 Fetch nurseries
   useEffect(() => {
@@ -269,322 +273,332 @@ const Nurseries = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Hero Section */}
-      <section className="bg-gradient-to-l from-yellow-700/80 to-emerald-800 text-white py-16">
-        <div className="container mx-auto px-4 text-center">
-          <h1 className="text-4xl md:text-5xl font-bold mb-4">
-            دليل المشاتل الشامل 🌻
-          </h1>
-          <p className="text-xl mb-6 pt-6">
-            اكتشف أكثر من 500 مشتل في جميع أنحاء المملكة
-          </p>
-        </div>
-      </section>
+    <>
+      <SEO
+        title={seo?.title}
+        description={seo?.description}
+        keywords={seo?.keywords}
+        ogUrl="https://nurseries.qvtest.com/nurseries"
+        canonical="https://nurseries.qvtest.com/nurseries"
+      />
 
-      {/* Filters */}
-      <section className="py-8">
-        <div className="container mx-auto px-4">
-          <div className="bg-white rounded-xl p-6 shadow-md space-y-4">
-            <div className="flex flex-wrap gap-4 items-center justify-center">
-              {/* Search */}
-              <input
-                type="text"
-                placeholder="ابحث عن مشتل، منطقة، أو تصنيف..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full px-4 py-2 border border-green-800 rounded-full bg-gradient-to-r from-gray-100/80 to-gray-100 mb-6"
-              />
+      <div className="min-h-screen bg-gray-50">
+        {/* Hero Section */}
+        <section className="bg-gradient-to-l from-yellow-700/80 to-emerald-800 text-white py-16">
+          <div className="container mx-auto px-4 text-center">
+            <h1 className="text-4xl md:text-5xl font-bold mb-4">
+              دليل المشاتل الشامل 🌻
+            </h1>
+            <p className="text-xl mb-6 pt-6">
+              اكتشف أكثر من 500 مشتل في جميع أنحاء المملكة
+            </p>
+          </div>
+        </section>
 
-              {/* Category Filter */}
-              <select
-                value={selectedCategory}
-                onChange={(e) => setSelectedCategory(e.target.value)}
-                disabled={loadingCategories}
-                className="w-full md:w-auto px-4 py-2 border border-green-800 rounded-full disabled:opacity-50"
-              >
-                <option value="all">جميع التصنيفات</option>
-                {categories.map(cat => (
-                  <option key={cat.id} value={cat.title}>
-                    {cat.title}
-                  </option>
-                ))}
-              </select>
-
-              {/* Region Filter */}
-              <select
-                value={selectedRegion}
-                onChange={(e) => {
-                  setSelectedRegion(e.target.value);
-                  setSelectedCity('all');
-                  setSelectedDistrict('all');
-                }}
-                className="w-full md:w-auto px-4 py-2 border border-green-800 rounded-full"
-              >
-                <option value="all">جميع المناطق</option>
-                {allSaudiRegions.length > 0
-                  ? allSaudiRegions.map(region => (
-                      <option key={region} value={region}>{region}</option>
-                    ))
-                  : regions.map(region => (
-                      <option key={region} value={region}>{region}</option>
-                    ))
-                }
-              </select>
-
-              {/* City Filter */}
-              <select
-                value={selectedCity}
-                onChange={(e) => {
-                  setSelectedCity(e.target.value);
-                  setSelectedDistrict('all');
-                }}
-                disabled={selectedRegion === 'all'}
-                className="w-full md:w-auto px-4 py-2 border border-green-800 rounded-full disabled:opacity-50"
-              >
-                <option value="all">جميع المدن</option>
-                {cities.map(city => (
-                  <option key={city} value={city}>{city}</option>
-                ))}
-              </select>
-
-              {/* District Filter */}
-              <select
-                value={selectedDistrict}
-                onChange={(e) => setSelectedDistrict(e.target.value)}
-                disabled={selectedCity === 'all'}
-                className="w-full md:w-auto px-4 py-2 border border-green-800 rounded-full disabled:opacity-50"
-              >
-                <option value="all">جميع الأحياء</option>
-                {districts.map(district => (
-                  <option key={district} value={district}>{district}</option>
-                ))}
-              </select>
-            </div> {/* ✅ This was missing! */}
-
-            {/* Sort & Offers */}
-            <div className="flex flex-col md:flex-row gap-4 mt-4">
-              <div>
-                <label className="ml-2">الترتيب حسب:</label>
-                <select
-                  value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value)}
-                  className="px-4 py-2 border border-green-800 rounded-full"
-                >
-                  <option value="newest">الأحدث اولاً</option>
-                  <option value="popular">الأكثر شهرة</option>
-                </select>
-              </div>
-
-              <div className="flex items-center">
-                <label className="mr-2 px-4 py-3 text-sm border bg-yellow-500/80 rounded-full ml-2 hover:bg-yellow-600/80 transition-all duration-500 ease-in-out">
-                  المشاتل ذات عروض فقط
-                </label>
+        {/* Filters */}
+        <section className="py-8">
+          <div className="container mx-auto px-4">
+            <div className="bg-white rounded-xl p-6 shadow-md space-y-4">
+              <div className="flex flex-wrap gap-4 items-center justify-center">
+                {/* Search */}
                 <input
-                  type="checkbox"
-                  checked={showOffersOnly}
-                  onChange={(e) => setShowOffersOnly(e.target.checked)}
-                  className="h-4 w-4 border border-yellow-600/80"
+                  type="text"
+                  placeholder="ابحث عن مشتل، منطقة، أو تصنيف..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full px-4 py-2 border border-green-800 rounded-full bg-gradient-to-r from-gray-100/80 to-gray-100 mb-6"
                 />
+
+                {/* Category Filter */}
+                <select
+                  value={selectedCategory}
+                  onChange={(e) => setSelectedCategory(e.target.value)}
+                  disabled={loadingCategories}
+                  className="w-full md:w-auto px-4 py-2 border border-green-800 rounded-full disabled:opacity-50"
+                >
+                  <option value="all">جميع التصنيفات</option>
+                  {categories.map(cat => (
+                    <option key={cat.id} value={cat.title}>
+                      {cat.title}
+                    </option>
+                  ))}
+                </select>
+
+                {/* Region Filter */}
+                <select
+                  value={selectedRegion}
+                  onChange={(e) => {
+                    setSelectedRegion(e.target.value);
+                    setSelectedCity('all');
+                    setSelectedDistrict('all');
+                  }}
+                  className="w-full md:w-auto px-4 py-2 border border-green-800 rounded-full"
+                >
+                  <option value="all">جميع المناطق</option>
+                  {allSaudiRegions.length > 0
+                    ? allSaudiRegions.map(region => (
+                        <option key={region} value={region}>{region}</option>
+                      ))
+                    : regions.map(region => (
+                        <option key={region} value={region}>{region}</option>
+                      ))
+                  }
+                </select>
+
+                {/* City Filter */}
+                <select
+                  value={selectedCity}
+                  onChange={(e) => {
+                    setSelectedCity(e.target.value);
+                    setSelectedDistrict('all');
+                  }}
+                  disabled={selectedRegion === 'all'}
+                  className="w-full md:w-auto px-4 py-2 border border-green-800 rounded-full disabled:opacity-50"
+                >
+                  <option value="all">جميع المدن</option>
+                  {cities.map(city => (
+                    <option key={city} value={city}>{city}</option>
+                  ))}
+                </select>
+
+                {/* District Filter */}
+                <select
+                  value={selectedDistrict}
+                  onChange={(e) => setSelectedDistrict(e.target.value)}
+                  disabled={selectedCity === 'all'}
+                  className="w-full md:w-auto px-4 py-2 border border-green-800 rounded-full disabled:opacity-50"
+                >
+                  <option value="all">جميع الأحياء</option>
+                  {districts.map(district => (
+                    <option key={district} value={district}>{district}</option>
+                  ))}
+                </select>
+              </div> {/* ✅ This was missing! */}
+
+              {/* Sort & Offers */}
+              <div className="flex flex-col md:flex-row gap-4 mt-4">
+                <div>
+                  <label className="ml-2">الترتيب حسب:</label>
+                  <select
+                    value={sortBy}
+                    onChange={(e) => setSortBy(e.target.value)}
+                    className="px-4 py-2 border border-green-800 rounded-full"
+                  >
+                    <option value="newest">الأحدث اولاً</option>
+                    <option value="popular">الأكثر شهرة</option>
+                  </select>
+                </div>
+
+                <div className="flex items-center">
+                  <label className="mr-2 px-4 py-3 text-sm border bg-yellow-500/80 rounded-full ml-2 hover:bg-yellow-600/80 transition-all duration-500 ease-in-out">
+                    المشاتل ذات عروض فقط
+                  </label>
+                  <input
+                    type="checkbox"
+                    checked={showOffersOnly}
+                    onChange={(e) => setShowOffersOnly(e.target.checked)}
+                    className="h-4 w-4 border border-yellow-600/80"
+                  />
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* Results */}
-      <section className="py-12">
-        <div className="container mx-auto px-4">
-          <div className="flex flex-col lg:flex-row gap-8">
-            {/* Main Content - Nurseries Grid */}
-            <div className="flex-1">
-              <div className="flex justify-between items-center mb-6">
-                <p className="font-bold text-green-800">عُثر على {sortedNurseries.length} مشتل</p>
-              </div>
+        {/* Results */}
+        <section className="py-12">
+          <div className="container mx-auto px-4">
+            <div className="flex flex-col lg:flex-row gap-8">
+              {/* Main Content - Nurseries Grid */}
+              <div className="flex-1">
+                <div className="flex justify-between items-center mb-6">
+                  <p className="font-bold text-green-800">عُثر على {sortedNurseries.length} مشتل</p>
+                </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                {currentNurseries.length > 0 ? (
-                  currentNurseries.map((nursery) => (
-                    <div key={nursery.id} className='hover:-translate-y-4 transition-transform duration-500 ease-in-out flex'>
-                      <NurseryCard 
-                        nursery={nursery} 
-                        offers={offers}
-                      />
-                    </div>
-                  ))
-                ) : (
-                  <p className="col-span-full text-center text-gray-500 py-8">
-                    لا توجد مشاتل مطابقة للبحث.
-                  </p>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                  {currentNurseries.length > 0 ? (
+                    currentNurseries.map((nursery) => (
+                      <div key={nursery.id} className='hover:-translate-y-4 transition-transform duration-500 ease-in-out flex'>
+                        <NurseryCard 
+                          nursery={nursery} 
+                          offers={offers}
+                        />
+                      </div>
+                    ))
+                  ) : (
+                    <p className="col-span-full text-center text-gray-500 py-8">
+                      لا توجد مشاتل مطابقة للبحث.
+                    </p>
+                  )}
+                </div>
+
+                {/* Pagination */}
+                {totalPages > 1 && (
+                  <div className="flex justify-center items-center mt-8 gap-2">
+                    {/* Previous Button (→ in RTL) */}
+                    <a
+                      href="#"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        if (currentPage > 1) handlePageChange(currentPage - 1);
+                      }}
+                      className={`w-10 h-10 flex items-center justify-center text-sm font-semibold rounded-md shadow transition ${
+                        currentPage === 1
+                          ? 'opacity-50 cursor-not-allowed bg-white text-gray-400'
+                          : 'bg-white text-gray-700 hover:bg-gray-100'
+                      }`}
+                    >
+                      →
+                    </a>
+
+                    {/* Page Numbers */}
+                    {getPageNumbers().map((page, idx, arr) => {
+                      // Show ellipsis if needed
+                      if (page === 'ellipsis') {
+                        return (
+                          <span
+                            key={`ellipsis-${idx}`}
+                            className="w-10 h-10 flex items-center justify-center text-sm font-semibold text-gray-500"
+                          >
+                            ...
+                          </span>
+                        );
+                      }
+
+                      return (
+                        <a
+                          key={page}
+                          href="#"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            handlePageChange(page);
+                          }}
+                          className={`w-10 h-10 flex items-center justify-center text-sm font-semibold rounded-md shadow transition ${
+                            currentPage === page
+                              ? 'bg-green-600 text-white'
+                              : 'bg-white text-gray-700 hover:bg-gray-100'
+                          }`}
+                        >
+                          {page}
+                        </a>
+                      );
+                    })}
+
+                    {/* Next Button (← in RTL) */}
+                    <a
+                      href="#"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        if (currentPage < totalPages) handlePageChange(currentPage + 1);
+                      }}
+                      className={`w-10 h-10 flex items-center justify-center text-sm font-semibold rounded-md shadow transition ${
+                        currentPage === totalPages
+                          ? 'opacity-50 cursor-not-allowed bg-white text-gray-400'
+                          : 'bg-white text-gray-700 hover:bg-gray-100'
+                      }`}
+                    >
+                      ←
+                    </a>
+                  </div>
                 )}
               </div>
 
-              {/* Pagination */}
-              {totalPages > 1 && (
-                <div className="flex justify-center items-center mt-8 gap-2">
-                  {/* Previous Button (→ in RTL) */}
-                  <a
-                    href="#"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      if (currentPage > 1) handlePageChange(currentPage - 1);
-                    }}
-                    className={`w-10 h-10 flex items-center justify-center text-sm font-semibold rounded-md shadow transition ${
-                      currentPage === 1
-                        ? 'opacity-50 cursor-not-allowed bg-white text-gray-400'
-                        : 'bg-white text-gray-700 hover:bg-gray-100'
-                    }`}
-                  >
-                    →
-                  </a>
-
-                  {/* Page Numbers */}
-                  {getPageNumbers().map((page, idx, arr) => {
-                    // Show ellipsis if needed
-                    if (page === 'ellipsis') {
-                      return (
-                        <span
-                          key={`ellipsis-${idx}`}
-                          className="w-10 h-10 flex items-center justify-center text-sm font-semibold text-gray-500"
-                        >
-                          ...
-                        </span>
-                      );
-                    }
-
-                    return (
-                      <a
-                        key={page}
-                        href="#"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          handlePageChange(page);
-                        }}
-                        className={`w-10 h-10 flex items-center justify-center text-sm font-semibold rounded-md shadow transition ${
-                          currentPage === page
-                            ? 'bg-green-600 text-white'
-                            : 'bg-white text-gray-700 hover:bg-gray-100'
-                        }`}
-                      >
-                        {page}
-                      </a>
-                    );
-                  })}
-
-                  {/* Next Button (← in RTL) */}
-                  <a
-                    href="#"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      if (currentPage < totalPages) handlePageChange(currentPage + 1);
-                    }}
-                    className={`w-10 h-10 flex items-center justify-center text-sm font-semibold rounded-md shadow transition ${
-                      currentPage === totalPages
-                        ? 'opacity-50 cursor-not-allowed bg-white text-gray-400'
-                        : 'bg-white text-gray-700 hover:bg-gray-100'
-                    }`}
-                  >
-                    ←
-                  </a>
-                </div>
-              )}
-            </div>
-
-            {/* Sidebars Container */}
-            <div className="flex flex-col gap-8 lg:w-[320px]">
-            {/* Sidebar - Premium Nurseries */}
-            <aside className="lg:w-full">
-              <div className="bg-gray-200 rounded-xl shadow-md p-6 sticky top-4">
-                <div className="flex items-center justify-center gap-2 bg-gray-900 text-white rounded-full px-6 py-3 mb-6">
-                  <span className="text-xl">✨</span>
-                  <h2 className="text-lg font-bold">شركاء النجاح</h2>
-                </div>
-
-                <hr className="mb-6 border-gray-200" />
-
-                <div className="space-y-4">
-                  {/* Premium Nursery Card 1 */}
-                  <div className="bg-gradient-to-br from-gray-50 to-white rounded-xl p-4 border-2 border-transparent hover:border-[#32a852] transition-all duration-300 ease-in-out hover:shadow-lg hover:-translate-x-2">
-                    <div className="flex items-start gap-3">
-                      <div className="bg-gray-200 rounded-full p-3 flex-shrink-0">
-                        <span className="text-2xl">🌿</span>
-                      </div>
-                      <div className="flex-1 text-right">
-                        <h3 className="font-bold text-green-800 mb-1">حدائق المملكة</h3>
-                        <p className="text-sm text-gray-600">نباتات داخلية وخارجية مميزة</p>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Premium Nursery Card 2 */}
-                  <div className="bg-gradient-to-br from-gray-50 to-white rounded-xl p-4 border-2 border-transparent hover:border-[#32a852] transition-all duration-300 ease-in-out hover:shadow-lg hover:-translate-x-2">
-                    <div className="flex items-start gap-3">
-                      <div className="bg-gray-200 rounded-full p-3 flex-shrink-0">
-                        <span className="text-2xl">🌸</span>
-                      </div>
-                      <div className="flex-1 text-right">
-                        <h3 className="font-bold text-green-800 mb-1">مشاتل الرياض الخضراء</h3>
-                        <p className="text-sm text-gray-600">تنسيق حدائق احترافي</p>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Premium Nursery Card 3 */}
-                  <div className="bg-gradient-to-br from-gray-50 to-white rounded-xl p-4 border-2 border-transparent hover:border-[#32a852] transition-all duration-300 ease-in-out hover:shadow-lg hover:-translate-x-2">
-                    <div className="flex items-start gap-3">
-                      <div className="bg-gray-200 rounded-full p-3 flex-shrink-0">
-                        <span className="text-2xl">🌴</span>
-                      </div>
-                      <div className="flex-1 text-right">
-                        <h3 className="font-bold text-green-800 mb-1">مؤسسة النخيل الذهبية</h3>
-                        <p className="text-sm text-gray-600">متخصصون في أشجار النخيل النادرة</p>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Premium Nursery Card 4 */}
-                  <div className="bg-gradient-to-br from-gray-50 to-white rounded-xl p-4 border-2 border-transparent hover:border-[#32a852] transition-all duration-300 ease-in-out hover:shadow-lg hover:-translate-x-2">
-                    <div className="flex items-start gap-3">
-                      <div className="bg-gray-200 rounded-full p-3 flex-shrink-0">
-                        <span className="text-2xl">☘️</span>
-                      </div>
-                      <div className="flex-1 text-right">
-                        <h3 className="font-bold text-green-800 mb-1">مشتل الخليج الأخضر</h3>
-                        <p className="text-sm text-gray-600">الرائد في النباتات المحلية والمستوردة</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </aside>
-            
-            {/* Sidebar - Latest Highlighted Offer */}
-            {latestHighlightedOffer && (
+              {/* Sidebars Container */}
+              <div className="flex flex-col gap-8 lg:w-[320px]">
+              {/* Sidebar - Premium Nurseries */}
               <aside className="lg:w-full">
-                <div className="bg-gradient-to-br from-yellow-50 to-amber-50 border border-amber-200 rounded-xl shadow-md p-6 sticky top-4 hover:border-yellow-600/80 transition-all duration-300 ease-in-out hover:shadow-lg hover:scale-102">
-                  <a href="/offers">
-                    <div className="flex items-center justify-center gap-2 bg-yellow-600/80 text-white rounded-full px-4 py-2 mb-4">
-                      <span className="text-lg">🔥</span>
-                      <h3 className="font-bold text-sm">عرض مميز</h3>
+                <div className="bg-gray-200 rounded-xl shadow-md p-6 sticky top-4">
+                  <div className="flex items-center justify-center gap-2 bg-gray-900 text-white rounded-full px-6 py-3 mb-6">
+                    <span className="text-xl">✨</span>
+                    <h2 className="text-lg font-bold">شركاء النجاح</h2>
+                  </div>
+
+                  <hr className="mb-6 border-gray-200" />
+
+                  <div className="space-y-4">
+                    {/* Premium Nursery Card 1 */}
+                    <div className="bg-gradient-to-br from-gray-50 to-white rounded-xl p-4 border-2 border-transparent hover:border-[#32a852] transition-all duration-300 ease-in-out hover:shadow-lg hover:-translate-x-2">
+                      <div className="flex items-start gap-3">
+                        <div className="bg-gray-200 rounded-full p-3 flex-shrink-0">
+                          <span className="text-2xl">🌿</span>
+                        </div>
+                        <div className="flex-1 text-right">
+                          <h3 className="font-bold text-green-800 mb-1">حدائق المملكة</h3>
+                          <p className="text-sm text-gray-600">نباتات داخلية وخارجية مميزة</p>
+                        </div>
+                      </div>
                     </div>
-                    <h4 className="font-bold text-lg text-amber-800 mb-2 line-clamp-2">
-                      {latestHighlightedOffer.title || 'عرض خاص'}
-                    </h4>
-                    <p className="text-sm text-gray-700 mb-4 line-clamp-3 pb-4">
-                      {latestHighlightedOffer.description || 'لا يوجد وصف متاح.'}
-                    </p>
-                    <div className="flex items-center justify-center gap-2 bg-yellow-600/40 text-amber-800 rounded-md px-4 py-2 mb-4">
-                      <h3 className="font-bold text-base">شاهد العروض</h3>
+
+                    {/* Premium Nursery Card 2 */}
+                    <div className="bg-gradient-to-br from-gray-50 to-white rounded-xl p-4 border-2 border-transparent hover:border-[#32a852] transition-all duration-300 ease-in-out hover:shadow-lg hover:-translate-x-2">
+                      <div className="flex items-start gap-3">
+                        <div className="bg-gray-200 rounded-full p-3 flex-shrink-0">
+                          <span className="text-2xl">🌸</span>
+                        </div>
+                        <div className="flex-1 text-right">
+                          <h3 className="font-bold text-green-800 mb-1">مشاتل الرياض الخضراء</h3>
+                          <p className="text-sm text-gray-600">تنسيق حدائق احترافي</p>
+                        </div>
+                      </div>
                     </div>
-                  </a>
+
+                    {/* Premium Nursery Card 3 */}
+                    <div className="bg-gradient-to-br from-gray-50 to-white rounded-xl p-4 border-2 border-transparent hover:border-[#32a852] transition-all duration-300 ease-in-out hover:shadow-lg hover:-translate-x-2">
+                      <div className="flex items-start gap-3">
+                        <div className="bg-gray-200 rounded-full p-3 flex-shrink-0">
+                          <span className="text-2xl">🌴</span>
+                        </div>
+                        <div className="flex-1 text-right">
+                          <h3 className="font-bold text-green-800 mb-1">مؤسسة النخيل الذهبية</h3>
+                          <p className="text-sm text-gray-600">متخصصون في أشجار النخيل النادرة</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Premium Nursery Card 4 */}
+                    <div className="bg-gradient-to-br from-gray-50 to-white rounded-xl p-4 border-2 border-transparent hover:border-[#32a852] transition-all duration-300 ease-in-out hover:shadow-lg hover:-translate-x-2">
+                      <div className="flex items-start gap-3">
+                        <div className="bg-gray-200 rounded-full p-3 flex-shrink-0">
+                          <span className="text-2xl">☘️</span>
+                        </div>
+                        <div className="flex-1 text-right">
+                          <h3 className="font-bold text-green-800 mb-1">مشتل الخليج الأخضر</h3>
+                          <p className="text-sm text-gray-600">الرائد في النباتات المحلية والمستوردة</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </aside>
-            )}
+              
+              {/* Sidebar - Latest Highlighted Offer */}
+              {latestHighlightedOffer && (
+                <aside className="lg:w-full">
+                  <div className="bg-gradient-to-br from-yellow-50 to-amber-50 border border-amber-200 rounded-xl shadow-md p-6 sticky top-4 hover:border-yellow-600/80 transition-all duration-300 ease-in-out hover:shadow-lg hover:scale-102">
+                    <a href="/offers">
+                      <div className="flex items-center justify-center gap-2 bg-yellow-600/80 text-white rounded-full px-4 py-2 mb-4">
+                        <span className="text-lg">🔥</span>
+                        <h3 className="font-bold text-sm">عرض مميز</h3>
+                      </div>
+                      <h4 className="font-bold text-lg text-amber-800 mb-2 line-clamp-2">
+                        {latestHighlightedOffer.title || 'عرض خاص'}
+                      </h4>
+                      <p className="text-sm text-gray-700 mb-4 line-clamp-3 pb-4">
+                        {latestHighlightedOffer.description || 'لا يوجد وصف متاح.'}
+                      </p>
+                      <div className="flex items-center justify-center gap-2 bg-yellow-600/40 text-amber-800 rounded-md px-4 py-2 mb-4">
+                        <h3 className="font-bold text-base">شاهد العروض</h3>
+                      </div>
+                    </a>
+                  </div>
+                </aside>
+              )}
+              </div>
             </div>
           </div>
-        </div>
-      </section>
-    </div>
+        </section>
+      </div>
+    </>
   );
 };
 

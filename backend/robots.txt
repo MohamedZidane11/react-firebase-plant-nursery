@@ -1,0 +1,8 @@
+# robots.txt
+User-agent: *
+Allow: /
+
+Sitemap: https://nurseries.qvtest.com/sitemap.xml
+
+# Optional: Disallow admin if you ever add one
+# Disallow: /admin
