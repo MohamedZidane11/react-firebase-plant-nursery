@@ -16,7 +16,7 @@ const SEO = ({
   const defaultDescription = 'منصة مشاتل السعودية تجمع لك النباتات والزهور من مشاتل المملكة في مكان واحد';
   const defaultKeywords = 'مشاتل السعودية، نباتات الزينة، مشاتل الرياض';
   const defaultOgImage = 'https://firebasestorage.googleapis.com/your-default-image.jpg';
-  const siteUrl = 'http://localhost:5000';
+  const siteUrl = 'https://nurseries.qvtest.com';
 
   return (
     <Helmet>

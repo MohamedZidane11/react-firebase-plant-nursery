@@ -4,7 +4,7 @@ import { db, auth } from '../firebase/firebase';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import axios from 'axios';
 
-const API_BASE = 'http://localhost:5000';
+const API_BASE = 'https://nurseries.qvtest.com';
 
 const SiteSettings = () => {
   const [heroImageFile, setHeroImageFile] = useState(null);

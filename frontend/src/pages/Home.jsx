@@ -370,8 +370,8 @@ const Home = () => {
           title={seo?.title}
           description={seo?.description}
           keywords={seo?.keywords}
-          ogUrl="http://localhost:5000"
-          canonical="http://localhost:5000"
+          ogUrl="https://nurseries.qvtest.com"
+          canonical="https://nurseries.qvtest.com"
         />
         
       <div className="min-h-screen bg-gray-50">
