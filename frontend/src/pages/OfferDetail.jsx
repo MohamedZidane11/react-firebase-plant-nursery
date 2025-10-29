@@ -194,14 +194,14 @@ const OfferDetail = () => {
 
               {/* Thumbnails */}
               {displayThumbnails.length > 0 && (
-                <div className="grid grid-cols-4 gap-4 p-6 bg-gray-50">
+                <div className="flex justify-center gap-2 mt-4 p-6 bg-gray-50">
                   {displayThumbnails.map((imageUrl, index) => (
                     <div
                       key={index}
-                      className={`w-full h-24 rounded-lg overflow-hidden border-3 cursor-pointer transition ${
+                      className={`w-12 h-12 rounded-lg overflow-hidden border-2 shadow-md cursor-pointer hover:scale-105 transition-transform ${
                         mainImage === imageUrl
-                          ? 'border-green-600 shadow-md'
-                          : 'border-transparent hover:border-green-400'
+                          ? 'border-green-600 ring-2 ring-green-300'
+                          : 'border-white'
                       }`}
                       onClick={() => handleThumbnailClick(imageUrl)}
                     >
