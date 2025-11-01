@@ -200,6 +200,7 @@ const SurveyManager = () => {
 
   const isFiltering = Object.values(filters).some(val => val !== '');
 
+  // ✅ Loading Animation
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-cyan-50 to-teal-50 flex items-center justify-center">

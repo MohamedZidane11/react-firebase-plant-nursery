@@ -142,13 +142,15 @@ const RegisterNursery = () => {
   const primaryCategories = ['مشاتل', 'مشاتل متنوعة', 'أدوات الزراعة'];
   const otherCategories = ['نباتات داخلية', 'نباتات خارجية', 'زهور', 'نخيل', 'معدات'];
 
-  if (loadingLocations) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <p className="text-lg text-gray-600">جاري تحميل البيانات...</p>
+  // ✅ Loading Animation
+  if (loadingLocations) return (
+    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="text-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto mb-4"></div>
+        <p className="text-gray-600">جاري التحميل...</p>
       </div>
-    );
-  }
+    </div>
+  );
 
   return (
     <>
