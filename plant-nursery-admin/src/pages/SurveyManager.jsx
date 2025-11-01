@@ -151,7 +151,7 @@ const SurveyManager = () => {
     if (!timestamp) return 'غير محدد';
     try {
       const date = new Date(timestamp);
-      return date.toLocaleString('ar-SA', {
+      return date.toLocaleString('ar-EG', {
         year: 'numeric',
         month: '2-digit',
         day: '2-digit',
