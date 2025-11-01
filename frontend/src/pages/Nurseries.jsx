@@ -9,6 +9,7 @@ import SEO from '../components/SEO';
 const Nurseries = () => {
   const [nurseries, setNurseries] = useState([]);
   const [offers, setOffers] = useState([]);
+  const [premiumNurseries, setPremiumNurseries] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [loadingCategories, setLoadingCategories] = useState(true);
@@ -91,6 +92,24 @@ const Nurseries = () => {
     };
 
     fetchCategories();
+  }, []);
+
+  // 🌟 Fetch premium nurseries
+  useEffect(() => {
+    const fetchPremiumNurseries = async () => {
+      try {
+        const API_BASE = 'https://nurseries.qvtest.com';
+        const response = await fetch(`${API_BASE}/api/premium-nurseries`);
+        if (!response.ok) throw new Error('فشل تحميل شركاء النجاح');
+        const data = await response.json();
+        const publishedOnly = data.filter(item => item.published !== false);
+        setPremiumNurseries(publishedOnly);
+      } catch (err) {
+        console.error('Error fetching premium nurseries:', err);
+        setPremiumNurseries([]);
+      }
+    };
+    fetchPremiumNurseries();
   }, []);
 
   // 🌍 Fetch full Saudi regions from Firestore (like in NurseryForm)
@@ -520,59 +539,47 @@ const Nurseries = () => {
                   </div>
 
                   <hr className="mb-6 border-gray-200" />
-
+                  
+                  {/* Premium Nursery Card 1 */}
                   <div className="space-y-4">
-                    {/* Premium Nursery Card 1 */}
-                    <div className="bg-gradient-to-br from-gray-50 to-white rounded-xl p-4 border-2 border-transparent hover:border-[#32a852] transition-all duration-300 ease-in-out hover:shadow-lg hover:-translate-x-2">
-                      <div className="flex items-start gap-3">
-                        <div className="bg-gray-200 rounded-full p-3 flex-shrink-0">
-                          <span className="text-2xl">🌿</span>
-                        </div>
-                        <div className="flex-1 text-right">
-                          <h3 className="font-bold text-green-800 mb-1">حدائق المملكة</h3>
-                          <p className="text-sm text-gray-600">نباتات داخلية وخارجية مميزة</p>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Premium Nursery Card 2 */}
-                    <div className="bg-gradient-to-br from-gray-50 to-white rounded-xl p-4 border-2 border-transparent hover:border-[#32a852] transition-all duration-300 ease-in-out hover:shadow-lg hover:-translate-x-2">
-                      <div className="flex items-start gap-3">
-                        <div className="bg-gray-200 rounded-full p-3 flex-shrink-0">
-                          <span className="text-2xl">🌸</span>
-                        </div>
-                        <div className="flex-1 text-right">
-                          <h3 className="font-bold text-green-800 mb-1">مشاتل الرياض الخضراء</h3>
-                          <p className="text-sm text-gray-600">تنسيق حدائق احترافي</p>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Premium Nursery Card 3 */}
-                    <div className="bg-gradient-to-br from-gray-50 to-white rounded-xl p-4 border-2 border-transparent hover:border-[#32a852] transition-all duration-300 ease-in-out hover:shadow-lg hover:-translate-x-2">
-                      <div className="flex items-start gap-3">
-                        <div className="bg-gray-200 rounded-full p-3 flex-shrink-0">
-                          <span className="text-2xl">🌴</span>
-                        </div>
-                        <div className="flex-1 text-right">
-                          <h3 className="font-bold text-green-800 mb-1">مؤسسة النخيل الذهبية</h3>
-                          <p className="text-sm text-gray-600">متخصصون في أشجار النخيل النادرة</p>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Premium Nursery Card 4 */}
-                    <div className="bg-gradient-to-br from-gray-50 to-white rounded-xl p-4 border-2 border-transparent hover:border-[#32a852] transition-all duration-300 ease-in-out hover:shadow-lg hover:-translate-x-2">
-                      <div className="flex items-start gap-3">
-                        <div className="bg-gray-200 rounded-full p-3 flex-shrink-0">
-                          <span className="text-2xl">☘️</span>
-                        </div>
-                        <div className="flex-1 text-right">
-                          <h3 className="font-bold text-green-800 mb-1">مشتل الخليج الأخضر</h3>
-                          <p className="text-sm text-gray-600">الرائد في النباتات المحلية والمستوردة</p>
-                        </div>
-                      </div>
-                    </div>
+                    {premiumNurseries.length > 0 ? (
+                      premiumNurseries.map((pn) => (
+                        <a
+                          key={pn.id}
+                          href={
+                            pn.type === 'external'
+                              ? pn.externalUrl
+                              : `/nurseries/${pn.nurseryId}`
+                          }
+                          target={pn.type === 'external' ? '_blank' : '_self'}
+                          rel={pn.type === 'external' ? 'noopener noreferrer' : ''}
+                          className="block bg-gradient-to-br from-gray-50 to-white rounded-xl p-4 border-2 border-transparent hover:border-[#32a852] transition-all duration-300 ease-in-out hover:shadow-lg hover:-translate-x-2"
+                        >
+                          <div className="flex items-start gap-3">
+                            <div className="bg-gray-200 rounded-full p-3 flex-shrink-0">
+                              {pn.logo ? (
+                                <img
+                                  src={pn.logo}
+                                  alt={pn.name}
+                                  className="w-6 h-6 object-contain"
+                                  onError={(e) => {
+                                    e.target.src = 'https://placehold.co/24x24/fbbf24/ffffff?text=Logo';
+                                  }}
+                                />
+                              ) : (
+                                <span className="text-lg">🌿</span>
+                              )}
+                            </div>
+                            <div className="flex-1 text-right">
+                              <h3 className="font-bold text-green-800 mb-1">{pn.name}</h3>
+                              <p className="text-sm text-gray-600">{pn.description || 'مشتل مميز'}</p>
+                            </div>
+                          </div>
+                        </a>
+                      ))
+                    ) : (
+                      <p className="text-center text-gray-500 text-sm">لا توجد شركاء نجاح حالياً</p>
+                    )}
                   </div>
                 </div>
               </aside>
