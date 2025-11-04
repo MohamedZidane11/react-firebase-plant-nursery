@@ -72,17 +72,30 @@ const NurseryDetail = () => {
       return { isOpen: null, message: 'غير محدد' };
     }
     const now = new Date();
-    const currentDay = now.getDay();
+    const currentDay = now.getDay(); // الأحد = 0, ..., الجمعة = 5
     const currentTime = now.getHours() * 60 + now.getMinutes();
+    
     const isFriday = currentDay === 5;
     const hours = isFriday ? nursery.workingHours.friday : nursery.workingHours.weekdays;
+  
     if (!hours || !hours.open || !hours.close) {
       return { isOpen: null, message: 'غير محدد' };
     }
+  
+    // إذا كانت الساعة 00:00 فالمشتل مغلق
+    if (hours.open === '00:00' || hours.close === '00:00') {
+      return {
+        isOpen: false,
+        message: 'مغلق اليوم',
+        nextChange: ''
+      };
+    }
+  
     const [openHour, openMin] = hours.open.split(':').map(Number);
     const [closeHour, closeMin] = hours.close.split(':').map(Number);
     const openTime = openHour * 60 + openMin;
     const closeTime = closeHour * 60 + closeMin;
+  
     const isOpen = currentTime >= openTime && currentTime < closeTime;
     return {
       isOpen,

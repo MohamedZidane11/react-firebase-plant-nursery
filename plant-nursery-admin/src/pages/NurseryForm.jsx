@@ -1029,21 +1029,67 @@ const NurseryForm = () => {
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <label className="block text-xs text-gray-500 mb-1">من</label>
-                      <input
-                        type="time"
+                      <select
                         value={formData.workingHours.friday.open}
                         onChange={(e) => handleWorkingHoursChange('friday', 'open', e.target.value)}
                         className="w-full px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-green-500"
-                      />
+                      >
+                        <option value="">اختر</option>
+                        <option value="00:00">مغلق</option>
+                        <option value="04:00">4:00 صباحًا</option>
+                        <option value="05:00">5:00 صباحًا</option>
+                        <option value="06:00">6:00 صباحًا</option>
+                        <option value="07:00">7:00 صباحًا</option>
+                        <option value="08:00">8:00 صباحًا</option>
+                        <option value="09:00">9:00 صباحًا</option>
+                        <option value="10:00">10:00 صباحًا</option>
+                        <option value="11:00">11:00 صباحًا</option>
+                        <option value="12:00">12:00 ظهرًا</option>
+                        <option value="13:00">1:00 مساءً</option>
+                        <option value="14:00">2:00 مساءً</option>
+                        <option value="15:00">3:00 مساءً</option>
+                        <option value="16:00">4:00 مساءً</option>
+                        <option value="17:00">5:00 مساءً</option>
+                        <option value="18:00">6:00 مساءً</option>
+                        <option value="19:00">7:00 مساءً</option>
+                        <option value="20:00">8:00 مساءً</option>
+                        <option value="21:00">9:00 مساءً</option>
+                        <option value="22:00">10:00 مساءً</option>
+                        <option value="23:00">11:00 مساءً</option>
+                        <option value="23:59">11:59 مساءً</option>
+                      </select>
                     </div>
                     <div>
                       <label className="block text-xs text-gray-500 mb-1">إلى</label>
-                      <input
-                        type="time"
+                      <select
                         value={formData.workingHours.friday.close}
                         onChange={(e) => handleWorkingHoursChange('friday', 'close', e.target.value)}
                         className="w-full px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-green-500"
-                      />
+                      >
+                        <option value="">اختر</option>
+                        <option value="00:00">مغلق</option>
+                        <option value="04:00">4:00 صباحًا</option>
+                        <option value="05:00">5:00 صباحًا</option>
+                        <option value="06:00">6:00 صباحًا</option>
+                        <option value="07:00">7:00 صباحًا</option>
+                        <option value="08:00">8:00 صباحًا</option>
+                        <option value="09:00">9:00 صباحًا</option>
+                        <option value="10:00">10:00 صباحًا</option>
+                        <option value="11:00">11:00 صباحًا</option>
+                        <option value="12:00">12:00 ظهرًا</option>
+                        <option value="13:00">1:00 مساءً</option>
+                        <option value="14:00">2:00 مساءً</option>
+                        <option value="15:00">3:00 مساءً</option>
+                        <option value="16:00">4:00 مساءً</option>
+                        <option value="17:00">5:00 مساءً</option>
+                        <option value="18:00">6:00 مساءً</option>
+                        <option value="19:00">7:00 مساءً</option>
+                        <option value="20:00">8:00 مساءً</option>
+                        <option value="21:00">9:00 مساءً</option>
+                        <option value="22:00">10:00 مساءً</option>
+                        <option value="23:00">11:00 مساءً</option>
+                        <option value="23:59">11:59 مساءً</option>
+                      </select>
                     </div>
                   </div>
                 </div>
